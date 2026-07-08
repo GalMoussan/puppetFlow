@@ -1,0 +1,49 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+MyLogs/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Test coverage
+coverage/
+
+# Prisma
+prisma/migrations/*.sql.bak
+
+# Company pipelines (keep structure, ignore large logs)
+Company/project/pipelines/*_journal/*.log
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/

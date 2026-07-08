@@ -1,0 +1,289 @@
+# Project Guidelines: {Project Name}
+
+<!-- ==========================================================================
+  ABOUT THIS FILE
+
+  This is the single most important file in the Company system. Every agent
+  reads it before doing any work. If something is wrong here, every agent will
+  make the same mistake.
+
+  HOW TO USE THIS TEMPLATE:
+  - Replace {placeholders} with your project's actual values
+  - Read the HTML comments in each section for guidance on what to include
+  - Delete the HTML comments once you've filled in the section
+  - The /company-startup wizard will generate most of this for you automatically
+  - After that, the Optimizer refines it after every pipeline run
+
+  WHAT GOES HERE vs. ROLE FILES:
+  - This file: project-specific conventions, tools, paths, patterns, gotchas
+  - Company/roles/*.md: generic role behavior (portable across projects)
+  - If a lesson applies to ANY project, it goes in a role file
+  - If it only applies to THIS codebase, it goes here
+  ========================================================================== -->
+
+These are project-specific conventions, tools, paths, and patterns for the {Project Name} project. The Manager includes this file in every agent's prompt alongside their generic role definition.
+
+## Project Overview
+
+<!-- One paragraph covering:
+  - What the project is (app type, domain)
+  - Primary language and version
+  - Framework(s) used
+  - Architecture style (e.g., MVC, component-based, microservices, MonoBehaviour)
+  - Anything an agent needs to know to understand the codebase at a glance
+
+  Example:
+  "Acme Dashboard is a React 18 + TypeScript web application for real-time inventory
+  management. It uses a component-based architecture with Redux for state management
+  and Express.js backend with PostgreSQL."
+-->
+
+{Project description}
+
+## Stable State
+
+<!-- Define what "everything is working" looks like for your project. This is the
+  state that every pipeline must return to before completing. The Debugger's job
+  is to restore this state when it breaks.
+
+  Examples:
+  - "all tests pass" (most common)
+  - "all tests pass and linter is clean"
+  - "builds without warnings and all integration tests pass"
+  - "CI pipeline is green"
+-->
+
+The stable state of this project is **{description}**. Any pipeline that introduces failures must fix them before completing. The Debugger's job is to return the project to this stable state.
+
+## Documentation Structure
+
+<!-- Map your project's documentation organization. If you don't have a convention
+  yet, the Company standard is shown below. Adjust the table to match your actual
+  structure. The agents use this to know WHERE to create and find docs.
+-->
+
+| Type | Location | Naming |
+|------|----------|--------|
+| Design Docs | `{path}` | {naming convention, e.g., "GDD_{Feature}.md"} |
+| Technical Docs | `{path}` | {naming convention, e.g., "{Feature}_Technical.md"} |
+| Test Specs | `{path}` | {naming convention, e.g., "Tests_{Feature}.md"} |
+| Plans | `{path}` | {naming convention, e.g., "{Task}_Plan.md"} |
+| Master Index | `{path}` | {description} |
+
+### Documentation Rules
+
+<!-- List rules that every Documenter must follow. Common ones:
+  - No hardcoded gameplay/config numbers -- point to source of truth
+  - Update the master index when creating new docs
+  - Specific test tier structure (if applicable)
+-->
+
+- {rule 1}
+- {rule 2}
+
+## Error Handling Conventions
+
+<!-- Define how errors should be handled in your codebase. Be explicit about
+  what is NOT allowed -- agents will follow these rules literally.
+
+  Common patterns:
+  - Throw exceptions vs return error codes vs Result types
+  - Logging framework and severity levels
+  - "Never do X" rules (e.g., no silent catches, no swallowed errors)
+  - How to handle missing configuration
+  - How to handle null/undefined dependencies
+-->
+
+- {convention 1, e.g., "No silent failures -- unexpected states must throw with descriptive messages"}
+- {convention 2, e.g., "Use logger.error(), not logger.warn(), for non-recoverable situations"}
+- {convention 3, e.g., "No defensive null checks that hide bugs -- missing dependencies should crash loudly"}
+
+## Test Infrastructure
+
+### Test Framework
+
+<!-- Identify the testing tools used in your project -->
+
+- **Framework**: {name and version, e.g., "Jest 29.7", "pytest 8.0", "NUnit 3.14"}
+- **Location**: `{test directory path}`
+- **Tiers**: {describe test tiers, e.g., "Unit tests (pure logic, no I/O), Integration tests (real database), E2E tests (browser automation)"}
+
+### Test Base Classes
+
+<!-- Describe any shared test infrastructure. If you have base classes for tests,
+  describe what they provide. If you have test helpers, document them here.
+  This section is critical -- agents need to know what already exists so they
+  don't reinvent it.
+-->
+
+- **Unit tests**: {base class or pattern, e.g., "Extend BaseUnitTest which provides mock factories and assertion helpers"}
+- **Integration tests**: {base class or pattern, e.g., "Extend IntegrationTestBase which sets up and tears down the test database"}
+- **Diagnostics**: {how to capture diagnostic data for failure reports, if applicable}
+
+### Running Tests
+
+<!-- Exact commands. Agents will run these literally.
+  Include: how to run all tests, how to run a subset, any required setup steps
+-->
+
+- **All tests**: `{command}`
+- **Specific test/suite**: `{command with filter, e.g., "npm test -- --testPathPattern=moduleName"}`
+- **Pre-test setup**: {any required steps, e.g., "Start Docker containers: docker-compose up -d"}
+
+<!-- If your project has a batch filter or test selection mechanism, document it:
+  - How to run only one test class or file
+  - How to run only tests for one module
+  - Any cleanup needed after filtered runs
+-->
+
+### Test Naming
+
+<!-- The convention agents must follow when creating new tests -->
+
+- Test file: `{convention, e.g., "{SystemUnderTest}.test.ts"}`
+- Test method: `{convention, e.g., "{method}_{scenario}_{expected}"}`
+
+### Test Helpers
+
+<!-- Document shared test utilities that agents should reuse instead of reinventing.
+  For each helper, state: what it does, when to use it, and any gotchas.
+-->
+
+- {helper 1, e.g., "createMockUser(overrides) -- factory for test users with sensible defaults"}
+- {helper 2, e.g., "waitForAsync(predicate, timeout) -- polls until predicate is true or timeout"}
+
+## Compilation & Build
+
+<!-- How agents verify their code compiles and how to produce builds.
+  Include any external tools required (editors, runtimes, emulators).
+-->
+
+- **Verify compilation**: `{command, e.g., "tsc --noEmit", "dotnet build", "cargo check"}`
+- **Full build**: `{command, e.g., "npm run build", "dotnet publish"}`
+- **External tools required**: {list, e.g., "Docker for integration tests", "Unity Editor for game builds", or "None"}
+
+<!-- If your project uses a language server, IDE, or external tool that agents
+  might interact with, document the interaction pattern here. For example:
+  - Unity MCP server for running tests
+  - LSP for compilation checks
+  - CI/CD for deployment verification
+-->
+
+## Code Patterns
+
+### Architecture
+
+<!-- List the key architectural patterns agents must follow. Be specific --
+  agents will create new code following these patterns exactly.
+-->
+
+- {pattern 1, e.g., "All business logic in service classes, controllers are thin"}
+- {pattern 2, e.g., "Dependency injection via constructor parameters, no service locators"}
+- {pattern 3, e.g., "Extract pure static methods for any logic testable without runtime context"}
+- {pattern 4, e.g., "State machines for complex behavior (via enum + switch, not class hierarchy)"}
+
+### Key Systems
+
+<!-- List the major systems/modules and their primary classes. This gives agents
+  a map of the codebase so they know where to look and what to touch.
+-->
+
+- {System 1}: {brief description, e.g., "AuthService -- handles authentication, token refresh, session management"}
+- {System 2}: {brief description, e.g., "OrderPipeline -- processes orders through validation, payment, fulfillment stages"}
+- {System 3}: {brief description}
+
+## Common Gotchas
+
+<!-- THIS IS THE HIGHEST-VALUE SECTION. List everything that would trip up
+  an agent (or a new developer). Be specific and include WHY.
+
+  This section grows organically -- after each pipeline, the Optimizer adds
+  gotchas discovered during execution. Start with what you know, and let the
+  system expand it over time.
+
+  Format each gotcha as a concise bullet with the symptom and the cause/fix.
+-->
+
+- {gotcha 1, e.g., "Database connections are not automatically closed in tests -- always use the test helper's cleanup method"}
+- {gotcha 2, e.g., "The auth middleware caches tokens for 5 minutes -- tests that modify user roles must clear the cache"}
+- {gotcha 3, e.g., "Background workers continue running between tests -- stop them in teardown or tests will interfere with each other"}
+
+## Module Structure
+
+<!-- Give agents an overview of how the source code is organized. Include
+  approximate size (file counts) if known -- this helps agents gauge the
+  scale of modules they're working in.
+-->
+
+{Brief description of source code organization, e.g., "~200 TypeScript files across 8 modules"}
+
+Key directories:
+- `{dir}/` -- {description}
+- `{dir}/` -- {description}
+- `{dir}/` -- {description}
+
+<!-- ===========================================================================
+  OPTIONAL SECTIONS
+
+  Add these sections as your project needs them. The Optimizer may add
+  some of these automatically after pipeline runs reveal the need.
+  =========================================================================== -->
+
+<!--
+## Config-Driven Test Convention
+
+If your tests validate timing values, distances, cooldowns, or other configurable
+parameters, document the convention for how tests should read those values:
+- Do they read from config files at runtime?
+- Do they use dependency injection?
+- Do they load from environment variables?
+
+The key rule: tests must adapt when configuration changes, not hardcode magic numbers.
+-->
+
+<!--
+## Integration Test Isolation Checklist
+
+If your integration tests require complex setup to prevent interference from
+background systems, document the checklist here. Include:
+- What systems need to be suppressed
+- What state needs to be cleared between tests
+- What order the setup steps must follow
+- Common failure patterns when steps are skipped
+-->
+
+<!--
+## Editor-Time / Build-Time Code Conventions
+
+If your project has separate code paths for editor/tooling vs runtime
+(e.g., Unity Editor scripts, build plugins, code generators), document
+the conventions for each.
+-->
+
+<!--
+## Test Scoping Defaults
+
+Define what agents should include when the user says "run all X tests":
+- Primary: test files directly in the X module's test directory
+- Adjacent: test files in other directories that test X-related infrastructure
+- Exclude: tests that only tangentially mention X but test a different system
+-->
+
+<!--
+## Cross-Cutting Concerns
+
+Document concerns that affect multiple modules, such as:
+- Thread safety requirements
+- Caching strategies and invalidation rules
+- Logging conventions
+- Feature flags and how to use them in tests
+-->
+
+<!--
+## Deployment & Environment
+
+If agents need to know about deployment targets or environments:
+- Environment variable conventions
+- Configuration file locations per environment
+- Secrets management (what NOT to commit)
+-->
