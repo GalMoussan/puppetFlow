@@ -230,3 +230,31 @@ All stages must pass before Vercel promotes the deployment.
 | 5 | Polish & Deploy | Auth, dark theme, error handling, production deployment |
 
 See `../puppetflow-docs/TASK_BOARD.md` for the full 46-task breakdown.
+
+## Org Tree
+
+The project is organized into a hierarchical structure at `Company/project/org/`. Each node has a `manager.md` with its charter, macro doc, and owned docs.
+
+```
+CEO (root)
+├── Domain       — pure TS logic (compiler, linter, variety, handshake)
+├── API          — routes, Prisma, Anthropic client, agent pipeline
+├── Canvas       — React Flow editor, lanes, blocks, palette
+├── RunExperience — run modal, progress, scene cards, export
+└── Infrastructure — CI/CD, deployment, auth, test config
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `Company/project/org/vision.md` | North Star, Pillars, Standing Design Answers |
+| `Company/project/org/tree.md` | Generated tree visualization |
+| `Company/project/org/CEO/manager.md` | Root node charter |
+| `Company/project/org/CEO/{Division}/manager.md` | Division charters + macro docs |
+
+### Usage
+
+- **Route missions**: Find the division whose charter matches the scope
+- **Escalate cross-cutting**: If multiple divisions involved, escalate to CEO
+- **Audit structure**: Run `/company-org reorg` to check if splits/merges needed
