@@ -29,30 +29,37 @@ PuppetFlow transforms the monolithic prompt-engineering workflow into a visual, 
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+- PostgreSQL 16+ (or Supabase account)
+
 ### 1. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 2. Set Up Database
-
-```bash
-pnpm db:migrate
-pnpm db:seed
-```
-
-### 3. Configure Environment
+### 2. Configure Environment
 
 Copy `.env.example` to `.env` and fill in:
 
 ```env
 DATABASE_URL=postgres://...
 DIRECT_URL=postgres://...
-ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_API_KEY=sk-ant-...  # Optional — degrades to export-only
 ANTHROPIC_MODEL=claude-sonnet-4-6
 APP_USER=your-username
 APP_PASSWORD=your-password
+```
+
+### 3. Set Up Database
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
 ```
 
 ### 4. Run Development Server
@@ -60,6 +67,24 @@ APP_PASSWORD=your-password
 ```bash
 pnpm dev
 ```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server with Turbopack |
+| `pnpm build` | Build for production |
+| `pnpm start` | Start production server |
+| `pnpm typecheck` | Type check with TypeScript |
+| `pnpm lint` | Run ESLint |
+| `pnpm test` | Run unit tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage |
+| `pnpm test:e2e` | Run Playwright E2E tests |
+| `pnpm db:generate` | Generate Prisma client |
+| `pnpm db:migrate` | Apply database migrations |
+| `pnpm db:seed` | Seed the database |
+| `pnpm db:studio` | Open Prisma Studio |
 
 ## Company Multi-Agent System
 

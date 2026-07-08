@@ -1,10 +1,17 @@
-# PuppetFlow — Project Learnings
+# Pipeline Learnings (Project-Specific)
 
-This file accumulates lessons learned during PuppetFlow development.
-Each pipeline execution may add new insights here.
+Project-specific lessons from pipeline executions.
+The Optimizer updates this file after each pipeline.
+
+Generic lessons (applicable to any project) go to `Company/learnings.md`.
+
+## Changelog Format
+
+### {date} -- {pipeline-id}: {feature name}
+
+**Context:** ...
+**Changes applied:** ...
 
 ---
 
-## Initial Observations
-
-_No learnings captured yet. Run `/company-startup` to configure the project, then `/company-plan` and `/company-execute` to begin accumulating learnings._
+<!-- Project-specific changelog entries below -->

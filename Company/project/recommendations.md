@@ -1,10 +1,20 @@
-# PuppetFlow — Project Recommendations
+# Visionary Recommendations (Project-Specific)
 
-Strategic recommendations specific to PuppetFlow architecture and development.
-The Visionary role populates this after analyzing pipeline executions.
+Project-specific strategic patterns and architectural recommendations.
+The Visionary adds entries here after each pipeline.
+
+Generic recommendations (applicable to any project) go to `Company/recommendations.md`.
+
+## Format
+
+### {date} -- {pipeline-id}: {feature name}
+**Priority**: {Critical | High | Medium | Low}
+**Category**: {Architecture | Tooling | Conventions | Process | Tech Debt}
+**Recommendation**: {what to do}
+**Rationale**: {why}
+**Effort**: {Small | Medium | Large}
+**Impact**: {what improves}
 
 ---
 
-## Initial State
-
-_No recommendations yet. After 5-10 pipeline executions, patterns will emerge._
+<!-- Project-specific recommendations below -->
