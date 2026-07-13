@@ -11,3 +11,157 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum BlockType {
+  THEME_PACK_REF
+  HOOK
+  CAMERA_MOVE
+  PUPPET_DYNAMIC
+  PUPPET_VISUAL
+  PHYSICAL_GAG
+  CHAOS_THREAD
+  PAYOFF
+  SONG_SECTION
+  LANGUAGE
+  CHARACTER_LOCK
+  STYLE_LOCK
+  LOOP_CLOSURE
+  STAGE_AREA
+  FESTIVAL_MOMENT
+  CUSTOM
+}
+
+enum RunStatus {
+  PENDING
+  COMPILING
+  GENERATING
+  LINTING
+  REPAIRING
+  DONE
+  FAILED
+}
+
+// =============================================================================
+// Models
+// =============================================================================
+
+/// Theme pack containing blocks and templates for a specific content theme
+model ThemePack {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  canon     Json     @default("{}")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  blocks    BlockDefinition[]
+  templates FlowTemplate[]
+
+  @@index([active])
+}
+
+/// Block definition - reusable prompt fragments that can be placed on the canvas
+model BlockDefinition {
+  id             String    @id @default(cuid())
+  type           BlockType
+  name           String
+  promptFragment String
+  stageScope     String[]  @default([])
+  rotationGroup  String?
+  themePackId    String?
+  archived       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  themePack ThemePack? @relation(fields: [themePackId], references: [id], onDelete: Cascade)
+
+  @@index([themePackId])
+  @@index([type])
+  @@index([rotationGroup])
+  @@index([archived])
+}
+
+/// Flow template - a saved canvas configuration
+model FlowTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  graph       Json
+  themePackId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  themePack ThemePack @relation(fields: [themePackId], references: [id], onDelete: Cascade)
+  runs      Run[]
+
+  @@index([themePackId])
+}
+
+/// Run - a generation batch execution
+model Run {
+  id         String    @id @default(cuid())
+  templateId String
+  status     RunStatus @default(PENDING)
+  scaffold   String?
+  error      String?
+  model      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  template FlowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  scenes   Scene[]
+
+  @@index([templateId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Scene - a single generated scene within a run
+model Scene {
+  id             String   @id @default(cuid())
+  runId          String
+  index          Int
+  combo          Json
+  lyrics         String
+  imagePrompt    String
+  startPrompt    String
+  middlePrompt   String
+  endPrompt      String
+  boundaryFrame1 String
+  boundaryFrame2 String
+  finalFrame     String
+  lintReport     Json     @default("[]")
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  run      Run        @relation(fields: [runId], references: [id], onDelete: Cascade)
+  usageLog UsageLog?
+
+  @@unique([runId, index])
+  @@index([runId])
+}
+
+/// Usage log - tracks combo usage for variety engine
+model UsageLog {
+  id        String   @id @default(cuid())
+  runDate   DateTime
+  comboHash String
+  axes      Json
+  sceneId   String   @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  scene Scene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@index([comboHash, runDate])
+  @@index([runDate])
+}

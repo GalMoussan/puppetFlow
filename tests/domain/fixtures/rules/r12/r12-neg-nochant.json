@@ -1,0 +1,21 @@
+{
+  "id": "r12-neg-nochant",
+  "rule": "R12",
+  "description": "Lyrics missing required chant",
+  "failureMode": "missing-chant",
+  "input": {
+    "endPrompt": "Continue from previous. [00:08] [DROP] Climax achieved! ENDING FRAME [EXACT]: Done.",
+    "lyrics": "[Intro]\nFestival opens big...\n\n[Build]\nEnergy rises high...\n\n[Drop]\nThe bass explodes without the chant!\nNo puppet names here!\n\n[Outro]\nEnergy fades away..."
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R12",
+        "severity": "hard",
+        "stage": "LYRICS",
+        "evidence": "Missing required chant: 'Shika! Shika! Shilshul! Shilshul!'"
+      }
+    ]
+  }
+}

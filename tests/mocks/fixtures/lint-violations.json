@@ -1,0 +1,57 @@
+{
+  "r2_no_camera_verb": {
+    "rule": "R2",
+    "severity": "hard",
+    "sceneIndex": 1,
+    "stage": "VIDEO_START",
+    "evidence": "No camera verb detected in startPrompt"
+  },
+  "r3_generic_verbs": {
+    "rule": "R3",
+    "severity": "hard",
+    "sceneIndex": 0,
+    "stage": "EXTEND_MIDDLE",
+    "evidence": "3 generic verbs detected: 'moves', 'goes', 'is' (max 2 allowed)"
+  },
+  "r7_handshake_mismatch": {
+    "rule": "R7",
+    "severity": "hard",
+    "sceneIndex": 2,
+    "stage": "EXTEND_MIDDLE",
+    "evidence": "Boundary frame similarity 0.65 < 0.80 threshold"
+  },
+  "r14_variety_collision_warn": {
+    "rule": "R14",
+    "severity": "warn",
+    "sceneIndex": 3,
+    "evidence": "Stage+moment combo 'Main Stage:Sunset Arrival' used 15 days ago (30-day lookback)"
+  },
+  "r8_continuity_break": {
+    "rule": "R8",
+    "severity": "hard",
+    "sceneIndex": 1,
+    "stage": "EXTEND_END",
+    "evidence": "Continuity score 0.35 < 0.40 threshold; character count changed from 2 to 1"
+  },
+  "r1_no_action": {
+    "rule": "R1",
+    "severity": "hard",
+    "sceneIndex": 0,
+    "stage": "VIDEO_START",
+    "evidence": "First beat (0-4s) contains no action verb"
+  },
+  "r4_prop_count": {
+    "rule": "R4",
+    "severity": "hard",
+    "sceneIndex": 2,
+    "stage": "IMAGE",
+    "evidence": "4 distinct props detected (max 3 allowed per beat)"
+  },
+  "r9_hook_timing": {
+    "rule": "R9",
+    "severity": "hard",
+    "sceneIndex": 0,
+    "stage": "VIDEO_START",
+    "evidence": "Hook 'String explosion' not established within first 4 seconds"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "r02-pos-dolly",
+  "rule": "R2",
+  "description": "Single camera verb: dolly",
+  "variant": "dolly",
+  "input": {
+    "prompt": "[00:00] Shika leaps forward energetically. Camera dollies backward as the crowd erupts. [00:04] Festival lights cascade overhead. Keep same character appearance. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Shika mid-air, frozen.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

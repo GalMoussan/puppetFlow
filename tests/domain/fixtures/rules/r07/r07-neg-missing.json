@@ -1,0 +1,20 @@
+{
+  "id": "r07-neg-missing",
+  "rule": "R7",
+  "description": "Missing ENDING FRAME marker in previous prompt",
+  "failureMode": "missing-marker",
+  "input": {
+    "previousEndingFrame": "[00:00] Shika performs dramatically. Camera dollies. [00:04] Action continues. [00:08] Scene ends without proper ending frame marker.",
+    "currentContinuation": "Continue directly from the final frame of the previous clip: Some frame description. [00:00] Action begins."
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R7",
+        "severity": "hard",
+        "evidence": "Missing ENDING FRAME [EXACT]: paragraph"
+      }
+    ]
+  }
+}

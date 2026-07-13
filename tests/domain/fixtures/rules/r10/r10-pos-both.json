@@ -1,0 +1,17 @@
+{
+  "id": "r10-pos-both",
+  "rule": "R10",
+  "description": "Both loop anchor (IMAGE) and mirror (END) directives present",
+  "variant": "both-directives",
+  "input": {
+    "imagePrompt": "Grand festival stage with UV purple lighting. Shika and Shilshul positioned center frame dramatically. This frame serves as a loop anchor for seamless video looping.",
+    "endPrompt": "Continue from previous. [00:00] Energy maintains at peak intensity. Camera cranes up dramatically. [00:08] [DROP] Final pose mirrors the opening composition perfectly. Keep same lighting. Audio: bass drop, no dialogue. ENDING FRAME [EXACT]: Loop complete.",
+    "runConfig": {
+      "loopMode": true
+    }
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

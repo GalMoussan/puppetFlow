@@ -1,0 +1,14 @@
+{
+  "id": "r01-pos-edge",
+  "rule": "R1",
+  "description": "Preservation phrase in final 25% (at exactly 76% position)",
+  "variant": "edge",
+  "input": {
+    "prompt": "[00:00] Shika explodes onto stage left, strings blazing with intense UV energy. The crowd gasps in anticipation. Camera whips left to capture the spectacle. [00:04] Shilshul emerges from shadow, arms unfurling in perfect sync with the bass drop. Festival lights pulse rhythmically overhead. [00:08] Both puppets freeze mid-pose, strings taut and gleaming. Keep same lighting, same character appearance throughout. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Both puppets frozen.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "r09-pos-4s",
+  "rule": "R9",
+  "description": "4s spacing (boundary) with hook at 2s",
+  "variant": "4s-boundary",
+  "input": {
+    "prompt": "[00:02] [HOOK] Opening action as Shika springs forward dramatically with full energy! Camera pans smoothly left to capture the dramatic energy. [00:06] Beat continues with building intensity throughout. Keep same character appearance. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Action frozen beautifully.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

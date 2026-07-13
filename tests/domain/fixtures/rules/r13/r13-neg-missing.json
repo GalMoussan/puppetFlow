@@ -1,0 +1,25 @@
+{
+  "id": "r13-neg-missing",
+  "rule": "R13",
+  "description": "Missing character lock block in IMAGE",
+  "failureMode": "missing-lock-block",
+  "input": {
+    "prompt": "Grand festival stage with UV purple lighting. Two puppets stand ready on stage. Dense crowd visible in the foreground. Standard composition without proper character locks.",
+    "stage": "IMAGE",
+    "characterLocks": [
+      "CRITICAL CHARACTER LOCK - SHIKA",
+      "CRITICAL CHARACTER LOCK - SHILSHUL"
+    ]
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R13",
+        "severity": "hard",
+        "stage": "IMAGE",
+        "evidence": "Missing character lock block: 'CRITICAL CHARACTER LOCK - SHIKA'"
+      }
+    ]
+  }
+}

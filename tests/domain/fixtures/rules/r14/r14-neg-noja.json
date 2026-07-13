@@ -1,0 +1,28 @@
+{
+  "id": "r14-neg-noja",
+  "rule": "R14",
+  "description": "No Japanese language in batch (both required)",
+  "failureMode": "language-missing",
+  "input": {
+    "batchCombos": [
+      { "stageArea": "Main Stage", "festivalMoment": "Sunset", "hook": "Hook 1", "camera": { "start": "dolly", "middle": "pan", "end": "crane" }, "language": "hi", "dynamic": "D1", "visual": "V1", "gag": "G1", "payoff": "P1", "chaosThread": "C1", "subgenre": "psycore" },
+      { "stageArea": "Pavilion", "festivalMoment": "Golden", "hook": "Hook 2", "camera": { "start": "push", "middle": "orbit", "end": "tilt" }, "language": "hi", "dynamic": "D2", "visual": "V2", "gag": "G2", "payoff": "P2", "chaosThread": "C2", "subgenre": "hi-tech" },
+      { "stageArea": "Garden", "festivalMoment": "Twilight", "hook": "Hook 3", "camera": { "start": "whip", "middle": "track", "end": "down" }, "language": "hi", "dynamic": "D3", "visual": "V3", "gag": "G3", "payoff": "P3", "chaosThread": "C3", "subgenre": "forest" },
+      { "stageArea": "Corner", "festivalMoment": "Night", "hook": "Hook 4", "camera": { "start": "static", "middle": "hand", "end": "zoom" }, "language": "hi", "dynamic": "D4", "visual": "V4", "gag": "G4", "payoff": "P4", "chaosThread": "C4", "subgenre": "darkpsy" },
+      { "stageArea": "Terrace", "festivalMoment": "Midnight", "hook": "Hook 5", "camera": { "start": "crash", "middle": "tiltd", "end": "snap" }, "language": "hi", "dynamic": "D5", "visual": "V5", "gag": "G5", "payoff": "P5", "chaosThread": "C5", "subgenre": "full-on" }
+    ],
+    "runConfig": {
+      "languages": { "hi": 3, "ja": 2 }
+    }
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R14",
+        "severity": "hard",
+        "evidence": "Language 'ja' missing from batch (both required)"
+      }
+    ]
+  }
+}

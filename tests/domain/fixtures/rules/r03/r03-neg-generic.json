@@ -1,0 +1,21 @@
+{
+  "id": "r03-neg-generic",
+  "rule": "R3",
+  "description": "Contains 3 generic motion verbs exceeding the 2 max",
+  "failureMode": "generic-verbs",
+  "input": {
+    "prompt": "[00:00] Shika moves to the left side of the stage. The puppet goes toward the crowd. The lighting is bright and colorful. [00:04] Camera pans right. The scene is electric with energy. Shilshul moves forward. [00:08] Both puppets freeze. Keep same lighting. ENDING FRAME [EXACT]: Both visible.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R3",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "3 generic verbs detected: 'moves', 'goes', 'is' (max 2 allowed)"
+      }
+    ]
+  }
+}

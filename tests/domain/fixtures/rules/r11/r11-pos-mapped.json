@@ -1,0 +1,14 @@
+{
+  "id": "r11-pos-mapped",
+  "rule": "R11",
+  "description": "Audio cue correctly mapped to song section",
+  "variant": "section-mapped",
+  "input": {
+    "prompt": "[00:00] Shika enters the stage dramatically with full energy. Camera pans smoothly. [00:04] Build continues intensely. Audio: intro synth pulse building, no dialogue. ENDING FRAME [EXACT]: Intro sequence complete.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

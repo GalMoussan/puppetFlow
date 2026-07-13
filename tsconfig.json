@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@puppetflow/domain": ["./packages/domain/types"]
     }
   },
   "include": [

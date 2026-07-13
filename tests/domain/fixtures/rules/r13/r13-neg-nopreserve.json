@@ -1,0 +1,22 @@
+{
+  "id": "r13-neg-nopreserve",
+  "rule": "R13",
+  "description": "VIDEO prompt missing condensed preservation line",
+  "failureMode": "missing-preservation",
+  "input": {
+    "prompt": "[00:00] Shika performs on stage energetically. Camera dollies backward. [00:04] Action continues. [00:08] Freeze pose. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Done.",
+    "stage": "VIDEO_START",
+    "characterLocks": []
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R13",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "Missing condensed preservation line"
+      }
+    ]
+  }
+}

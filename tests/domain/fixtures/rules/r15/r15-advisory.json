@@ -1,0 +1,13 @@
+{
+  "id": "r15-advisory",
+  "rule": "R15",
+  "description": "R15 is advisory only (no predicate tests) - this fixture documents UI feature testing",
+  "variant": "advisory",
+  "input": {
+    "note": "R15 (Iteration Discipline) has no predicate tests. Coverage is via UI component tests for reroll buttons and integration tests for reroll API endpoints."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

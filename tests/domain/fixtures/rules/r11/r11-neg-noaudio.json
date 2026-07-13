@@ -1,0 +1,21 @@
+{
+  "id": "r11-neg-noaudio",
+  "rule": "R11",
+  "description": "Missing audio cue entirely",
+  "failureMode": "missing-audio",
+  "input": {
+    "prompt": "[00:00] Shika performs on stage dramatically. Camera dollies backward. [00:04] Energy peaks as the crowd reacts. Keep same lighting. ENDING FRAME [EXACT]: Done.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R11",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "No audio cue sentence found"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "r12-pos-chant",
+  "rule": "R12",
+  "description": "Full chant present in Drop section of lyrics",
+  "variant": "chant-present",
+  "input": {
+    "endPrompt": "Continue from previous. [00:08] [DROP] Climactic moment achieved! ENDING FRAME [EXACT]: Peak frozen.",
+    "lyrics": "[Intro]\nOpening verse lines...\n\n[Build]\nBuilding verse lines...\n\n[Drop]\nShika! Shika! Shilshul! Shilshul!\nExplosive drop content here!\n\n[Outro]\nClosing lines fade..."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

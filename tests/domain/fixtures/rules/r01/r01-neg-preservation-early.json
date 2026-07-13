@@ -1,0 +1,21 @@
+{
+  "id": "r01-neg-preservation-early",
+  "rule": "R1",
+  "description": "Preservation phrase appears in first half of prompt (forbidden)",
+  "failureMode": "preservation-early",
+  "input": {
+    "prompt": "Shika moves left. Keep same lighting throughout. Camera pans right. The crowd roars with excitement. More action follows. Audio: synth, no dialogue. ENDING FRAME [EXACT]: Done.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R1",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "Preservation phrase at position 20% (first half forbidden)"
+      }
+    ]
+  }
+}

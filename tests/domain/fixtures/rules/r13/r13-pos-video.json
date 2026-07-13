@@ -1,0 +1,15 @@
+{
+  "id": "r13-pos-video",
+  "rule": "R13",
+  "description": "Condensed preservation line present in VIDEO prompt",
+  "variant": "preservation-line",
+  "input": {
+    "prompt": "[00:00] Shika surges forward dramatically. Camera dollies backward. [00:04] Energy peaks throughout. Keep Shika and Shilshul identical to reference image throughout. Audio: synth pulse, no dialogue. ENDING FRAME [EXACT]: Both frozen.",
+    "stage": "VIDEO_START",
+    "characterLocks": []
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

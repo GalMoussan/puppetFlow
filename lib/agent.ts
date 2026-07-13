@@ -1,0 +1,627 @@
+/**
+ * Agent Pipeline Orchestrator
+ *
+ * Orchestrates the compile-generate-lint-repair cycle for batch generation.
+ * Emits SSE events for progress tracking.
+ *
+ * @module lib/agent
+ */
+
+import { prisma } from "./db";
+import { NotFoundError, ConflictError, BadRequestError } from "./errors";
+import {
+  VarietyError,
+  assign as varietyAssign,
+  type VarietyPool,
+  type HistoryEntry,
+} from "@/packages/domain/variety";
+import * as anthropic from "./anthropic";
+import { compile } from "@/packages/domain/compiler";
+import { lintBatch, lintScene } from "@/packages/domain/linter";
+import { exportBatch } from "@/packages/domain/exporter";
+import type { SSEEvent, RunConfigInput } from "./schemas";
+import type {
+  CanvasGraph,
+  Lane,
+  ComboAssignment,
+  Scene as DomainScene,
+  Violation,
+  BatchOutput,
+} from "@/packages/domain/types";
+import type { ThemePack, BlockDefinition } from "@/packages/domain/compiler";
+
+// =============================================================================
+// Types
+// =============================================================================
+
+/**
+ * SSE event emitter type
+ */
+export type SSEEmitter = (event: SSEEvent) => void;
+
+/**
+ * Run result
+ */
+export interface RunResult {
+  status: "DONE" | "FAILED";
+  runId: string;
+  sceneCount: number;
+  error?: string;
+}
+
+/**
+ * Agent event emitter for SSE
+ */
+export class AgentEventEmitter {
+  private listeners: Map<string, ((event: SSEEvent) => void)[]> = new Map();
+  private closed = false;
+
+  on(event: string, callback: (event: SSEEvent) => void): void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event)!.push(callback);
+  }
+
+  emit(event: SSEEvent): void {
+    if (this.closed) return;
+
+    const callbacks = this.listeners.get(event.type) || [];
+    callbacks.forEach((cb) => cb(event));
+
+    // Also emit to "all" listeners
+    const allCallbacks = this.listeners.get("all") || [];
+    allCallbacks.forEach((cb) => cb(event));
+  }
+
+  disconnect(): void {
+    this.closed = true;
+    this.listeners.clear();
+  }
+}
+
+// =============================================================================
+// Utility Functions
+// =============================================================================
+
+/**
+ * Generate a hash for a combo assignment for deduplication
+ */
+function hashCombo(combo: ComboAssignment): string {
+  const key = [
+    combo.stageArea,
+    combo.festivalMoment,
+    combo.dynamic,
+    combo.payoff,
+  ].join("|");
+  return key;
+}
+
+/**
+ * Generate a new combo avoiding siblings
+ */
+function rerollCombo(
+  current: ComboAssignment,
+  siblings: ComboAssignment[],
+  pool: VarietyPool
+): ComboAssignment {
+  // Build used sets from siblings
+  const usedStageArea = new Set(siblings.map((s) => s.stageArea));
+  const usedFestivalMoment = new Set(siblings.map((s) => s.festivalMoment));
+  const usedDynamic = new Set(siblings.map((s) => s.dynamic));
+  const usedVisual = new Set(siblings.map((s) => s.visual));
+  const usedHook = new Set(siblings.map((s) => s.hook));
+  const usedGag = new Set(siblings.map((s) => s.gag));
+  const usedPayoff = new Set(siblings.map((s) => s.payoff));
+  const usedChaosThread = new Set(siblings.map((s) => s.chaosThread));
+
+  // Pick new values avoiding siblings
+  const pickNew = (pool: string[], used: Set<string>, fallback: string): string => {
+    const available = pool.filter((v) => !used.has(v) && v !== fallback);
+    if (available.length === 0) return fallback;
+    return available[Math.floor(Math.random() * available.length)];
+  };
+
+  return {
+    stageArea: pickNew(pool.stageArea, usedStageArea, current.stageArea),
+    festivalMoment: pickNew(pool.festivalMoment, usedFestivalMoment, current.festivalMoment),
+    dynamic: pickNew(pool.dynamic, usedDynamic, current.dynamic),
+    visual: pickNew(pool.visual, usedVisual, current.visual),
+    hook: pickNew(pool.hook, usedHook, current.hook),
+    gag: pickNew(pool.gag, usedGag, current.gag),
+    payoff: pickNew(pool.payoff, usedPayoff, current.payoff),
+    chaosThread: pickNew(pool.chaosThread, usedChaosThread, current.chaosThread),
+    camera: {
+      start: pool.camera_start[Math.floor(Math.random() * pool.camera_start.length)],
+      middle: pool.camera_middle[Math.floor(Math.random() * pool.camera_middle.length)],
+      end: pool.camera_end[Math.floor(Math.random() * pool.camera_end.length)],
+    },
+    language: current.language,
+    subgenre: pool.subgenre[Math.floor(Math.random() * pool.subgenre.length)],
+  };
+}
+
+/**
+ * Build variety pool from canon data
+ */
+function buildVarietyPool(canon: Record<string, string[]>): VarietyPool {
+  return {
+    hook: canon.hooks || ["surprise entrance", "dramatic lighting", "crowd surge"],
+    camera_start: canon.cameras || ["dolly", "pan", "crane up", "push-in"],
+    camera_middle: canon.cameras || ["pan", "dolly", "steadicam", "handheld"],
+    camera_end: canon.cameras || ["crane up", "dolly out", "aerial", "pull-back"],
+    dynamic: canon.dynamics || ["synchronized", "call-response", "battle", "mirror", "tandem"],
+    visual: canon.visuals || ["neon strings", "golden glow", "UV reactive", "smoke", "particles"],
+    gag: canon.gags || ["tangled strings", "puppet falls", "wrong stage", "collision", "stuck"],
+    payoff: canon.payoffs || ["crowd sync", "confetti burst", "light explosion", "freeze", "unity"],
+    chaosThread: canon.chaosThreads || ["rogue balloon", "lost phone", "beach ball", "smoke drift", "confetti"],
+    stageArea: canon.stages || ["Main Stage", "Pyramid Stage", "Other Stage", "Secret Stage", "Campground"],
+    festivalMoment: canon.moments || ["Sunset Arrival", "Peak Hour", "After Hours", "Dawn", "Midnight"],
+    language: canon.languages || ["hi", "ja"],
+    subgenre: canon.subgenres || ["psycore", "techno", "house", "trance", "dubstep"],
+  };
+}
+
+/**
+ * Build ThemePack for compiler from DB data
+ */
+function buildThemePack(dbThemePack: {
+  id: string;
+  name: string;
+  canon: unknown;
+}): ThemePack {
+  const canon = dbThemePack.canon as Record<string, string[]>;
+  return {
+    id: dbThemePack.id,
+    name: dbThemePack.name,
+    festivalName: dbThemePack.name,
+    universeRules: [],
+    characters: [],
+    stages: canon.stages || [],
+    festivalMoments: canon.moments || [],
+    subgenres: canon.subgenres || [],
+    languageChants: {},
+  };
+}
+
+/**
+ * Build empty block definitions (for now)
+ */
+function buildBlockDefs(): Record<string, BlockDefinition> {
+  return {};
+}
+
+// =============================================================================
+// Main Orchestrator
+// =============================================================================
+
+/**
+ * Run a batch generation
+ *
+ * @param templateId - ID of the template to use
+ * @param runConfig - Run configuration (optional, uses template defaults)
+ * @param emitter - SSE event emitter
+ * @returns Run result
+ */
+export async function runBatch(
+  templateId: string,
+  runConfig: RunConfigInput | undefined,
+  emitter: SSEEmitter
+): Promise<RunResult> {
+  // 1. Load template + validate
+  const template = await prisma.flowTemplate.findUnique({
+    where: { id: templateId },
+    include: { themePack: true },
+  });
+
+  if (!template) {
+    throw new NotFoundError("Template not found");
+  }
+
+  // 2. Validate and parse graph
+  const graph = template.graph as CanvasGraph;
+
+  // Merge run config with template defaults
+  const config = {
+    ...graph.runConfig,
+    ...runConfig,
+    languages: {
+      ...graph.runConfig.languages,
+      ...runConfig?.languages,
+    },
+  };
+
+  // 3. Check for concurrent runs
+  const activeRun = await prisma.run.findFirst({
+    where: {
+      status: {
+        in: ["PENDING", "COMPILING", "GENERATING", "LINTING", "REPAIRING"],
+      },
+    },
+  });
+
+  if (activeRun) {
+    throw new ConflictError("A batch is already running");
+  }
+
+  // 4. Create run record (status = PENDING)
+  const run = await prisma.run.create({
+    data: {
+      templateId,
+      status: "PENDING",
+      model: anthropic.getModelName(),
+    },
+  });
+
+  try {
+    // 5. Assign variety first (before compilation, as compile needs combos)
+    emitter({ type: "phase", phase: "ASSIGNING" });
+
+    // Load history for variety engine
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const historyEntries = await prisma.usageLog.findMany({
+      where: {
+        runDate: {
+          gte: thirtyDaysAgo,
+        },
+      },
+    });
+
+    // Convert to variety engine format
+    const history: HistoryEntry[] = historyEntries.map((entry) => {
+      const axes = entry.axes as Record<string, unknown>;
+      return {
+        runDate: entry.runDate.getTime(),
+        stageArea: (axes.stageArea as string) || "",
+        festivalMoment: (axes.festivalMoment as string) || "",
+        dynamic: (axes.dynamic as string) || "",
+        payoff: (axes.payoff as string) || "",
+        hook: (axes.hook as string) || "",
+        camera: (axes.camera as { start: string })?.start || "",
+        gag: (axes.gag as string) || "",
+        chaosThread: (axes.chaosThread as string) || "",
+        language: (axes.language as string) || "",
+        subgenre: (axes.subgenre as string) || "",
+        visual: (axes.visual as string) || "",
+      };
+    });
+
+    // Build variety pool from theme pack canon
+    const canon = template.themePack.canon as Record<string, string[]>;
+    const pool = buildVarietyPool(canon);
+
+    // Assign combos
+    const assignments = varietyAssign(pool, history, {
+      batchSize: config.batchSize,
+      languages: config.languages,
+      lookbackDays: 30,
+      lookbackRuns: 10,
+    });
+
+    // 6. Compile to scaffold
+    emitter({ type: "phase", phase: "COMPILING" });
+
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { status: "COMPILING" },
+    });
+
+    const themePack = buildThemePack(template.themePack);
+    const blockDefs = buildBlockDefs();
+    const scaffold = compile(graph, themePack, assignments, blockDefs);
+
+    // Update run with scaffold
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { scaffold },
+    });
+
+    // 7. Generate with Anthropic
+    emitter({ type: "phase", phase: "GENERATING" });
+
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { status: "GENERATING" },
+    });
+
+    const batchOutput = await anthropic.generateBatch(scaffold, assignments, {
+      temperature: 1.0,
+      maxTokens: 4000,
+    });
+
+    // 8. Lint batch output
+    emitter({ type: "phase", phase: "LINTING" });
+
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { status: "LINTING" },
+    });
+
+    // Convert to full Scene objects for linting
+    const scenesForLinting: DomainScene[] = batchOutput.scenes.map((s, idx) => ({
+      ...s,
+      id: `temp-${idx}`,
+      runId: run.id,
+      index: idx,
+      combo: assignments[idx],
+      lintReport: [],
+      notes: null,
+    }));
+
+    let finalOutput = batchOutput;
+    let lintReport = lintBatch({ scenes: scenesForLinting }, graph, config);
+
+    // 9. Repair if hard violations
+    if (!lintReport.valid && anthropic.hasAnthropicKey()) {
+      emitter({ type: "phase", phase: "REPAIRING" });
+
+      await prisma.run.update({
+        where: { id: run.id },
+        data: { status: "REPAIRING" },
+      });
+
+      // Build violation summary for repair
+      const violationsByScene = Array.from(lintReport.byScene.entries()).map(
+        ([sceneIndex, violations]) => ({ sceneIndex, violations })
+      );
+
+      const repairPrompt = anthropic.buildRepairPrompt(scaffold, violationsByScene);
+      finalOutput = await anthropic.repair(repairPrompt);
+
+      // Re-lint after repair
+      const repairedScenesForLinting: DomainScene[] = finalOutput.scenes.map(
+        (s, idx) => ({
+          ...s,
+          id: `temp-${idx}`,
+          runId: run.id,
+          index: idx,
+          combo: assignments[idx],
+          lintReport: [],
+          notes: null,
+        })
+      );
+      lintReport = lintBatch({ scenes: repairedScenesForLinting }, graph, config);
+    }
+
+    // 10. Persist scenes + UsageLog
+    const scenes = await Promise.all(
+      finalOutput.scenes.map(async (scene, idx) => {
+        const sceneViolations = lintReport.byScene.get(idx) || [];
+
+        const createdScene = await prisma.scene.create({
+          data: {
+            runId: run.id,
+            index: idx,
+            combo: assignments[idx],
+            lyrics: scene.lyrics,
+            imagePrompt: scene.imagePrompt,
+            startPrompt: scene.startPrompt,
+            middlePrompt: scene.middlePrompt,
+            endPrompt: scene.endPrompt,
+            boundaryFrame1: scene.boundaryFrame1,
+            boundaryFrame2: scene.boundaryFrame2,
+            finalFrame: scene.finalFrame,
+            lintReport: sceneViolations,
+          },
+        });
+
+        // Create UsageLog entry
+        await prisma.usageLog.create({
+          data: {
+            runDate: new Date(),
+            comboHash: hashCombo(assignments[idx]),
+            axes: assignments[idx],
+            sceneId: createdScene.id,
+          },
+        });
+
+        return createdScene;
+      })
+    );
+
+    // 11. Mark run complete
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { status: "DONE" },
+    });
+
+    // Emit scene updates and done event
+    scenes.forEach((scene) => {
+      emitter({
+        type: "scene",
+        scene: {
+          id: scene.id,
+          runId: scene.runId,
+          index: scene.index,
+          combo: scene.combo as ComboAssignment,
+          lyrics: scene.lyrics,
+          imagePrompt: scene.imagePrompt,
+          startPrompt: scene.startPrompt,
+          middlePrompt: scene.middlePrompt,
+          endPrompt: scene.endPrompt,
+          boundaryFrame1: scene.boundaryFrame1,
+          boundaryFrame2: scene.boundaryFrame2,
+          finalFrame: scene.finalFrame,
+          lintReport: scene.lintReport as Violation[],
+          notes: scene.notes,
+        },
+      });
+    });
+
+    emitter({
+      type: "done",
+      runId: run.id,
+      totalScenes: scenes.length,
+    });
+
+    return {
+      status: "DONE",
+      runId: run.id,
+      sceneCount: scenes.length,
+    };
+  } catch (err) {
+    // Update run status to FAILED
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+
+    await prisma.run.update({
+      where: { id: run.id },
+      data: {
+        status: "FAILED",
+        error: errorMessage,
+      },
+    });
+
+    emitter({
+      type: "error",
+      message: errorMessage,
+    });
+
+    return {
+      status: "FAILED",
+      runId: run.id,
+      sceneCount: 0,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Reroll a single scene
+ */
+export async function rerollScene(
+  runId: string,
+  sceneIndex: number,
+  stage?: Lane
+): Promise<DomainScene> {
+  // 1. Load run + all scenes
+  const run = await prisma.run.findUnique({
+    where: { id: runId },
+    include: {
+      scenes: true,
+      template: { include: { themePack: true } },
+    },
+  });
+
+  if (!run) {
+    throw new NotFoundError("Run not found");
+  }
+
+  if (run.status !== "DONE") {
+    throw new ConflictError("Run not complete");
+  }
+
+  const targetScene = run.scenes.find((s) => s.index === sceneIndex);
+  if (!targetScene) {
+    throw new BadRequestError("Invalid scene index");
+  }
+
+  // 2. Extract sibling combos
+  const siblingCombos = run.scenes
+    .filter((s) => s.index !== sceneIndex)
+    .map((s) => s.combo as ComboAssignment);
+
+  // 3. Get scaffold (recompile if missing)
+  const graph = run.template.graph as CanvasGraph;
+  let scaffold = run.scaffold;
+
+  if (!scaffold) {
+    const themePack = buildThemePack(run.template.themePack);
+    const blockDefs = buildBlockDefs();
+    const allCombos = run.scenes.map((s) => s.combo as ComboAssignment);
+    scaffold = compile(graph, themePack, allCombos, blockDefs);
+  }
+
+  // 4. Reroll combo
+  const currentCombo = targetScene.combo as ComboAssignment;
+  const canon = run.template.themePack.canon as Record<string, string[]>;
+  const pool = buildVarietyPool(canon);
+
+  const updatedCombo = rerollCombo(currentCombo, siblingCombos, pool);
+
+  // 5. Generate new scene
+  const singleSceneOutput = await anthropic.generateScene(
+    scaffold,
+    sceneIndex,
+    updatedCombo,
+    stage
+  );
+
+  // 6. Lint the updated scene
+  const fullScene: DomainScene = {
+    ...singleSceneOutput,
+    id: targetScene.id,
+    runId: run.id,
+    index: sceneIndex,
+    combo: updatedCombo,
+    lintReport: [],
+    notes: null,
+  };
+
+  const violations = lintScene(fullScene, graph.runConfig, []);
+
+  // 7. Update Scene record
+  const updatedScene = await prisma.scene.update({
+    where: { id: targetScene.id },
+    data: {
+      combo: updatedCombo,
+      lyrics: singleSceneOutput.lyrics,
+      imagePrompt: singleSceneOutput.imagePrompt,
+      startPrompt: singleSceneOutput.startPrompt,
+      middlePrompt: singleSceneOutput.middlePrompt,
+      endPrompt: singleSceneOutput.endPrompt,
+      boundaryFrame1: singleSceneOutput.boundaryFrame1,
+      boundaryFrame2: singleSceneOutput.boundaryFrame2,
+      finalFrame: singleSceneOutput.finalFrame,
+      lintReport: violations,
+    },
+  });
+
+  // 8. Update UsageLog
+  const existingLog = await prisma.usageLog.findUnique({
+    where: { sceneId: targetScene.id },
+  });
+
+  if (existingLog) {
+    await prisma.usageLog.update({
+      where: { id: existingLog.id },
+      data: {
+        comboHash: hashCombo(updatedCombo),
+        axes: updatedCombo,
+      },
+    });
+  }
+
+  return {
+    id: updatedScene.id,
+    runId: updatedScene.runId,
+    index: updatedScene.index,
+    combo: updatedScene.combo as ComboAssignment,
+    lyrics: updatedScene.lyrics,
+    imagePrompt: updatedScene.imagePrompt,
+    startPrompt: updatedScene.startPrompt,
+    middlePrompt: updatedScene.middlePrompt,
+    endPrompt: updatedScene.endPrompt,
+    boundaryFrame1: updatedScene.boundaryFrame1,
+    boundaryFrame2: updatedScene.boundaryFrame2,
+    finalFrame: updatedScene.finalFrame,
+    lintReport: updatedScene.lintReport as Violation[],
+    notes: updatedScene.notes,
+  };
+}
+
+/**
+ * Reroll a single stage within a scene
+ * Alias for rerollScene with stage parameter
+ */
+export async function rerollStage(
+  runId: string,
+  sceneIndex: number,
+  stage: Lane
+): Promise<DomainScene> {
+  return rerollScene(runId, sceneIndex, stage);
+}
+
+// Re-export for convenience
+export { VarietyError };

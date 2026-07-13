@@ -1,0 +1,14 @@
+{
+  "id": "r11-pos-complete",
+  "rule": "R11",
+  "description": "Audio cue with 'no dialogue' present",
+  "variant": "complete-audio",
+  "input": {
+    "prompt": "[00:00] Shika performs energetically on stage. Camera dollies backward to capture the full scene. [00:04] Energy peaks as festival lights pulse overhead rhythmically. Keep same character appearance. Audio: crowd roar building to climax, no dialogue. ENDING FRAME [EXACT]: Action complete.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "r06-neg-no",
+  "rule": "R6",
+  "description": "Contains 'no' negative constraint (not 'no dialogue')",
+  "failureMode": "no-constraint",
+  "input": {
+    "prompt": "[00:00] Shika performs the routine, no extra puppets in frame. Camera pans smoothly. [00:04] Action continues. ENDING FRAME [EXACT]: Done.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R6",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "Negative constraint 'no extra puppets' forbidden in video prompt"
+      }
+    ]
+  }
+}

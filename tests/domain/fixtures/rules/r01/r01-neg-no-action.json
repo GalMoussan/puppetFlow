@@ -1,0 +1,21 @@
+{
+  "id": "r01-neg-no-action",
+  "rule": "R1",
+  "description": "First sentence lacks action verb (only noun phrase)",
+  "failureMode": "no-action-verb",
+  "input": {
+    "prompt": "The stage. Shika stands still. Camera pans left. Keep same lighting. Audio: crowd, no dialogue. ENDING FRAME [EXACT]: Done.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R1",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "First sentence contains no action verb: 'The stage.'"
+      }
+    ]
+  }
+}

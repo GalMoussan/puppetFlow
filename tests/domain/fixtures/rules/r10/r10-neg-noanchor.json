@@ -1,0 +1,24 @@
+{
+  "id": "r10-neg-noanchor",
+  "rule": "R10",
+  "description": "Missing loop anchor directive in IMAGE when loopMode enabled",
+  "failureMode": "missing-loop-anchor",
+  "input": {
+    "imagePrompt": "Grand festival stage with UV purple lighting. Shika and Shilshul positioned center frame. Standard composition without any loop references.",
+    "endPrompt": "Continue from previous. [00:08] [DROP] Final pose mirrors the opening composition. ENDING FRAME [EXACT]: Done.",
+    "runConfig": {
+      "loopMode": true
+    }
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R10",
+        "severity": "hard",
+        "stage": "IMAGE",
+        "evidence": "Missing loop anchor directive (loopMode enabled)"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "r12-neg-nodrop",
+  "rule": "R12",
+  "description": "Missing [DROP] tag in END final beat",
+  "failureMode": "missing-drop-tag",
+  "input": {
+    "endPrompt": "Continue from previous. [00:00] Energy builds up. [00:08] Climactic moment without proper tag! ENDING FRAME [EXACT]: Peak.",
+    "lyrics": "[Intro]\nLines...\n\n[Drop]\nShika! Shika! Shilshul! Shilshul!\nExplosion!\n\n[Outro]\nFading..."
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R12",
+        "severity": "hard",
+        "stage": "EXTEND_END",
+        "evidence": "Final beat missing [DROP] tag"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "r12-pos-drop",
+  "rule": "R12",
+  "description": "[DROP] tag in final beat with chant in lyrics",
+  "variant": "complete-drop-sync",
+  "input": {
+    "endPrompt": "Continue from previous. [00:00] Energy builds to climax intensely. Camera cranes up dramatically. [00:04] Anticipation peaks throughout. [00:08] [DROP] Both puppets explode into synchronized climactic movement! Keep same lighting. Audio: bass drop impact, no dialogue. ENDING FRAME [EXACT]: Peak energy frozen.",
+    "lyrics": "[Intro]\nFestival energy rises...\n\n[Build]\nThe crowd anticipates...\n\n[Pre-Drop]\nTension building higher...\n\n[Drop]\nShika! Shika! Shilshul! Shilshul!\nThe bass explodes through!\n\n[Outro]\nEnergy fades..."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

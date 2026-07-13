@@ -1,0 +1,18 @@
+{
+  "id": "r08-pos-boundary-70",
+  "rule": "R8",
+  "description": "EXTEND prompt at 70 words (upper boundary)",
+  "variant": "boundary-70words",
+  "input": {
+    "prompt": "Continue directly from previous: Shika and Shilshul frozen mid-pose, UV purple lighting overhead, crowd visible in foreground. [00:00] Shika's strings surge dramatically upward as both puppets resume their synchronized dance routine together in perfect harmony. Camera pans smoothly left to capture the full stage energy and spectacle. [00:04] The festival atmosphere builds steadily as pyrotechnics pulse overhead rhythmically with the beat. Keep same UV purple lighting, same character appearance, same string positions throughout this segment. ENDING FRAME [EXACT]: Both puppets frozen center stage, strings gleaming.",
+    "stage": "EXTEND_MIDDLE",
+    "priorStages": {
+      "imagePrompt": "Shika and Shilshul on festival stage.",
+      "startPrompt": "Both puppets perform together."
+    }
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

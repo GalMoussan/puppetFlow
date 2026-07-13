@@ -1,0 +1,21 @@
+{
+  "id": "r11-neg-nodialogue",
+  "rule": "R11",
+  "description": "Audio cue without 'no dialogue' specification",
+  "failureMode": "missing-no-dialogue",
+  "input": {
+    "prompt": "[00:00] Shika dances energetically. Camera pans left. [00:04] Energy builds throughout. Audio: crowd cheers loudly. ENDING FRAME [EXACT]: Complete.",
+    "stage": "EXTEND_MIDDLE"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R11",
+        "severity": "hard",
+        "stage": "EXTEND_MIDDLE",
+        "evidence": "Missing 'no dialogue' in audio direction"
+      }
+    ]
+  }
+}

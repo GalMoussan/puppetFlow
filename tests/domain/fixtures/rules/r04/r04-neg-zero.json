@@ -1,0 +1,21 @@
+{
+  "id": "r04-neg-zero",
+  "rule": "R4",
+  "description": "No timestamp markers present",
+  "failureMode": "no-timestamps",
+  "input": {
+    "prompt": "Shika dances across the stage while Shilshul watches from the wings. Camera follows the action smoothly. The crowd erupts in cheers as the performance reaches its climax. Keep same lighting throughout. ENDING FRAME [EXACT]: Both puppets visible.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R4",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "No timestamp markers found"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "r06-pos-nodialogue",
+  "rule": "R6",
+  "description": "Uses 'no dialogue' exception which is allowed",
+  "variant": "no-dialogue-exception",
+  "input": {
+    "prompt": "[00:00] Action begins intensely. Camera pans smoothly left capturing the energy. [00:04] Energy peaks dramatically. [00:08] Both puppets freeze in place. Audio: crowd cheers building to climax, no dialogue. Keep same character appearance. ENDING FRAME [EXACT]: Frozen moment captured.",
+    "stage": "EXTEND_MIDDLE"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

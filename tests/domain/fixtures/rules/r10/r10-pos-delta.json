@@ -1,0 +1,17 @@
+{
+  "id": "r10-pos-delta",
+  "rule": "R10",
+  "description": "Mirror with intentional delta specified",
+  "variant": "delta-specified",
+  "input": {
+    "imagePrompt": "Grand stage setup. This frame serves as a loop anchor for seamless video looping.",
+    "endPrompt": "Continue from previous. [00:08] [DROP] Final pose mirrors the opening composition with delta: strings now visible and glowing. Keep same lighting. ENDING FRAME [EXACT]: Loop closure achieved.",
+    "runConfig": {
+      "loopMode": true
+    }
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

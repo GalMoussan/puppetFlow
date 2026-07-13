@@ -1,0 +1,21 @@
+{
+  "id": "r05-neg-copy",
+  "rule": "R5",
+  "description": "Heavy environment description copied from IMAGE to VIDEO",
+  "failureMode": "environment-copy",
+  "input": {
+    "imagePrompt": "The grand mainstage at the festival features massive LED screens displaying psychedelic visuals. UV purple lighting bathes the entire scene. Two puppet characters stand ready.",
+    "videoPrompt": "[00:00] On the grand mainstage at the festival with massive LED screens displaying psychedelic visuals and UV purple lighting bathing the entire scene, Shika performs dramatically. Camera dollies backward. ENDING FRAME [EXACT]: Same scene setup."
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R5",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "37.5% token overlap with IMAGE environment (max 25%)"
+      }
+    ]
+  }
+}

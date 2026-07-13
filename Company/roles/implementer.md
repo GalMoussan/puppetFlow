@@ -44,6 +44,14 @@ When tests are written before implementation (TDD workflow):
 - **"Optional" or "enhancement" labels do not apply to tested components.** If a test exercises behavior, implementing that behavior is mandatory for the tests to pass. Deferring tested components causes test failures.
 - **Check test files before marking anything optional.** Before deferring work as an enhancement, read the test files to verify no tests depend on it. If tests exist, the component is required.
 
+### TDD API Contract Verification
+When implementing code that has pre-written tests (TDD workflow):
+- **Read the Tester's journal entry first.** Check for "Assumed API Signatures" section documenting expected exports, function signatures, and return types.
+- **If signatures match:** Implement exactly as documented. This prevents test rewrites.
+- **If signatures will differ:** Flag the divergence IMMEDIATELY in your journal before implementing. List each deviation: expected vs actual signature. The Manager needs this to dispatch test updates.
+- **Check test imports:** Before implementing a function, read how tests import and call it. Match the expected argument count and types.
+- **Schema naming conflicts:** If your module defines a schema with the same name as a domain-layer schema but different shape (e.g., API response format vs full domain object), document this clearly in JSDoc. Tests that import from the wrong module will fail.
+
 ### Downstream Consumer Audit
 When changing the output characteristics of a system (e.g., different spatial distribution, more complex paths, scaled parameters):
 - **Identify all downstream consumers** that process the output — not just the direct caller, but anything that reads the result downstream in the pipeline

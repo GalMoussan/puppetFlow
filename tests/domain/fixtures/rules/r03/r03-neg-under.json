@@ -1,0 +1,21 @@
+{
+  "id": "r03-neg-under",
+  "rule": "R3",
+  "description": "Under budget at 35 words",
+  "failureMode": "under-budget",
+  "input": {
+    "prompt": "[00:00] Shika leaps. Camera dollies back. Crowd roars. [00:04] Strings flash. Lights pulse. [00:08] Freeze. Keep same lighting. ENDING FRAME [EXACT]: Done.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R3",
+        "severity": "warn",
+        "stage": "VIDEO_START",
+        "evidence": "Word count 21 below minimum 40"
+      }
+    ]
+  }
+}

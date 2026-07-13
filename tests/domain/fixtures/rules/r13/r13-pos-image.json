@@ -1,0 +1,18 @@
+{
+  "id": "r13-pos-image",
+  "rule": "R13",
+  "description": "Verbatim character lock blocks present in IMAGE prompt",
+  "variant": "verbatim-locks",
+  "input": {
+    "prompt": "Grand festival stage with UV purple lighting. Dense crowd visible in foreground.\n\nCRITICAL CHARACTER LOCK - SHIKA:\nShika is a humanoid puppet with orange fur, large expressive eyes, and visible string connections at joints. Height approximately 1.5 meters. Always shows marionette control bars above.\n\nCRITICAL CHARACTER LOCK - SHILSHUL:\nShilshul is a humanoid puppet with blue fur, matching expressive eyes, complementary design to Shika. Same visible string mechanism and control aesthetic.\n\nBoth puppets positioned center frame ready for action.",
+    "stage": "IMAGE",
+    "characterLocks": [
+      "CRITICAL CHARACTER LOCK - SHIKA",
+      "CRITICAL CHARACTER LOCK - SHILSHUL"
+    ]
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

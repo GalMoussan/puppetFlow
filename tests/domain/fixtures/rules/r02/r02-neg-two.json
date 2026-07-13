@@ -1,0 +1,21 @@
+{
+  "id": "r02-neg-two",
+  "rule": "R2",
+  "description": "Two camera verbs present (exactly 1 required)",
+  "failureMode": "two-cameras",
+  "input": {
+    "prompt": "[00:00] Pan left to Shika, then dolly forward toward the main stage. [00:04] Action continues energetically. ENDING FRAME [EXACT]: Final pose visible.",
+    "stage": "EXTEND_MIDDLE"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R2",
+        "severity": "hard",
+        "stage": "EXTEND_MIDDLE",
+        "evidence": "2 camera verbs detected: 'pan', 'dolly' (exactly 1 required)"
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "r10-neg-nomirror",
+  "rule": "R10",
+  "description": "Missing mirror directive in END when loopMode enabled",
+  "failureMode": "missing-mirror",
+  "input": {
+    "imagePrompt": "Grand stage. This frame serves as a loop anchor for seamless video looping.",
+    "endPrompt": "Continue from previous. [00:08] [DROP] Final climactic moment without loop reference. Keep same lighting. ENDING FRAME [EXACT]: Scene complete.",
+    "runConfig": {
+      "loopMode": true
+    }
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R10",
+        "severity": "hard",
+        "stage": "EXTEND_END",
+        "evidence": "Missing mirror directive (loopMode enabled)"
+      }
+    ]
+  }
+}

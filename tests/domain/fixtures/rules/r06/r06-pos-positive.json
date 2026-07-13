@@ -1,0 +1,14 @@
+{
+  "id": "r06-pos-positive",
+  "rule": "R6",
+  "description": "Only positive preservation language used",
+  "variant": "positive-only",
+  "input": {
+    "prompt": "[00:00] Shika surges forward dramatically. Camera dollies backward. [00:04] Strings flash brilliantly. [00:08] Freeze pose. Keep Shika identical to reference image. Keep same UV lighting. Audio: synth pulse, no dialogue. ENDING FRAME [EXACT]: Shika frozen center.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

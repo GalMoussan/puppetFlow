@@ -424,3 +424,35 @@ Significant changes the Optimizer flagged for user approval before applying.
 - `roles/tester.md`: Added note to async error testing — JSDOM timing quirks vs real errors
 
 **Pattern Validation:** Zero integration issues when TDD followed rigorously. All components from parallel sub-plans integrated correctly on first try. Design → Test → Code workflow caught edge cases (token leakage, invalid IDs, video timing bugs) before implementation. SP-2 (API route) achieved 100% test coverage with 24 tests written before any implementation code.
+
+### 2026-07-11 — 2026-07-11-phase2-persistence-api: TDD API Signature Alignment and Mock Target Selection
+
+**Context:** Phase 2 Persistence & API pipeline (Next.js + Prisma + Anthropic). Initial state: 59 TypeScript errors, then 21 runtime failures, then 5 final failures. After 3 debug iterations: 571/571 tests passing. 3 root causes identified.
+
+**Root Cause 1 — Tester assumed API signatures different from implementation (59 TypeScript errors):**
+- Tester wrote tests with assumed function signatures before implementation
+- Implementer created different signatures (e.g., `runBatch(templateId, config, emitter)` vs expected `runBatch(templateId, config)`)
+- Also: `generateBatch(scaffold, assignments, options)` vs expected `generateBatch(scaffold)`
+- Tests expected non-existent exports (`AgentError`, `parseStructuredOutput`, `streamGeneration`)
+- **Lesson:** In TDD workflow, when tests assume API signatures before implementation, document ALL assumed exports and function signatures in the journal. The Implementer must either follow these exactly OR immediately notify that signatures will differ. Large-scale signature divergence causes many hours of test rewriting.
+
+**Root Cause 2 — Duplicate schema definitions with different shapes (runtime failures):**
+- `lib/anthropic.ts` defined `BatchOutputSchema` with 8 fields (API response format)
+- `packages/domain/types.ts` defined `BatchOutputSchema` with full domain schema (14+ fields)
+- Test mocks imported from domain types but tests for `lib/anthropic.ts` needed API format
+- **Lesson:** When the same schema name exists in multiple modules with different shapes, tests must import from the module they're testing, not a shared/domain module. Document schema scope in the schema's JSDoc (e.g., "API response schema, not full domain schema").
+
+**Root Cause 3 — Tests mocked Prisma instead of actual delegate function (5 failures):**
+- Route handler delegated to `rerollScene` function
+- Tests mocked `prisma.run.findUnique` expecting to control 404/400 responses
+- But the route handler's 404/400 logic was in `rerollScene`, not the route
+- Tests needed to mock `rerollScene` itself, not its dependencies
+- Also: tests expected 400 but routes threw `ConflictError` (409)
+- **Lesson:** When a route handler delegates to a service function that contains the error-handling logic, mock the service function, not the database layer. Read the route handler to identify which function contains the branch you're testing.
+
+**Changes applied:**
+- `roles/tester.md`: Added "TDD API Contract Documentation" subsection to TDD Stub Creation — Tester must document all assumed exports and function signatures in journal entry
+- `roles/tester.md`: Added Integration Test Writing Rule 9 "Mock at the correct abstraction level" — mock the function containing the branch being tested, not its downstream dependencies
+- `roles/implementer.md`: Added "TDD API Contract Verification" to Rules section — Implementer must check test files for assumed signatures and either follow them or flag divergence in journal
+
+**Pattern Observation:** This pipeline had 3 debug iterations, caused primarily by TDD API divergence. The Tester wrote 80+ test scenarios before implementation, but without explicit function signature documentation. The Implementer created different signatures, causing 59 TypeScript errors requiring bulk test rewrites. Future TDD pipelines should require explicit signature documentation from the Tester AND Implementer verification of those signatures before implementation begins.

@@ -1,0 +1,21 @@
+{
+  "id": "r06-neg-avoid",
+  "rule": "R6",
+  "description": "Contains 'avoid' negative constraint",
+  "failureMode": "avoid-constraint",
+  "input": {
+    "prompt": "[00:00] Shika dances energetically, avoid cartoon style throughout the scene. Camera dollies backward. [00:04] Continue the action. ENDING FRAME [EXACT]: Complete.",
+    "stage": "EXTEND_MIDDLE"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R6",
+        "severity": "hard",
+        "stage": "EXTEND_MIDDLE",
+        "evidence": "Negative constraint 'avoid cartoon style' forbidden in video prompt"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "r09-neg-nohook",
+  "rule": "R9",
+  "description": "First beat not tagged as [HOOK]",
+  "failureMode": "missing-hook-tag",
+  "input": {
+    "prompt": "[00:00] Shika walks onto stage casually without urgency. Camera pans slowly left. [00:04] Action builds gradually over time. Keep same character throughout. Audio: ambient sounds, no dialogue. ENDING FRAME [EXACT]: Standing position.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R9",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "First beat not tagged as [HOOK]"
+      }
+    ]
+  }
+}

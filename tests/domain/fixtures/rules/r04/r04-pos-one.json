@@ -1,0 +1,14 @@
+{
+  "id": "r04-pos-one",
+  "rule": "R4",
+  "description": "1 timestamp (minimum allowed)",
+  "variant": "single-beat",
+  "input": {
+    "prompt": "[00:00] Single intense continuous action as Shika performs throughout the entire ten second clip without pause. Camera tracks smoothly alongside the action. Maintain consistent energy throughout. Audio: building synth pulse, no dialogue. ENDING FRAME [EXACT]: Shika centered dramatically.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

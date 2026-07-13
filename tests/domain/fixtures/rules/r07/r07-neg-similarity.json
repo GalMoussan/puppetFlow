@@ -1,0 +1,20 @@
+{
+  "id": "r07-neg-similarity",
+  "rule": "R7",
+  "description": "Handshake similarity at 79% (below threshold)",
+  "failureMode": "similarity-threshold",
+  "input": {
+    "previousEndingFrame": "ENDING FRAME [EXACT]: Shika stage-left, strings taut at 45-degree angle, mouth agape in mid-laugh, Shilshul stage-right with one arm raised, confetti frozen mid-air, camera at medium-wide, UV purple lighting from overhead, crowd silhouettes visible.",
+    "currentContinuation": "Continue directly from the final frame of the previous clip: Shika on left, strings at angle, laughing expression, Shilshul on right arm up, confetti in air, medium shot, purple lights, crowd in background."
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R7",
+        "severity": "hard",
+        "evidence": "Handshake similarity 0.79 < 0.80 threshold"
+      }
+    ]
+  }
+}

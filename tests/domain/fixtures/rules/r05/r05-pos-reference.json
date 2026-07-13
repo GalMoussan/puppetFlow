@@ -1,0 +1,14 @@
+{
+  "id": "r05-pos-reference",
+  "rule": "R5",
+  "description": "Reference to source image without re-describing environment",
+  "variant": "reference-only",
+  "input": {
+    "imagePrompt": "Festival stage with UV purple lighting, two puppets Shika and Shilshul positioned center frame, crowd visible in the background with arms raised.",
+    "videoPrompt": "[00:00] Shika surges forward from the source image, strings blazing brilliantly. Camera pans left capturing the dramatic motion. [00:04] Energy builds to peak intensity. UV purple lighting pulses overhead. [00:08] Freeze pose. Keep same lighting. Audio: synth pulse, no dialogue. ENDING FRAME [EXACT]: Scene complete."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

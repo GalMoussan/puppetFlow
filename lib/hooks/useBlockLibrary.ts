@@ -1,0 +1,201 @@
+/**
+ * Block Library Hook
+ *
+ * Hook for fetching block definitions by theme pack.
+ *
+ * @module lib/hooks/useBlockLibrary
+ */
+
+import { useState, useEffect, useCallback } from "react";
+import type { Lane, BlockType } from "@/packages/domain/types";
+
+/**
+ * Block definition structure from API
+ */
+export interface BlockDefinition {
+  id: string;
+  type: BlockType;
+  name: string;
+  promptFragment: string;
+  stageScope: Lane[];
+  rotationGroup?: string;
+  themePackId: string;
+  archived: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Hook return type
+ */
+interface UseBlockLibraryReturn {
+  blocks: BlockDefinition[];
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Hook for fetching block definitions by theme pack
+ *
+ * @param themePackId - Theme pack ID to fetch blocks for, or null
+ * @returns Object with blocks array, loading state, and error
+ */
+export function useBlockLibrary(
+  themePackId: string | null
+): UseBlockLibraryReturn {
+  const [blocks, setBlocks] = useState<BlockDefinition[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchBlocks = useCallback(async () => {
+    if (!themePackId) {
+      setBlocks([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/blocks?themePackId=${themePackId}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch blocks: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedBlocks = (data.data || data) as BlockDefinition[];
+
+      // Filter out archived blocks and map dates
+      const activeBlocks = fetchedBlocks
+        .filter((b) => !b.archived)
+        .map((b) => ({
+          ...b,
+          createdAt: new Date(b.createdAt),
+          updatedAt: new Date(b.updatedAt),
+        }));
+
+      setBlocks(activeBlocks);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setBlocks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [themePackId]);
+
+  // Fetch on mount and when themePackId changes
+  // Using IIFE to handle async data fetching in useEffect
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (!themePackId) {
+        if (!cancelled) {
+          setBlocks([]);
+          setLoading(false);
+          setError(null);
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setLoading(true);
+        setError(null);
+      }
+
+      try {
+        const response = await fetch(`/api/blocks?themePackId=${themePackId}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch blocks: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const fetchedBlocks = (data.data || data) as BlockDefinition[];
+
+        // Filter out archived blocks and map dates
+        const activeBlocks = fetchedBlocks
+          .filter((b) => !b.archived)
+          .map((b) => ({
+            ...b,
+            createdAt: new Date(b.createdAt),
+            updatedAt: new Date(b.updatedAt),
+          }));
+
+        if (!cancelled) {
+          setBlocks(activeBlocks);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error("Unknown error"));
+          setBlocks([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [themePackId]);
+
+  return {
+    blocks,
+    loading,
+    error,
+    refetch: fetchBlocks,
+  };
+}
+
+/**
+ * Group blocks by their type category
+ */
+export function groupBlocksByType(
+  blocks: BlockDefinition[]
+): Map<string, BlockDefinition[]> {
+  const groups = new Map<string, BlockDefinition[]>();
+
+  const BLOCK_GROUPS: Record<string, BlockType[]> = {
+    "Theme & Style": ["THEME_PACK_REF", "STYLE_LOCK", "CHARACTER_LOCK"],
+    "Scene Elements": ["PUPPET_VISUAL", "STAGE_AREA", "FESTIVAL_MOMENT"],
+    Actions: ["CAMERA_MOVE", "PUPPET_DYNAMIC", "PHYSICAL_GAG"],
+    Narrative: ["HOOK", "CHAOS_THREAD", "PAYOFF"],
+    Configuration: ["SONG_SECTION", "LANGUAGE", "LOOP_CLOSURE", "CUSTOM"],
+  };
+
+  for (const [groupName, types] of Object.entries(BLOCK_GROUPS)) {
+    const groupBlocks = blocks.filter((b) => types.includes(b.type));
+    if (groupBlocks.length > 0) {
+      groups.set(groupName, groupBlocks);
+    }
+  }
+
+  return groups;
+}
+
+/**
+ * Filter blocks by search query
+ */
+export function filterBlocksBySearch(
+  blocks: BlockDefinition[],
+  search: string
+): BlockDefinition[] {
+  if (!search.trim()) {
+    return blocks;
+  }
+
+  const query = search.toLowerCase();
+  return blocks.filter(
+    (block) =>
+      block.name.toLowerCase().includes(query) ||
+      block.promptFragment.toLowerCase().includes(query) ||
+      block.type.toLowerCase().includes(query)
+  );
+}

@@ -1,0 +1,74 @@
+{
+  "id": "clx_theme_001",
+  "name": "Master of Puppets",
+  "canon": {
+    "stages": ["Main Stage", "Pyramid Stage", "Side Stage"],
+    "moments": ["Sunset Arrival", "Peak Hour", "Sunrise Finale"],
+    "characters": {
+      "shika": {
+        "name": "Shika",
+        "traits": ["energetic", "leader"],
+        "colors": ["electric blue", "white"]
+      },
+      "shilshul": {
+        "name": "Shilshul",
+        "traits": ["playful", "chaotic"],
+        "colors": ["golden", "amber"]
+      }
+    },
+    "hooks": [
+      "String explosion",
+      "Synchronized dance",
+      "Mirror formation",
+      "Crowd surfing strings",
+      "Spiral ascent"
+    ],
+    "gags": [
+      "Tangled strings",
+      "Puppet collision",
+      "String snap recovery",
+      "Rogue balloon chase"
+    ],
+    "dynamics": [
+      "Synchronized puppetry",
+      "Call and response",
+      "Mirrored movements",
+      "Interweaved strings"
+    ],
+    "visuals": [
+      "Neon strings",
+      "UV reactive",
+      "Holographic trails",
+      "Particle effects"
+    ],
+    "payoffs": [
+      "Crowd sync",
+      "String unity",
+      "Finale formation",
+      "Loop closure"
+    ],
+    "chaosThreads": [
+      "Rogue balloon",
+      "Wayward string",
+      "Crowd surge",
+      "Equipment malfunction"
+    ],
+    "cameraMoves": [
+      "dolly",
+      "pan",
+      "crane up",
+      "steadicam",
+      "tracking shot",
+      "zoom"
+    ],
+    "subgenres": [
+      "psycore",
+      "minimal",
+      "progressive",
+      "melodic"
+    ]
+  },
+  "active": true,
+  "createdAt": "2026-07-01T00:00:00.000Z",
+  "updatedAt": "2026-07-01T00:00:00.000Z"
+}

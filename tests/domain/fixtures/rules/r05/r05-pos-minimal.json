@@ -1,0 +1,14 @@
+{
+  "id": "r05-pos-minimal",
+  "rule": "R5",
+  "description": "No environment overlap between IMAGE and VIDEO",
+  "variant": "minimal-overlap",
+  "input": {
+    "imagePrompt": "A grand festival stage bathed in UV purple lighting. Two puppet characters, Shika and Shilshul, stand ready. The mainstage towers behind them with psychedelic visuals projected onto massive LED screens. Dense crowd silhouettes visible in foreground.",
+    "videoPrompt": "[00:00] From the source image, Shika springs into action dramatically. Camera dollies backward to capture the motion. [00:04] Strings flash with vibrant energy. [00:08] Both freeze in position. Keep same character appearance. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Action complete."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

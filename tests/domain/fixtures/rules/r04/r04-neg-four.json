@@ -1,0 +1,21 @@
+{
+  "id": "r04-neg-four",
+  "rule": "R4",
+  "description": "4 timestamps (exceeds maximum of 3)",
+  "failureMode": "too-many-timestamps",
+  "input": {
+    "prompt": "[00:00] Beat one starts energetically. [00:03] Beat two continues. [00:06] Beat three builds. [00:09] Beat four - too many beats! Camera dollies backward. ENDING FRAME [EXACT]: Over-structured scene.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R4",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "4 timestamp beats detected (max 3 allowed)"
+      }
+    ]
+  }
+}

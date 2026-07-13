@@ -1,0 +1,14 @@
+{
+  "id": "r02-pos-compound",
+  "rule": "R2",
+  "description": "Compound camera move: dolly zoom",
+  "variant": "compound",
+  "input": {
+    "prompt": "[00:00] The scene intensifies dramatically. Dolly zoom creates vertigo effect as Shilshul spins. [00:04] Strings tangle in the air. Keep same UV purple lighting. Audio: crowd roar building, no dialogue. ENDING FRAME [EXACT]: Shilshul dizzy, strings swirling.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

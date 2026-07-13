@@ -1,0 +1,25 @@
+{
+  "id": "r08-neg-newchar",
+  "rule": "R8",
+  "description": "New character introduced not in prior stages",
+  "failureMode": "new-character",
+  "input": {
+    "prompt": "Continue from previous: Shika frozen in place. [00:00] A new puppet named Zara appears suddenly from stage right, surprising everyone in attendance. Camera pans right to capture Zara's dramatic entrance. [00:04] Energy shifts dramatically. Keep same lighting throughout. ENDING FRAME [EXACT]: Zara now visible alongside Shika.",
+    "stage": "EXTEND_MIDDLE",
+    "priorStages": {
+      "imagePrompt": "Shika and Shilshul on stage.",
+      "startPrompt": "Shika performs, Shilshul watches."
+    }
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R8",
+        "severity": "hard",
+        "stage": "EXTEND_MIDDLE",
+        "evidence": "New noun 'Zara' not present in prior stages"
+      }
+    ]
+  }
+}

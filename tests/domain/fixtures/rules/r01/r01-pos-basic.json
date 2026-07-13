@@ -1,0 +1,14 @@
+{
+  "id": "r01-pos-basic",
+  "rule": "R1",
+  "description": "Basic valid prompt with subject + action verb in first sentence",
+  "variant": "basic",
+  "input": {
+    "prompt": "[00:00] Shika surges forward, strings blazing with neon light. Camera dollies backward. [00:04] The crowd roars in unison. [00:08] Both puppets freeze mid-pose. Keep same UV purple lighting, same character appearance throughout. Audio: crowd roar building, no dialogue. ENDING FRAME [EXACT]: Shika center stage, arms raised, strings taut.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

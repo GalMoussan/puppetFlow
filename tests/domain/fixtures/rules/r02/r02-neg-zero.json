@@ -1,0 +1,21 @@
+{
+  "id": "r02-neg-zero",
+  "rule": "R2",
+  "description": "No camera verb present in prompt",
+  "failureMode": "zero-camera",
+  "input": {
+    "prompt": "[00:00] Shika dances wildly across the stage. Lights flash everywhere in rhythm. The crowd cheers loudly. [00:04] Festival energy peaks dramatically. ENDING FRAME [EXACT]: Chaos everywhere.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R2",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "No camera verb detected from controlled vocabulary"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "r03-pos-boundary-40",
+  "rule": "R3",
+  "description": "Exactly 40 words (lower boundary, inclusive)",
+  "variant": "boundary-40words",
+  "input": {
+    "prompt": "[00:00] Shika surges forward strings blazing camera dollies backward crowd gasps Shilshul emerges arms unfurling festival lights pulse overhead both puppets freeze mid-pose strings taut keep same lighting keep same character appearance audio crowd roar ending frame exact frozen.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

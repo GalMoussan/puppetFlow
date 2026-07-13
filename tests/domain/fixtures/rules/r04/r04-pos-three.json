@@ -1,0 +1,14 @@
+{
+  "id": "r04-pos-three",
+  "rule": "R4",
+  "description": "3 timestamps (maximum allowed)",
+  "variant": "three-beats",
+  "input": {
+    "prompt": "[00:00] Shika explodes onto stage dramatically. [00:04] Shilshul joins the dance energetically. [00:08] Both freeze in perfect sync. Camera dollies back. Audio: crowd roar building, no dialogue. ENDING FRAME [EXACT]: Frozen tableau.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

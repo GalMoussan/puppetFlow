@@ -1,0 +1,21 @@
+{
+  "id": "r09-neg-5s",
+  "rule": "R9",
+  "description": "5s gap between beats (exceeds 4s maximum)",
+  "failureMode": "gap-too-large",
+  "input": {
+    "prompt": "[00:00] [HOOK] Shika starts performing energetically on stage. Camera tracks smoothly alongside. [00:05] Second beat arrives too late for optimal pacing. Keep same lighting. ENDING FRAME [EXACT]: Scene complete.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R9",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "5s gap between beats exceeds 4s maximum"
+      }
+    ]
+  }
+}

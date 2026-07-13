@@ -128,6 +128,20 @@ const ageHours = Math.round((ageMs / (1000 * 60 * 60)) * 10) / 10
 
 **Rationale**: JavaScript's IEEE 754 floating-point arithmetic has inherent precision limitations. When dividing large integers (milliseconds) by constants (ms per hour), results may not be exact. Rounding to 1 decimal place maintains test accuracy while eliminating precision drift.
 
+### 9. Mock at the Correct Abstraction Level
+
+When testing route handlers or controllers that delegate to service functions, mock the **service function** that contains the logic you're testing, not its downstream dependencies (database, external APIs).
+
+```typescript
+// ❌ DON'T: Mock the database layer when testing route error handling
+mockPrisma.run.findUnique.mockResolvedValue(null)  // Route doesn't call this directly
+
+// ✅ DO: Mock the service function the route actually calls
+mockRerollScene.mockRejectedValue(new NotFoundError("Run not found"))
+```
+
+**Rationale**: Route handlers often delegate to service functions that contain error-handling logic. Mocking the database layer doesn't test the route's actual code path — it tests the service layer (which has its own tests). Read the route handler to identify which function contains the branch you're testing, then mock that function.
+
 ## Integration Test Migration Rules
 
 These rules apply when migrating tests to a new base class or refactoring test infrastructure.
@@ -160,6 +174,29 @@ When writing tests before implementation (TDD), you may need to create productio
 - **Flag API deviations from documentation** — if you create a stub with a different return type, parameter list, or data structure than what the documentation specifies, explicitly call it out in your journal as an intentional deviation and state why. The Documenter needs to know what changed so docs can be synced. Silently diverging from the doc spec forces later agents to discover the mismatch themselves.
 - **Note implementation order** — if test class A depends on production class B being implemented first (e.g., tests for a wall builder need a path builder to create test paths), state this dependency in your journal
 - **Expect divergence** — the Implementer may change signatures, field names, or semantics from your stubs. Your tests must be updated after implementation if the API changes. This is normal TDD workflow, not a failure.
+
+### TDD API Contract Documentation (CRITICAL)
+
+When writing tests before implementation, you MUST document all assumed API signatures explicitly in your journal. This prevents large-scale test rewrites when the Implementer creates different signatures.
+
+**Required documentation for each module tested:**
+
+```markdown
+## Assumed API Signatures
+
+### {module-name}
+
+**Exports assumed:**
+- `functionName(param1: Type, param2: Type): ReturnType`
+- `ClassName` with methods: `method1()`, `method2(arg: Type)`
+- `TypeName` (type/interface)
+- `SchemaName` (Zod schema)
+
+**NOT exported (tests don't assume these exist):**
+- List of names NOT used in tests
+```
+
+**Why this matters:** Large API divergence (e.g., function takes 3 args vs 2, exports different names) causes bulk test rewrites during debug iterations. Explicit documentation enables the Implementer to either follow the contract or flag divergence immediately.
 
 ## E2E Test Infrastructure
 

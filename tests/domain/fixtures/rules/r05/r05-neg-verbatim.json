@@ -1,0 +1,21 @@
+{
+  "id": "r05-neg-verbatim",
+  "rule": "R5",
+  "description": "Verbatim copy of IMAGE scene opening in VIDEO",
+  "failureMode": "verbatim-copy",
+  "input": {
+    "imagePrompt": "Grand festival stage with UV purple lighting. Massive LED screens display psychedelic visuals. Two puppet characters positioned center stage.",
+    "videoPrompt": "Grand festival stage with UV purple lighting. Massive LED screens display psychedelic visuals. Two puppet characters positioned center stage. [00:00] Shika moves. Camera pans. ENDING FRAME [EXACT]: Done."
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R5",
+        "severity": "hard",
+        "stage": "VIDEO_START",
+        "evidence": "60% token overlap with IMAGE environment (max 25%)"
+      }
+    ]
+  }
+}

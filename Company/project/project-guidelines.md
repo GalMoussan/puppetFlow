@@ -80,6 +80,16 @@ Each of the 15 rules (R1-R15) requires:
 
 Fixtures live in `tests/domain/rules/fixtures/`
 
+### React 19 + pnpm Compatibility
+**CRITICAL**: This project uses `node-linker=hoisted` in `.npmrc` to avoid the "Invalid hook call" error caused by multiple React instances in pnpm's strict dependency resolution.
+
+- **Root cause**: React 19 + pnpm's isolated `node_modules` structure + Vitest can load multiple React instances, breaking hooks
+- **Fix**: The `.npmrc` file sets `node-linker=hoisted` which flattens dependencies like npm
+- **Symptom if broken**: "Cannot read properties of null (reading 'useState')" or "Invalid hook call" errors in component tests
+- **If you modify .npmrc**: Run `rm -rf node_modules pnpm-lock.yaml && pnpm install` to reset
+
+Sources: [pnpm/pnpm#12116](https://github.com/pnpm/pnpm/issues/12116), [vitest-dev/vitest#3861](https://github.com/vitest-dev/vitest/issues/3861)
+
 ### TDD Workflow (MANDATORY)
 1. **Write test first** (should fail — RED)
 2. **Write minimal implementation** (should pass — GREEN)
@@ -170,21 +180,56 @@ See `.claude/CLAUDE.md` for the `CanvasGraph` type definition. Key points:
 
 ## Common Gotchas
 
+### Framework Boundary
 1. **Domain purity**: Never import React/Next/Prisma in `packages/domain/`. This breaks TDD.
 
-2. **Handshake similarity**: The 80% threshold is strict — even small lighting descriptor changes fail.
+### API Layer Patterns
+15. **SSE Streaming**: Use `ReadableStream` with `Content-Type: text/event-stream`. The `lib/agent.ts` `SSEEmitter` callback type is: `(event: SSEEvent) => void`. All consumers must provide this callback.
 
-3. **Single API call for batch**: All 5 scenes generate in one Claude call (cross-scene variety constraints). Reroll is per-scene.
+16. **Anthropic Client Retry**: `lib/anthropic.ts` handles 429 (rate limit) with exponential backoff. Max 3 retries. Other 4xx errors fail immediately.
 
-4. **Export = API parity**: The scaffold exported for Claude Code must be byte-identical to what the API uses.
+17. **Error Type to HTTP Status Mapping**:
+    - `NotFoundError` → 404
+    - `BadRequestError` → 400
+    - `ConflictError` → 409
+    - `LintError` → 422
+    - Generic `Error` → 500
 
-5. **Loop mode is optional**: Only inject closure directives when `runConfig.loopMode === true`.
+18. **Schema Naming**: `BatchOutputSchema` exists in two places with different shapes:
+    - `lib/anthropic.ts` — 8 fields (API response parsing)
+    - `packages/domain/types.ts` — 14+ fields (full domain object)
+    Import from the module being tested.
 
-6. **Pinned blocks bypass rotation**: Don't include them in variety calculations.
+### Rule Enforcement
+2. **Handshake similarity**: The 80% threshold is strict — even small lighting descriptor changes fail. Boundary tests: 0.79 fails, 0.80 passes.
 
-7. **Basic auth middleware**: All routes protected — test with credentials or mock the middleware.
+3. **R15 has no predicate**: R15 (Iteration Discipline) is advisory/UI-level only. Its `predicate` field is undefined. Linter skips it.
 
-8. **Prisma client singleton**: Use `lib/db.ts`, never instantiate directly.
+### Batch Generation
+4. **Single API call for batch**: All 5 scenes generate in one Claude call (cross-scene variety constraints). Reroll is per-scene.
+
+5. **Export = API parity**: The scaffold exported for Claude Code must be byte-identical to what the API uses.
+
+6. **Loop mode is optional**: Only inject closure directives when `runConfig.loopMode === true`.
+
+7. **Pinned blocks bypass rotation**: Don't include them in variety calculations.
+
+### Variety Engine
+8. **Camera moves can repeat**: Camera and subgenre axes are NOT tracked for within-batch collision (per R14).
+
+9. **History lookback split**: 30-day lookback for stage+moment (inclusive: `>=`), 10-run lookback for dynamic+payoff.
+
+10. **Language distribution validation**: `generateLanguageDistribution()` validates all specified languages exist in pool before generating.
+
+### Infrastructure
+11. **Basic auth middleware**: All routes protected — test with credentials or mock the middleware.
+
+12. **Prisma client singleton**: Use `lib/db.ts`, never instantiate directly.
+
+### Testing
+13. **Property-based tests use fixed seeds**: Variety engine tests use seed=42 for deterministic CI.
+
+14. **Boundary condition operators**: Document inclusivity explicitly. Example: "pass: exactly 30 days old, fail: 31 days old".
 
 ## Environment Variables
 

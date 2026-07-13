@@ -1,0 +1,14 @@
+{
+  "id": "r03-pos-boundary-90",
+  "rule": "R3",
+  "description": "Exactly 90 words (upper boundary, inclusive)",
+  "variant": "boundary-90words",
+  "input": {
+    "prompt": "[00:00] Shika explodes onto the mainstage platform, strings blazing with intense neon purple light that pulses to the thundering bassline. The massive crowd surges forward in wild anticipation. [00:04] Camera dollies dramatically backward to capture the full spectacular scene as Shilshul emerges from the shadows stage right, arms unfurling in perfect synchronization with the escalating pre-drop build. Festival pyrotechnics erupt overhead magnificently. [00:08] Both puppets freeze mid-pose, strings taut and gleaming. Keep same UV purple lighting, same character appearance, same string tension, same crowd energy throughout this segment. ENDING FRAME [EXACT]: Puppets frozen center stage.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

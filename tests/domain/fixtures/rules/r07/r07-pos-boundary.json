@@ -1,0 +1,14 @@
+{
+  "id": "r07-pos-boundary",
+  "rule": "R7",
+  "description": "Handshake at exactly 80% similarity (boundary)",
+  "variant": "boundary-80",
+  "input": {
+    "previousEndingFrame": "ENDING FRAME [EXACT]: Shika stage-left, strings taut at angle, laughing expression, Shilshul stage-right arm raised, confetti in air, medium-wide shot, UV purple lighting, crowd visible.",
+    "currentContinuation": "Continue directly from the final frame: Shika stage-left, strings taut at angle, laughing expression, Shilshul stage-right arm raised, confetti in air, medium-wide shot, UV purple lighting, crowd visible."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

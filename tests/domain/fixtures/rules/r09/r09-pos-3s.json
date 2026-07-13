@@ -1,0 +1,14 @@
+{
+  "id": "r09-pos-3s",
+  "rule": "R9",
+  "description": "3s spacing between beats with hook at 0s",
+  "variant": "3s-spacing",
+  "input": {
+    "prompt": "[00:00] [HOOK] Shika explodes onto stage with strings blazing brilliantly! Camera dollies dramatically backward to capture everything. [00:03] Shilshul joins the action energetically from stage right. [00:06] Both puppets synchronize their movements perfectly. Keep same lighting. Audio: synth pulse, no dialogue. ENDING FRAME [EXACT]: Synchronized pose frozen.",
+    "stage": "VIDEO_START"
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

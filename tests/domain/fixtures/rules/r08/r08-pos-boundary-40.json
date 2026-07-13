@@ -1,0 +1,18 @@
+{
+  "id": "r08-pos-boundary-40",
+  "rule": "R8",
+  "description": "EXTEND prompt at 40 words (lower boundary)",
+  "variant": "boundary-40words",
+  "input": {
+    "prompt": "Continue directly from previous: Shika stage-left frozen in dramatic pose. [00:00] Shika's strings surge upward as movement resumes gracefully. Camera pans smoothly left capturing the motion. [00:04] Energy builds steadily throughout. Keep same UV purple lighting, same character appearance. ENDING FRAME [EXACT]: Shika centered stage beautifully.",
+    "stage": "EXTEND_MIDDLE",
+    "priorStages": {
+      "imagePrompt": "Shika and Shilshul on festival stage with UV purple lighting.",
+      "startPrompt": "Shika performs dramatic entrance, strings blazing."
+    }
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

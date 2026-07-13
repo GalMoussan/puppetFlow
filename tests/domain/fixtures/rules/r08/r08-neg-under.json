@@ -1,0 +1,25 @@
+{
+  "id": "r08-neg-under",
+  "rule": "R8",
+  "description": "EXTEND prompt under budget at 35 words",
+  "failureMode": "under-budget",
+  "input": {
+    "prompt": "Continue from previous. [00:00] Shika moves. Camera pans. [00:04] Freeze. Keep same lighting. ENDING FRAME [EXACT]: Done.",
+    "stage": "EXTEND_MIDDLE",
+    "priorStages": {
+      "imagePrompt": "Shika on stage.",
+      "startPrompt": "Shika performs."
+    }
+  },
+  "expected": {
+    "pass": false,
+    "violations": [
+      {
+        "rule": "R8",
+        "severity": "hard",
+        "stage": "EXTEND_MIDDLE",
+        "evidence": "Word count 17 below minimum 40 for EXTEND"
+      }
+    ]
+  }
+}

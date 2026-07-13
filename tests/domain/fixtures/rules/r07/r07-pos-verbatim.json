@@ -1,0 +1,14 @@
+{
+  "id": "r07-pos-verbatim",
+  "rule": "R7",
+  "description": "Perfect verbatim handshake between video stages",
+  "variant": "verbatim-handshake",
+  "input": {
+    "previousEndingFrame": "ENDING FRAME [EXACT]: Shika stage-left, strings taut at 45-degree angle, mouth agape in mid-laugh, Shilshul stage-right with one arm raised, confetti frozen mid-air, camera at medium-wide, UV purple lighting from overhead, crowd silhouettes visible.",
+    "currentContinuation": "Continue directly from the final frame of the previous clip: Shika stage-left, strings taut at 45-degree angle, mouth agape in mid-laugh, Shilshul stage-right with one arm raised, confetti frozen mid-air, camera at medium-wide, UV purple lighting from overhead, crowd silhouettes visible."
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}

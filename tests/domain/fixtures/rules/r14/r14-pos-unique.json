@@ -1,0 +1,82 @@
+{
+  "id": "r14-pos-unique",
+  "rule": "R14",
+  "description": "All axes unique within batch (zero collisions)",
+  "variant": "all-unique",
+  "input": {
+    "batchCombos": [
+      {
+        "stageArea": "Main Stage",
+        "festivalMoment": "Sunset Arrival",
+        "hook": "String explosion",
+        "camera": { "start": "dolly", "middle": "pan", "end": "crane up" },
+        "dynamic": "Synchronized dance",
+        "visual": "Neon glowing strings",
+        "gag": "Strings tangle",
+        "payoff": "Crowd chant sync",
+        "chaosThread": "Rogue balloon",
+        "language": "hi",
+        "subgenre": "psycore"
+      },
+      {
+        "stageArea": "Puppet Pavilion",
+        "festivalMoment": "Golden Hour",
+        "hook": "Puppet reveal",
+        "camera": { "start": "push-in", "middle": "orbit", "end": "tilt-up" },
+        "dynamic": "Shilshul puppets Shika",
+        "visual": "UV reactive fur",
+        "gag": "Puppet stumble",
+        "payoff": "Light show climax",
+        "chaosThread": "Escaped glow stick",
+        "language": "ja",
+        "subgenre": "hi-tech"
+      },
+      {
+        "stageArea": "String Garden",
+        "festivalMoment": "Twilight Transition",
+        "hook": "Crowd surge",
+        "camera": { "start": "whip pan", "middle": "tracking shot", "end": "crane down" },
+        "dynamic": "Shika leads Shilshul",
+        "visual": "Holographic shimmer",
+        "gag": "Confetti explosion",
+        "payoff": "Puppet embrace",
+        "chaosThread": "Wandering mascot",
+        "language": "hi",
+        "subgenre": "forest"
+      },
+      {
+        "stageArea": "Chaos Corner",
+        "festivalMoment": "Night Falls",
+        "hook": "Light burst",
+        "camera": { "start": "static wide", "middle": "handheld tracking", "end": "dolly zoom" },
+        "dynamic": "Call and response",
+        "visual": "Smoke trail aura",
+        "gag": "Hat flip",
+        "payoff": "String harmony",
+        "chaosThread": "Broken string repair",
+        "language": "hi",
+        "subgenre": "darkpsy"
+      },
+      {
+        "stageArea": "Twilight Terrace",
+        "festivalMoment": "Midnight Peak",
+        "hook": "Beat drop entrance",
+        "camera": { "start": "crash-zoom", "middle": "tilt-down", "end": "snap-zoom" },
+        "dynamic": "Mirror movements",
+        "visual": "Prismatic reflections",
+        "gag": "Crowd surf attempt",
+        "payoff": "Festival logo reveal",
+        "chaosThread": "Crowd surfer",
+        "language": "ja",
+        "subgenre": "full-on"
+      }
+    ],
+    "runConfig": {
+      "languages": { "hi": 3, "ja": 2 }
+    }
+  },
+  "expected": {
+    "pass": true,
+    "violations": []
+  }
+}
