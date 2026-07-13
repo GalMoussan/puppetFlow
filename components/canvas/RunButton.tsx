@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Play, Loader2 } from "lucide-react";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useShallow } from "zustand/shallow";
@@ -21,6 +22,7 @@ const initialUIState = (): RunUIState => ({
 });
 
 export function RunButton() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -105,13 +107,18 @@ export function RunButton() {
       setProgressState(start);
       setRunStatus("compiling");
 
-      await consumeRunSSEStream(response.body, start, (next) => {
+      const finalState = await consumeRunSSEStream(response.body, start, (next) => {
         setProgressState(next);
         setRunStatus(next.runStatus);
         if (next.currentRunId) {
           setCurrentRunId(next.currentRunId);
         }
       });
+
+      // Navigate to run viewer when batch completes successfully
+      if (finalState.runStatus === "done" && finalState.currentRunId) {
+        router.push(`/runs/${finalState.currentRunId}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start run");
       setRunStatus("failed");
@@ -120,7 +127,9 @@ export function RunButton() {
   };
 
   const handleProgressComplete = () => {
-    // Keep done state visible; user can dismiss later
+    if (progressState.currentRunId) {
+      router.push(`/runs/${progressState.currentRunId}`);
+    }
   };
 
   const handleProgressCancel = () => {

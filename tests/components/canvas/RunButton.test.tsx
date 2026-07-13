@@ -33,6 +33,13 @@ import {
 // =============================================================================
 
 let mockStore: MockCanvasStore;
+const mockRouterPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+  }),
+}));
 
 vi.mock("@/lib/store/canvas-store", () => ({
   useCanvasStore: vi.fn((selector?: (state: MockCanvasStore) => unknown) => {
@@ -54,6 +61,7 @@ global.fetch = mockFetch;
 describe("RunButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRouterPush.mockReset();
     mockStore = createMockCanvasStore({
       nodes: createLaneNodes(),
       templateId: "tpl-001",
@@ -294,6 +302,25 @@ describe("RunButton", () => {
         expect(screen.getByText(/already running/i)).toBeInTheDocument();
       });
       expect(screen.queryByTestId("run-progress")).not.toBeInTheDocument();
+    });
+
+    it("navigates to /runs/[id] when SSE completes with done", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockFetch.mockResolvedValue(
+        mockSSEResponse([
+          { type: "phase", phase: "COMPILING" },
+          { type: "done", runId: "run-99", sceneCount: 5, duration: 100 },
+        ])
+      );
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        expect(mockRouterPush).toHaveBeenCalledWith("/runs/run-99");
+      });
     });
   });
 });
