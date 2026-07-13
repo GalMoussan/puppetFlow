@@ -18,7 +18,6 @@ import {
 import * as anthropic from "./anthropic";
 import { compile } from "@/packages/domain/compiler";
 import { lintBatch, lintScene } from "@/packages/domain/linter";
-import { exportBatch } from "@/packages/domain/exporter";
 import type { SSEEvent, RunConfigInput } from "./schemas";
 import type {
   CanvasGraph,
@@ -26,7 +25,6 @@ import type {
   ComboAssignment,
   Scene as DomainScene,
   Violation,
-  BatchOutput,
 } from "@/packages/domain/types";
 import type { ThemePack, BlockDefinition } from "@/packages/domain/compiler";
 
@@ -48,6 +46,8 @@ export interface RunResult {
   sceneCount: number;
   error?: string;
 }
+
+type AgentPhase = "COMPILING" | "ASSIGNING" | "GENERATING" | "LINTING" | "REPAIRING";
 
 /**
  * Agent event emitter for SSE
@@ -116,8 +116,8 @@ function rerollCombo(
   const usedChaosThread = new Set(siblings.map((s) => s.chaosThread));
 
   // Pick new values avoiding siblings
-  const pickNew = (pool: string[], used: Set<string>, fallback: string): string => {
-    const available = pool.filter((v) => !used.has(v) && v !== fallback);
+  const pickNew = (values: string[], used: Set<string>, fallback: string): string => {
+    const available = values.filter((v) => !used.has(v) && v !== fallback);
     if (available.length === 0) return fallback;
     return available[Math.floor(Math.random() * available.length)];
   };
@@ -191,6 +191,22 @@ function buildBlockDefs(): Record<string, BlockDefinition> {
   return {};
 }
 
+function nowTs(): number {
+  return Date.now();
+}
+
+function previewText(scene: {
+  lyrics?: string;
+  imagePrompt?: string;
+}): string {
+  const source = scene.lyrics || scene.imagePrompt || "";
+  return source.slice(0, 100);
+}
+
+function makeSceneId(runId: string, index: number): string {
+  return `${runId}-scene-${index}`;
+}
+
 // =============================================================================
 // Main Orchestrator
 // =============================================================================
@@ -208,6 +224,9 @@ export async function runBatch(
   runConfig: RunConfigInput | undefined,
   emitter: SSEEmitter
 ): Promise<RunResult> {
+  const startedAt = nowTs();
+  let currentPhase: AgentPhase = "COMPILING";
+
   // 1. Load template + validate
   const template = await prisma.flowTemplate.findUnique({
     where: { id: templateId },
@@ -230,6 +249,35 @@ export async function runBatch(
       ...runConfig?.languages,
     },
   };
+
+  // Early language constraint check (sum of language weights must fit batch)
+  const languageTotal = (config.languages.hi ?? 0) + (config.languages.ja ?? 0);
+  if (languageTotal > config.batchSize) {
+    // Create a failed run record for observability, then return FAILED
+    const failedRun = await prisma.run.create({
+      data: {
+        templateId,
+        status: "FAILED",
+        model: anthropic.getModelName(),
+        error: `language constraint impossible: hi=${config.languages.hi} + ja=${config.languages.ja} exceeds batchSize=${config.batchSize}`,
+      },
+    });
+
+    emitter({
+      type: "error",
+      error: failedRun.error ?? "language constraint impossible",
+      phase: "COMPILING",
+      runId: failedRun.id,
+      timestamp: nowTs(),
+    });
+
+    return {
+      status: "FAILED",
+      runId: failedRun.id,
+      sceneCount: 0,
+      error: failedRun.error ?? "language constraint impossible",
+    };
+  }
 
   // 3. Check for concurrent runs
   const activeRun = await prisma.run.findFirst({
@@ -254,8 +302,14 @@ export async function runBatch(
   });
 
   try {
-    // 5. Assign variety first (before compilation, as compile needs combos)
-    emitter({ type: "phase", phase: "ASSIGNING" });
+    // 5. COMPILING — compile scaffold after variety assignment
+    currentPhase = "COMPILING";
+    emitter({ type: "phase", phase: "COMPILING", timestamp: nowTs() });
+
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { status: "COMPILING" },
+    });
 
     // Load history for variety engine
     const thirtyDaysAgo = new Date();
@@ -292,20 +346,12 @@ export async function runBatch(
     const canon = template.themePack.canon as Record<string, string[]>;
     const pool = buildVarietyPool(canon);
 
-    // Assign combos
+    // Assign combos (variety failures bubble to catch → FAILED)
     const assignments = varietyAssign(pool, history, {
       batchSize: config.batchSize,
       languages: config.languages,
       lookbackDays: 30,
       lookbackRuns: 10,
-    });
-
-    // 6. Compile to scaffold
-    emitter({ type: "phase", phase: "COMPILING" });
-
-    await prisma.run.update({
-      where: { id: run.id },
-      data: { status: "COMPILING" },
     });
 
     const themePack = buildThemePack(template.themePack);
@@ -318,8 +364,9 @@ export async function runBatch(
       data: { scaffold },
     });
 
-    // 7. Generate with Anthropic
-    emitter({ type: "phase", phase: "GENERATING" });
+    // 6. Generate with Anthropic
+    currentPhase = "GENERATING";
+    emitter({ type: "phase", phase: "GENERATING", timestamp: nowTs() });
 
     await prisma.run.update({
       where: { id: run.id },
@@ -331,135 +378,136 @@ export async function runBatch(
       maxTokens: 4000,
     });
 
-    // 8. Lint batch output
-    emitter({ type: "phase", phase: "LINTING" });
+    // Emit scene previews as soon as generation completes (before lint)
+    batchOutput.scenes.forEach((scene, index) => {
+      emitter({
+        type: "scene",
+        index,
+        preview: previewText(scene),
+        timestamp: nowTs(),
+      });
+    });
+
+    // 7. Lint batch output
+    currentPhase = "LINTING";
+    emitter({ type: "phase", phase: "LINTING", timestamp: nowTs() });
 
     await prisma.run.update({
       where: { id: run.id },
       data: { status: "LINTING" },
     });
 
-    // Convert to full Scene objects for linting
+    // Convert to full Scene objects for linting (preserve any fixture lintReport)
     const scenesForLinting: DomainScene[] = batchOutput.scenes.map((s, idx) => ({
-      ...s,
+      lyrics: s.lyrics,
+      imagePrompt: s.imagePrompt,
+      startPrompt: s.startPrompt,
+      middlePrompt: s.middlePrompt,
+      endPrompt: s.endPrompt,
+      boundaryFrame1: s.boundaryFrame1,
+      boundaryFrame2: s.boundaryFrame2,
+      finalFrame: s.finalFrame,
       id: `temp-${idx}`,
       runId: run.id,
       index: idx,
       combo: assignments[idx],
-      lintReport: [],
+      lintReport: ("lintReport" in s && Array.isArray(s.lintReport) ? s.lintReport : []) as Violation[],
       notes: null,
     }));
 
     let finalOutput = batchOutput;
     let lintReport = lintBatch({ scenes: scenesForLinting }, graph, config);
 
-    // 9. Repair if hard violations
+    // 8. Repair if hard violations (single retry)
     if (!lintReport.valid && anthropic.hasAnthropicKey()) {
-      emitter({ type: "phase", phase: "REPAIRING" });
+      currentPhase = "REPAIRING";
+      emitter({ type: "phase", phase: "REPAIRING", timestamp: nowTs() });
 
       await prisma.run.update({
         where: { id: run.id },
         data: { status: "REPAIRING" },
       });
 
-      // Build violation summary for repair
-      const violationsByScene = Array.from(lintReport.byScene.entries()).map(
-        ([sceneIndex, violations]) => ({ sceneIndex, violations })
-      );
-
-      const repairPrompt = anthropic.buildRepairPrompt(scaffold, violationsByScene);
-      finalOutput = await anthropic.repair(repairPrompt);
+      finalOutput = await anthropic.repair(scaffold, {
+        violations: lintReport.hardViolations,
+      });
 
       // Re-lint after repair
       const repairedScenesForLinting: DomainScene[] = finalOutput.scenes.map(
         (s, idx) => ({
-          ...s,
+          lyrics: s.lyrics,
+          imagePrompt: s.imagePrompt,
+          startPrompt: s.startPrompt,
+          middlePrompt: s.middlePrompt,
+          endPrompt: s.endPrompt,
+          boundaryFrame1: s.boundaryFrame1,
+          boundaryFrame2: s.boundaryFrame2,
+          finalFrame: s.finalFrame,
           id: `temp-${idx}`,
           runId: run.id,
           index: idx,
           combo: assignments[idx],
-          lintReport: [],
+          lintReport: ("lintReport" in s && Array.isArray(s.lintReport)
+            ? s.lintReport
+            : []) as Violation[],
           notes: null,
         })
       );
       lintReport = lintBatch({ scenes: repairedScenesForLinting }, graph, config);
+      // Even if still invalid after one repair, persist with warnings (DONE)
     }
 
-    // 10. Persist scenes + UsageLog
-    const scenes = await Promise.all(
-      finalOutput.scenes.map(async (scene, idx) => {
-        const sceneViolations = lintReport.byScene.get(idx) || [];
+    // 9. Persist scenes + UsageLog via createMany (explicit IDs for FK linking)
+    const sceneRows = finalOutput.scenes.map((scene, idx) => {
+      const sceneViolations = lintReport.byScene.get(idx) || [];
+      return {
+        id: makeSceneId(run.id, idx),
+        runId: run.id,
+        index: idx,
+        combo: assignments[idx] as object,
+        lyrics: scene.lyrics,
+        imagePrompt: scene.imagePrompt,
+        startPrompt: scene.startPrompt,
+        middlePrompt: scene.middlePrompt,
+        endPrompt: scene.endPrompt,
+        boundaryFrame1: scene.boundaryFrame1,
+        boundaryFrame2: scene.boundaryFrame2,
+        finalFrame: scene.finalFrame,
+        lintReport: sceneViolations as object,
+      };
+    });
 
-        const createdScene = await prisma.scene.create({
-          data: {
-            runId: run.id,
-            index: idx,
-            combo: assignments[idx],
-            lyrics: scene.lyrics,
-            imagePrompt: scene.imagePrompt,
-            startPrompt: scene.startPrompt,
-            middlePrompt: scene.middlePrompt,
-            endPrompt: scene.endPrompt,
-            boundaryFrame1: scene.boundaryFrame1,
-            boundaryFrame2: scene.boundaryFrame2,
-            finalFrame: scene.finalFrame,
-            lintReport: sceneViolations,
-          },
-        });
+    await prisma.scene.createMany({
+      data: sceneRows,
+    });
 
-        // Create UsageLog entry
-        await prisma.usageLog.create({
-          data: {
-            runDate: new Date(),
-            comboHash: hashCombo(assignments[idx]),
-            axes: assignments[idx],
-            sceneId: createdScene.id,
-          },
-        });
+    await prisma.usageLog.createMany({
+      data: sceneRows.map((row, idx) => ({
+        runDate: new Date(),
+        comboHash: hashCombo(assignments[idx]),
+        axes: assignments[idx] as object,
+        sceneId: row.id,
+      })),
+    });
 
-        return createdScene;
-      })
-    );
-
-    // 11. Mark run complete
+    // 10. Mark run complete
     await prisma.run.update({
       where: { id: run.id },
       data: { status: "DONE" },
     });
 
-    // Emit scene updates and done event
-    scenes.forEach((scene) => {
-      emitter({
-        type: "scene",
-        scene: {
-          id: scene.id,
-          runId: scene.runId,
-          index: scene.index,
-          combo: scene.combo as ComboAssignment,
-          lyrics: scene.lyrics,
-          imagePrompt: scene.imagePrompt,
-          startPrompt: scene.startPrompt,
-          middlePrompt: scene.middlePrompt,
-          endPrompt: scene.endPrompt,
-          boundaryFrame1: scene.boundaryFrame1,
-          boundaryFrame2: scene.boundaryFrame2,
-          finalFrame: scene.finalFrame,
-          lintReport: scene.lintReport as Violation[],
-          notes: scene.notes,
-        },
-      });
-    });
-
     emitter({
       type: "done",
       runId: run.id,
-      totalScenes: scenes.length,
+      sceneCount: sceneRows.length,
+      duration: nowTs() - startedAt,
+      timestamp: nowTs(),
     });
 
     return {
       status: "DONE",
       runId: run.id,
-      sceneCount: scenes.length,
+      sceneCount: sceneRows.length,
     };
   } catch (err) {
     // Update run status to FAILED
@@ -475,7 +523,10 @@ export async function runBatch(
 
     emitter({
       type: "error",
-      message: errorMessage,
+      error: errorMessage,
+      phase: currentPhase,
+      runId: run.id,
+      timestamp: nowTs(),
     });
 
     return {

@@ -31,9 +31,11 @@ import { createMockPrisma, type MockPrismaClient } from "@/tests/mocks/prisma";
 import {
   createMockBatchOutput,
   createMockBatchOutputWithViolations,
+  createMockCombo,
 } from "@/tests/mocks/anthropic-responses";
 
-import type { CanvasGraph, RunConfig, Violation } from "@/packages/domain/types";
+import type { CanvasGraph, RunConfig, Violation, Scene } from "@/packages/domain/types";
+import type { LintReport } from "@/packages/domain/linter";
 
 // Mock dependencies - use async factory to ensure imports are available
 vi.mock("@/lib/db", async () => {
@@ -50,34 +52,101 @@ vi.mock("@/lib/anthropic", () => ({
 }));
 
 // Mock variety module at top level - individual tests can override with mockImplementation
-// assign returns ComboAssignment[] so default to empty array
+// Per phase2-test-spec §4.1: mock variety returns N assignments matching batchSize
 vi.mock("@/packages/domain/variety", () => ({
-  assign: vi.fn().mockImplementation(() => []),
+  assign: vi.fn(),
   VarietyError: class VarietyError extends Error {
-    constructor(public code: string, public axis: string, message: string, public details?: Record<string, unknown>) {
+    constructor(
+      public type: string,
+      public axis: string,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
       super(message);
       this.name = "VarietyError";
     }
   },
 }));
 
+// Per phase2-test-spec §4.1–4.3: mock linter so agent tests control repair paths
+// Default: empty violations. When scenes carry lintReport fixtures, surface those.
+vi.mock("@/packages/domain/linter", () => ({
+  lintBatch: vi.fn(),
+  lintScene: vi.fn().mockReturnValue([]),
+}));
+
 // Import mocked modules
 import { prisma } from "@/lib/db";
 import { generateBatch, repair } from "@/lib/anthropic";
 import { assign as varietyAssign } from "@/packages/domain/variety";
+import { lintBatch } from "@/packages/domain/linter";
 
 const mockPrisma = prisma as unknown as MockPrismaClient;
 const mockGenerateBatch = generateBatch as ReturnType<typeof vi.fn>;
 const mockRepair = repair as ReturnType<typeof vi.fn>;
 const mockVarietyAssign = varietyAssign as ReturnType<typeof vi.fn>;
+const mockLintBatch = lintBatch as ReturnType<typeof vi.fn>;
+
+/**
+ * Build a LintReport from scene.lintReport fixtures (agent test control surface).
+ */
+function lintReportFromScenes(batch: { scenes: Array<Partial<Scene> & { index?: number }> }): LintReport {
+  const byScene = new Map<number, Violation[]>();
+  const hardViolations: Violation[] = [];
+  const warnings: Violation[] = [];
+
+  batch.scenes.forEach((scene, idx) => {
+    const sceneIndex = typeof scene.index === "number" ? scene.index : idx;
+    const report = (scene.lintReport ?? []) as Violation[];
+    byScene.set(sceneIndex, report);
+    for (const v of report) {
+      if (v.severity === "hard") hardViolations.push(v);
+      else warnings.push(v);
+    }
+  });
+
+  return {
+    valid: hardViolations.length === 0,
+    hardViolations,
+    warnings,
+    byScene,
+    byRule: new Map(),
+  };
+}
+
+function defaultAssignments(batchSize: number) {
+  return Array.from({ length: batchSize }, (_, i) =>
+    createMockCombo({
+      language: i % 2 === 0 ? "hi" : "ja",
+      hook: `hook-${i}`,
+      stageArea: `stage-${i}`,
+    })
+  );
+}
 
 describe("lib/agent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Concurrent-run guard: no active run
+    mockPrisma.run.findFirst.mockResolvedValue(null);
+    // History for variety
+    mockPrisma.usageLog.findMany.mockResolvedValue([]);
+
+    // Default variety: N combos for requested batchSize
+    mockVarietyAssign.mockImplementation(
+      (_pool: unknown, _history: unknown, cfg: { batchSize: number }) =>
+        defaultAssignments(cfg?.batchSize ?? 5)
+    );
+
+    // Default linter: honor fixture lintReport fields on scenes
+    mockLintBatch.mockImplementation((batch: { scenes: Array<Partial<Scene>> }) =>
+      lintReportFromScenes(batch)
+    );
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Do not restoreAllMocks — that wipes vi.mock factory implementations mid-suite
   });
 
   // Helper to create a valid template with graph
@@ -240,12 +309,10 @@ describe("lib/agent", () => {
         historyStrictness: "warn",
       }, mockEmitter);
 
-      // Verify loopMode was passed correctly
-      expect(mockGenerateBatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          loopMode: false,
-        })
-      );
+      // loopMode is applied during compile (scaffold), not as a generateBatch option.
+      // generateBatch(scaffold, assignments, options) — assert generation still ran.
+      expect(mockGenerateBatch).toHaveBeenCalled();
+      expect(mockGenerateBatch.mock.calls[0].length).toBeGreaterThanOrEqual(2);
       expect(result.status).toBe("DONE");
     });
 

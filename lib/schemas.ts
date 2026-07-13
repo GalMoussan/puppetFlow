@@ -249,24 +249,39 @@ export type SceneOutput = z.infer<typeof SceneOutputSchema>;
 
 /**
  * SSE event types
+ *
+ * Contract matches Phase 2 test spec §4.5 / §5.3 and tests/utils/sse-reader.ts:
+ * - phase: pipeline stage markers
+ * - scene: flat index + preview (first 100 chars) for streaming efficiency
+ * - done: runId + sceneCount + optional duration
+ * - error: error message with optional phase/runId context
  */
 export const SSEEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("phase"),
     phase: z.enum(["COMPILING", "ASSIGNING", "GENERATING", "LINTING", "REPAIRING"]),
+    timestamp: z.number().optional(),
   }),
   z.object({
     type: z.literal("scene"),
-    scene: SceneOutputSchema,
+    index: z.number().int(),
+    preview: z.string().optional(),
+    partial: z.boolean().optional(),
+    timestamp: z.number().optional(),
   }),
   z.object({
     type: z.literal("done"),
     runId: z.string(),
-    totalScenes: z.number().int(),
+    sceneCount: z.number().int(),
+    duration: z.number().optional(),
+    timestamp: z.number().optional(),
   }),
   z.object({
     type: z.literal("error"),
-    message: z.string(),
+    error: z.string(),
+    phase: z.enum(["COMPILING", "ASSIGNING", "GENERATING", "LINTING", "REPAIRING"]).optional(),
+    runId: z.string().optional(),
+    timestamp: z.number().optional(),
   }),
 ]);
 

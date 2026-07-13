@@ -283,12 +283,53 @@ Please regenerate the scenes fixing all violations while maintaining the creativ
 }
 
 /**
- * Repair scenes with lint violations
+ * Options for the repair pass
  */
-export async function repair(repairPrompt: string): Promise<BatchOutput> {
-  return generateBatch(repairPrompt, [], {
-    temperature: 0.8,
-    maxTokens: 4000,
+export interface RepairOptions {
+  /** Hard violations that must be fixed (required by agent orchestrator contract) */
+  violations?: Array<{
+    rule?: string;
+    evidence?: string;
+    sceneIndex?: number;
+    stage?: string;
+    severity?: string;
+    [key: string]: unknown;
+  }>;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+/**
+ * Repair scenes with lint violations.
+ *
+ * Supports two call styles:
+ * - `repair(fullRepairPrompt)` — prompt already built via buildRepairPrompt
+ * - `repair(scaffold, { violations })` — agent contract; builds repair prompt internally
+ */
+export async function repair(
+  scaffoldOrPrompt: string,
+  options: RepairOptions = {}
+): Promise<BatchOutput> {
+  let prompt = scaffoldOrPrompt;
+
+  if (options.violations && options.violations.length > 0) {
+    // Group flat violations by scene for buildRepairPrompt
+    const byScene = new Map<number, unknown[]>();
+    for (const v of options.violations) {
+      const idx = typeof v.sceneIndex === "number" ? v.sceneIndex : 0;
+      const list = byScene.get(idx) ?? [];
+      list.push(v);
+      byScene.set(idx, list);
+    }
+    const violationsByScene = Array.from(byScene.entries()).map(
+      ([sceneIndex, violations]) => ({ sceneIndex, violations })
+    );
+    prompt = buildRepairPrompt(scaffoldOrPrompt, violationsByScene);
+  }
+
+  return generateBatch(prompt, [], {
+    temperature: options.temperature ?? 0.8,
+    maxTokens: options.maxTokens ?? 4000,
   });
 }
 
