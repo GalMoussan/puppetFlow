@@ -145,7 +145,8 @@ describe("RunViewerPage", () => {
       expect(screen.getByTestId("scene-card-scene-1")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /^reroll$/i }));
+    await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+    await user.click(screen.getByRole("button", { name: /reroll full scene/i }));
     await user.click(screen.getByRole("button", { name: /confirm/i }));
 
     await waitFor(() => {
@@ -154,6 +155,43 @@ describe("RunViewerPage", () => {
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({ sceneIndex: 0 }),
+        })
+      );
+    });
+  });
+
+  it("calls reroll API with stage when stage option selected", async () => {
+    const user = userEvent.setup();
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => apiRun,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => apiRun.scenes[0],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => apiRun,
+      });
+
+    render(<RunViewerPage runId="run-001" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("scene-card-scene-1")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+    await user.click(screen.getByRole("button", { name: /reroll video start/i }));
+    await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/runs/run-001/reroll",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ sceneIndex: 0, stage: "VIDEO_START" }),
         })
       );
     });

@@ -204,30 +204,24 @@ describe("RunViewer", () => {
   });
 
   // ===========================================================================
+  // Export formats (T406)
+  // ===========================================================================
+
+  // ===========================================================================
   // Export Functionality
   // ===========================================================================
 
   describe("Export Functionality", () => {
-    it("has Export Run button", () => {
-      render(<RunViewer {...defaultProps} />);
-
-      expect(
-        screen.getByRole("button", { name: /export/i })
-      ).toBeInTheDocument();
-    });
-
-    it("triggers download on export", async () => {
-      const user = userEvent.setup();
-      const mockBlob = new Blob(["# Run Export"], { type: "text/markdown" });
+    function mockDownload() {
+      const mockBlob = new Blob(["# Run Export\n2024-01-15"], {
+        type: "text/markdown",
+      });
       mockFetch.mockResolvedValueOnce({
         ok: true,
         blob: () => Promise.resolve(mockBlob),
       });
-
-      // Mock URL.createObjectURL and link click
       global.URL.createObjectURL = vi.fn(() => "blob:url");
       global.URL.revokeObjectURL = vi.fn();
-
       const mockLink = { href: "", download: "", click: vi.fn() };
       const originalCreateElement = document.createElement.bind(document);
       vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
@@ -236,44 +230,67 @@ describe("RunViewer", () => {
         }
         return originalCreateElement(tagName);
       });
+      return mockLink;
+    }
+
+    it("has Export scenes and Export scaffold buttons", () => {
+      render(<RunViewer {...defaultProps} />);
+
+      expect(
+        screen.getByRole("button", { name: /export scenes/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /export scaffold/i })
+      ).toBeInTheDocument();
+    });
+
+    it("triggers scenes download on export scenes", async () => {
+      const user = userEvent.setup();
+      const mockLink = mockDownload();
 
       render(<RunViewer {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByRole("button", { name: /export scenes/i }));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith("/api/export/run-001");
+        expect(mockFetch).toHaveBeenCalledWith(
+          "/api/export/run-001?format=scenes"
+        );
         expect(mockLink.click).toHaveBeenCalled();
       });
 
       vi.restoreAllMocks();
     });
 
-    it("export filename includes date", async () => {
+    it("export scenes filename includes date", async () => {
       const user = userEvent.setup();
-      const mockBlob = new Blob(["# Run Export"], { type: "text/markdown" });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        blob: () => Promise.resolve(mockBlob),
-      });
-
-      global.URL.createObjectURL = vi.fn(() => "blob:url");
-
-      const mockLink = { href: "", download: "", click: vi.fn() };
-      const originalCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
-        if (tagName === "a") {
-          return mockLink as unknown as HTMLAnchorElement;
-        }
-        return originalCreateElement(tagName);
-      });
+      const mockLink = mockDownload();
 
       render(<RunViewer {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByRole("button", { name: /export scenes/i }));
 
       await waitFor(() => {
         expect(mockLink.download).toContain("2024-01-15");
+      });
+
+      vi.restoreAllMocks();
+    });
+
+    it("triggers scaffold download with format=scaffold", async () => {
+      const user = userEvent.setup();
+      const mockLink = mockDownload();
+
+      render(<RunViewer {...defaultProps} />);
+
+      await user.click(screen.getByRole("button", { name: /export scaffold/i }));
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          "/api/export/run-001?format=scaffold"
+        );
+        expect(mockLink.click).toHaveBeenCalled();
+        expect(mockLink.download).toMatch(/scaffold/i);
       });
 
       vi.restoreAllMocks();
@@ -317,6 +334,7 @@ describe("SceneCard", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockWriteText.mockResolvedValue(undefined);
   });
 
   // ===========================================================================
@@ -393,6 +411,120 @@ describe("SceneCard", () => {
   });
 
   // ===========================================================================
+  // Per-prompt copy (T404)
+  // ===========================================================================
+
+  describe("Per-prompt Copy", () => {
+    it("has copy buttons for image and each video stage", async () => {
+      const user = userEvent.setup();
+      render(<SceneCard {...defaultProps} />);
+
+      expect(
+        screen.getByRole("button", { name: /copy image prompt/i })
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /video prompts/i }));
+
+      expect(
+        screen.getByRole("button", { name: /copy video start/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /copy video middle/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /copy video end/i })
+      ).toBeInTheDocument();
+    });
+
+    it("copies image prompt text to clipboard", async () => {
+      const user = userEvent.setup();
+      const writeTextSpy = vi.spyOn(navigator.clipboard, "writeText");
+      render(<SceneCard {...defaultProps} />);
+
+      await user.click(
+        screen.getByRole("button", { name: /copy image prompt/i })
+      );
+
+      await waitFor(() => {
+        expect(writeTextSpy).toHaveBeenCalledWith(mockScene.imagePrompt);
+      });
+    });
+
+    it("copies video start prompt when expanded", async () => {
+      const user = userEvent.setup();
+      const writeTextSpy = vi.spyOn(navigator.clipboard, "writeText");
+      render(<SceneCard {...defaultProps} />);
+
+      await user.click(screen.getByRole("button", { name: /video prompts/i }));
+      await user.click(
+        screen.getByRole("button", { name: /copy video start/i })
+      );
+
+      await waitFor(() => {
+        expect(writeTextSpy).toHaveBeenCalledWith(mockScene.videoStart);
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Stage reroll (T405)
+  // ===========================================================================
+
+  describe("Stage Reroll", () => {
+    it("offers stage-specific reroll options after opening menu", async () => {
+      const user = userEvent.setup();
+      render(<SceneCard {...defaultProps} />);
+
+      await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+
+      expect(
+        screen.getByRole("button", { name: /reroll full scene/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reroll image/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reroll video start/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reroll video middle/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reroll video end/i })
+      ).toBeInTheDocument();
+    });
+
+    it("calls onReroll with stage when stage option confirmed", async () => {
+      const user = userEvent.setup();
+      render(<SceneCard {...defaultProps} />);
+
+      await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+      await user.click(
+        screen.getByRole("button", { name: /reroll video start/i })
+      );
+      await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+      expect(defaultProps.onReroll).toHaveBeenCalledWith(
+        mockScene.index,
+        "VIDEO_START"
+      );
+    });
+
+    it("calls onReroll without stage for full scene", async () => {
+      const user = userEvent.setup();
+      render(<SceneCard {...defaultProps} />);
+
+      await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+      await user.click(
+        screen.getByRole("button", { name: /reroll full scene/i })
+      );
+      await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+      expect(defaultProps.onReroll).toHaveBeenCalledWith(mockScene.index);
+    });
+  });
+
+  // ===========================================================================
   // Boundary Frames
   // ===========================================================================
 
@@ -440,19 +572,22 @@ describe("SceneCard", () => {
       expect(defaultProps.onCopy).toHaveBeenCalledWith(mockScene);
     });
 
-    it("has reroll button", () => {
+    it("has reroll menu button", () => {
       render(<SceneCard {...defaultProps} />);
 
       expect(
-        screen.getByRole("button", { name: /reroll/i })
+        screen.getByRole("button", { name: /reroll menu/i })
       ).toBeInTheDocument();
     });
 
-    it("shows confirmation before reroll", async () => {
+    it("shows confirmation before full scene reroll", async () => {
       const user = userEvent.setup();
       render(<SceneCard {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /reroll/i }));
+      await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+      await user.click(
+        screen.getByRole("button", { name: /reroll full scene/i })
+      );
 
       expect(screen.getByText(/regenerate this scene/i)).toBeInTheDocument();
     });
@@ -461,7 +596,10 @@ describe("SceneCard", () => {
       const user = userEvent.setup();
       render(<SceneCard {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /reroll/i }));
+      await user.click(screen.getByRole("button", { name: /reroll menu/i }));
+      await user.click(
+        screen.getByRole("button", { name: /reroll full scene/i })
+      );
       await user.click(screen.getByRole("button", { name: /confirm/i }));
 
       expect(defaultProps.onReroll).toHaveBeenCalledWith(mockScene.index);

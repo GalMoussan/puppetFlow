@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, Copy, Download, Check } from "lucide-react";
-import { SceneCard, type Scene } from "./SceneCard";
+import { SceneCard, type Scene, type RerollStage } from "./SceneCard";
 
 export interface Run {
   id: string;
@@ -19,7 +19,7 @@ export interface Run {
 
 interface RunViewerProps {
   run: Run;
-  onReroll: (sceneIndex: number) => void;
+  onReroll: (sceneIndex: number, stage?: RerollStage) => void;
   onBackToCanvas: () => void;
 }
 
@@ -63,8 +63,32 @@ function formatAllScenesForClipboard(scenes: Scene[]): string {
   return scenes.map(formatSceneForClipboard).join("\n---\n\n");
 }
 
+async function downloadExport(
+  runId: string,
+  format: "scenes" | "scaffold",
+  filename: string
+): Promise<void> {
+  const response = await fetch(`/api/export/${runId}?format=${format}`);
+  if (!response.ok) {
+    throw new Error("Export failed");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
 export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
   const [copySuccess, setCopySuccess] = useState(false);
+
+  const dateStr = new Date(run.createdAt).toISOString().split("T")[0];
+  const baseName = run.templateName.replace(/\s+/g, "-");
 
   const handleCopyAll = async () => {
     const text = formatAllScenesForClipboard(run.scenes);
@@ -78,25 +102,27 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
     await navigator.clipboard.writeText(text);
   };
 
-  const handleExport = async () => {
+  const handleExportScenes = async () => {
     try {
-      const response = await fetch(`/api/export/${run.id}`);
-      if (!response.ok) {
-        throw new Error("Export failed");
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      const dateStr = new Date(run.createdAt).toISOString().split("T")[0];
-      link.download = `${run.templateName.replace(/\s+/g, "-")}-${dateStr}.md`;
-      link.click();
-
-      URL.revokeObjectURL(url);
+      await downloadExport(
+        run.id,
+        "scenes",
+        `${baseName}-${dateStr}.md`
+      );
     } catch (error) {
-      console.error("Export failed:", error);
+      console.error("Export scenes failed:", error);
+    }
+  };
+
+  const handleExportScaffold = async () => {
+    try {
+      await downloadExport(
+        run.id,
+        "scaffold",
+        `scaffold-${baseName}-${dateStr}.md`
+      );
+    } catch (error) {
+      console.error("Export scaffold failed:", error);
     }
   };
 
@@ -104,12 +130,13 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}
       <header className="border-b border-zinc-800 px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-4">
             <button
               onClick={onBackToCanvas}
               className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
               aria-label="Back to canvas"
+              type="button"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Canvas
@@ -117,11 +144,12 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
             <div className="h-6 w-px bg-zinc-700" />
             <h1 className="text-xl font-semibold">{run.templateName}</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleCopyAll}
               className="flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
               aria-label="Copy all"
+              type="button"
             >
               {copySuccess ? (
                 <Check className="w-4 h-4 text-green-500" />
@@ -131,12 +159,22 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
               {copySuccess ? "Copied!" : "Copy All"}
             </button>
             <button
-              onClick={handleExport}
+              onClick={handleExportScenes}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
-              aria-label="Export"
+              aria-label="Export scenes"
+              type="button"
             >
               <Download className="w-4 h-4" />
-              Export
+              Export scenes
+            </button>
+            <button
+              onClick={handleExportScaffold}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+              aria-label="Export scaffold"
+              type="button"
+            >
+              <Download className="w-4 h-4" />
+              Export scaffold
             </button>
           </div>
         </div>

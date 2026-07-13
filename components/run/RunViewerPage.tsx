@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RunViewer, type Run } from "./RunViewer";
+import type { RerollStage } from "./SceneCard";
 import { mapApiRunToViewerRun, type ApiRun } from "@/lib/map-run";
 
 interface RunViewerPageProps {
@@ -44,14 +45,16 @@ export function RunViewerPage({ runId }: RunViewerPageProps) {
     router.push("/");
   };
 
-  const handleReroll = async (displayIndex: number) => {
+  const handleReroll = async (displayIndex: number, stage?: RerollStage) => {
     // Viewer uses 1-based display index; API expects 0-based sceneIndex
     const sceneIndex = displayIndex - 1;
     try {
       const response = await fetch(`/api/runs/${runId}/reroll`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sceneIndex }),
+        body: JSON.stringify(
+          stage ? { sceneIndex, stage } : { sceneIndex }
+        ),
       });
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as {
