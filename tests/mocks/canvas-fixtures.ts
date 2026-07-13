@@ -422,6 +422,9 @@ export interface MockCanvasStore {
   selectNode: ReturnType<typeof vi.fn<(nodeId: string | null) => void>>;
   loadTemplate: ReturnType<typeof vi.fn<(templateId: string) => Promise<void>>>;
   saveTemplate: ReturnType<typeof vi.fn<() => Promise<void>>>;
+  setThemePackId: ReturnType<typeof vi.fn<(themePackId: string | null) => void>>;
+  setRunStatus: ReturnType<typeof vi.fn<(status: RunStatus) => void>>;
+  setCurrentRunId: ReturnType<typeof vi.fn<(runId: string | null) => void>>;
   setRunConfig: ReturnType<typeof vi.fn<(config: Partial<MockCanvasStore["runConfig"]>) => void>>;
 }
 
@@ -454,6 +457,9 @@ export function createMockCanvasStore(overrides?: Partial<MockCanvasStore>): Moc
     selectNode: vi.fn(),
     loadTemplate: vi.fn(),
     saveTemplate: vi.fn().mockResolvedValue(undefined),
+    setThemePackId: vi.fn(),
+    setRunStatus: vi.fn(),
+    setCurrentRunId: vi.fn(),
     setRunConfig: vi.fn(),
     ...overrides,
   };

@@ -140,7 +140,10 @@ export function RunProgress({
   };
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-700 space-y-4">
+    <div
+      className="bg-zinc-900 rounded-xl p-6 border border-zinc-700 space-y-4"
+      data-testid="run-progress"
+    >
       {/* Header */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-white">Run Progress</h3>

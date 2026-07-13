@@ -190,15 +190,13 @@ export async function POST(request: NextRequest) {
     runBatch(data.templateId, data.runConfig, emitter).catch((err) => {
       console.error("runBatch error:", err);
 
-      if (err instanceof NotFoundError) {
-        emitter({ type: "error", message: err.message });
-      } else if (err instanceof ConflictError) {
-        emitter({ type: "error", message: err.message });
+      const message =
+        err instanceof Error ? err.message : "Unknown error";
+
+      if (err instanceof NotFoundError || err instanceof ConflictError) {
+        emitter({ type: "error", error: message });
       } else {
-        emitter({
-          type: "error",
-          message: err instanceof Error ? err.message : "Unknown error",
-        });
+        emitter({ type: "error", error: message });
       }
     });
 

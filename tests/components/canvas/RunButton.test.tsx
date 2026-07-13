@@ -174,6 +174,128 @@ describe("RunButton", () => {
       expect(screen.queryByTestId("run-modal")).not.toBeInTheDocument();
     });
   });
+
+  // ===========================================================================
+  // API wiring + SSE progress
+  // ===========================================================================
+
+  describe("Execution Wiring", () => {
+    function setupWithBlocks() {
+      const blockNode = createBlockNode("node-1", mockCameraBlock, "VIDEO_START", 0);
+      mockStore = createMockCanvasStore({
+        nodes: [...createLaneNodes(), blockNode],
+        templateId: "tpl-001",
+        templateName: "Test Template",
+      });
+    }
+
+    function mockSSEResponse(events: object[]) {
+      const encoder = new TextEncoder();
+      const chunks = events.map(
+        (e) => `event: ${(e as { type: string }).type}\ndata: ${JSON.stringify(e)}\n\n`
+      );
+      let i = 0;
+      const stream = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (i < chunks.length) {
+            controller.enqueue(encoder.encode(chunks[i]));
+            i++;
+          } else {
+            controller.close();
+          }
+        },
+      });
+      return {
+        ok: true,
+        status: 200,
+        body: stream,
+        json: async () => ({}),
+      };
+    }
+
+    it("POSTs CreateRun body with nested runConfig matching API schema", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockFetch.mockResolvedValue(
+        mockSSEResponse([
+          { type: "phase", phase: "COMPILING" },
+          { type: "done", runId: "run-1", sceneCount: 5, duration: 100 },
+        ])
+      );
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+      });
+
+      const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+      expect(mockFetch.mock.calls[0][0]).toBe("/api/runs");
+      expect(init.method).toBe("POST");
+      const body = JSON.parse(init.body as string);
+      expect(body).toEqual({
+        templateId: "tpl-001",
+        runConfig: {
+          batchSize: 5,
+          loopMode: true,
+          languages: { hi: 3, ja: 2 },
+          historyStrictness: "warn",
+        },
+      });
+    });
+
+    it("updates store runStatus from SSE phase events and shows progress UI", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockFetch.mockResolvedValue(
+        mockSSEResponse([
+          { type: "phase", phase: "COMPILING" },
+          { type: "phase", phase: "GENERATING" },
+          { type: "scene", index: 0, preview: "Scene 0" },
+          { type: "phase", phase: "LINTING" },
+          { type: "done", runId: "run-42", sceneCount: 5, duration: 2500 },
+        ])
+      );
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("run-progress")).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(mockStore.setRunStatus).toHaveBeenCalledWith("compiling");
+        expect(mockStore.setRunStatus).toHaveBeenCalledWith("generating");
+        expect(mockStore.setRunStatus).toHaveBeenCalledWith("linting");
+        expect(mockStore.setRunStatus).toHaveBeenCalledWith("done");
+        expect(mockStore.setCurrentRunId).toHaveBeenCalledWith("run-42");
+      });
+    });
+
+    it("surfaces API error JSON without opening progress", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 409,
+        body: null,
+        json: async () => ({ error: "A batch is already running" }),
+      });
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/already running/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId("run-progress")).not.toBeInTheDocument();
+    });
+  });
 });
 
 // =============================================================================
@@ -222,6 +344,35 @@ describe("RunModal", () => {
       render(<RunModal {...defaultProps} />);
 
       expect(screen.getByText("Test Template")).toBeInTheDocument();
+    });
+
+    it("renders loop mode toggle defaulting to on", () => {
+      render(<RunModal {...defaultProps} />);
+
+      const loopToggle = screen.getByLabelText(/loop mode/i);
+      expect(loopToggle).toBeChecked();
+    });
+
+    it("renders language weight inputs with defaults hi=3 ja=2", () => {
+      render(<RunModal {...defaultProps} />);
+
+      expect(screen.getByLabelText(/hindi/i)).toHaveValue(3);
+      expect(screen.getByLabelText(/japanese/i)).toHaveValue(2);
+    });
+
+    it("renders history strictness defaulting to warn", () => {
+      render(<RunModal {...defaultProps} />);
+
+      const strictness = screen.getByLabelText(/history strictness/i);
+      expect(strictness).toHaveValue("warn");
+    });
+
+    it("renders run date defaulting to today", () => {
+      render(<RunModal {...defaultProps} />);
+
+      const dateInput = screen.getByLabelText(/run date/i) as HTMLInputElement;
+      const today = new Date().toISOString().slice(0, 10);
+      expect(dateInput).toHaveValue(today);
     });
   });
 
@@ -291,10 +442,15 @@ describe("RunModal", () => {
       const generateButton = screen.getByRole("button", { name: /generate/i });
       await user.click(generateButton);
 
+      const today = new Date().toISOString().slice(0, 10);
       expect(defaultProps.onRun).toHaveBeenCalledWith({
         sceneCount: 5,
         model: "claude-sonnet-4-20250514",
         notes: "",
+        loopMode: true,
+        languages: { hi: 3, ja: 2 },
+        historyStrictness: "warn",
+        runDate: today,
       });
     });
 
@@ -311,6 +467,30 @@ describe("RunModal", () => {
       expect(defaultProps.onRun).toHaveBeenCalledWith(
         expect.objectContaining({
           notes: "Test run notes",
+        })
+      );
+    });
+
+    it("includes loop mode, languages, and history strictness when changed", async () => {
+      const user = userEvent.setup();
+      render(<RunModal {...defaultProps} />);
+
+      await user.click(screen.getByLabelText(/loop mode/i));
+      const hiInput = screen.getByLabelText(/hindi/i);
+      await user.clear(hiInput);
+      await user.type(hiInput, "4");
+      const jaInput = screen.getByLabelText(/japanese/i);
+      await user.clear(jaInput);
+      await user.type(jaInput, "1");
+      await user.selectOptions(screen.getByLabelText(/history strictness/i), "hard-fail");
+
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      expect(defaultProps.onRun).toHaveBeenCalledWith(
+        expect.objectContaining({
+          loopMode: false,
+          languages: { hi: 4, ja: 1 },
+          historyStrictness: "hard-fail",
         })
       );
     });
