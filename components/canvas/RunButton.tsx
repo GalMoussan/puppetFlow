@@ -190,7 +190,10 @@ export function RunButton() {
       />
 
       {showProgress && progressRunId && (
-        <div className="fixed bottom-4 right-4 z-50 w-full max-w-md shadow-2xl">
+        <div
+          className="fixed bottom-4 right-4 z-[110] w-full max-w-md shadow-2xl pointer-events-auto"
+          data-testid="run-progress-host"
+        >
           <RunProgress
             runId={progressRunId}
             progress={progress ?? undefined}

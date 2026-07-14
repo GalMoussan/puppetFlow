@@ -342,6 +342,36 @@ describe("RunButton", () => {
       });
     });
 
+    it("closes the run modal and shows progress host above modal z-index after stream starts", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockFetchWithLlmStatus(
+        mockSSEResponse([
+          { type: "phase", phase: "COMPILING" },
+          { type: "done", runId: "run-77", sceneCount: 1, duration: 50 },
+        ])
+      );
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      expect(screen.getByTestId("run-modal")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("run-modal")).not.toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("run-progress-host")).toBeInTheDocument();
+        expect(screen.getByTestId("run-progress")).toBeInTheDocument();
+      });
+
+      const host = screen.getByTestId("run-progress-host");
+      // Must stack above modal (z-[100]) → expect z-[110] or higher
+      expect(host.className).toMatch(/z-\[(1[1-9][0-9]|[2-9][0-9]{2,})\]/);
+    });
+
     it("surfaces API error JSON without opening progress", async () => {
       const user = userEvent.setup();
       setupWithBlocks();
@@ -676,6 +706,48 @@ describe("RunModal", () => {
       await user.click(screen.getByRole("button", { name: /cancel/i }));
 
       expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+  });
+
+  // ===========================================================================
+  // Layout contract (sticky actions — Generate always reachable)
+  // ===========================================================================
+
+  describe("Layout contract", () => {
+    it("keeps Generate in a sticky action footer outside the scroll body", () => {
+      render(<RunModal {...defaultProps} />);
+
+      const modal = screen.getByTestId("run-modal");
+      const body = screen.getByTestId("run-modal-body");
+      const actions = screen.getByTestId("run-modal-actions");
+      const generate = screen.getByRole("button", { name: /generate/i });
+
+      expect(modal.contains(body)).toBe(true);
+      expect(modal.contains(actions)).toBe(true);
+      // Actions must not live inside the scrollable body (below-the-fold trap)
+      expect(body.contains(actions)).toBe(false);
+      expect(actions.contains(generate)).toBe(true);
+    });
+
+    it("uses flex column panel with constrained height", () => {
+      render(<RunModal {...defaultProps} />);
+      const modal = screen.getByTestId("run-modal");
+      expect(modal.className).toMatch(/flex/);
+      expect(modal.className).toMatch(/flex-col/);
+      expect(modal.className).toMatch(/max-h-/);
+    });
+
+    it("pins action footer with shrink-0 so it stays visible", () => {
+      render(<RunModal {...defaultProps} />);
+      const actions = screen.getByTestId("run-modal-actions");
+      expect(actions.className).toMatch(/shrink-0/);
+    });
+
+    it("raises modal stacking above the top bar (z-50)", () => {
+      render(<RunModal {...defaultProps} />);
+      const backdrop = screen.getByTestId("run-modal-backdrop");
+      // z-[100] or higher
+      expect(backdrop.className).toMatch(/z-\[(1[0-9]{2}|[2-9][0-9]{2,})\]|z-\[100\]/);
     });
   });
 

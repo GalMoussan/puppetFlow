@@ -212,15 +212,25 @@ export function RunModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
       data-testid="run-modal-backdrop"
       onClick={handleBackdropClick}
     >
+      {/*
+        Flex column panel: header + scroll body + sticky actions.
+        Generate must never live inside the scroll region (below-the-fold trap).
+      */}
       <div
-        className="bg-[#0a0a0b]/95 rounded-2xl p-6 w-full max-w-md border border-white/[0.1] max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.08)]"
+        className="
+          bg-[#0a0a0b]/95 rounded-2xl w-full max-w-md
+          border border-white/[0.1]
+          max-h-[min(90vh,40rem)]
+          flex flex-col overflow-hidden
+          shadow-[0_0_60px_rgba(34,211,238,0.08)]
+        "
         data-testid="run-modal"
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="shrink-0 flex justify-between items-center px-6 pt-6 pb-3">
           <h2 className="text-lg font-semibold tracking-tight text-white">
             Run Template
           </h2>
@@ -228,217 +238,256 @@ export function RunModal({
             onClick={onClose}
             className="text-zinc-500 hover:text-white transition-colors"
             type="button"
+            aria-label="Close run modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="text-sm text-zinc-500 mb-4 space-y-1">
-          <div>
-            Template: <span className="text-white">{templateName}</span>
+        <div
+          className="flex-1 min-h-0 overflow-y-auto px-6 pb-2"
+          data-testid="run-modal-body"
+        >
+          <div className="text-sm text-zinc-500 mb-4 space-y-1">
+            <div>
+              Template: <span className="text-white">{templateName}</span>
+            </div>
+            <div>
+              Provider:{" "}
+              <span
+                className="text-cyan-300 capitalize"
+                data-testid="llm-provider"
+              >
+                {provider}
+              </span>
+              {!hasKey && (
+                <span className="text-red-400 ml-2">(no API key)</span>
+              )}
+            </div>
           </div>
-          <div>
-            Provider:{" "}
-            <span className="text-cyan-300 capitalize" data-testid="llm-provider">
-              {provider}
-            </span>
-            {!hasKey && (
-              <span className="text-red-400 ml-2">(no API key)</span>
+
+          <form
+            id="run-config-form"
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+            <div>
+              <label
+                htmlFor="runDate"
+                className="block text-sm font-medium text-zinc-300 mb-1"
+              >
+                Run Date
+              </label>
+              <input
+                type="date"
+                id="runDate"
+                value={runDate}
+                onChange={(e) => {
+                  setRunDate(e.target.value);
+                  clearValidation();
+                }}
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="sceneCount"
+                className="block text-sm font-medium text-zinc-300 mb-1"
+              >
+                Scene Count
+              </label>
+              <input
+                type="number"
+                id="sceneCount"
+                value={sceneCount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  applySceneCount(Number.isNaN(val) ? 0 : val);
+                }}
+                min={1}
+                max={10}
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              />
+              <p className="text-xs text-zinc-500 mt-1">
+                Language weights auto-adjust to match scene count.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <label
+                htmlFor="loopMode"
+                className="text-sm font-medium text-zinc-300"
+              >
+                Loop Mode
+              </label>
+              <input
+                type="checkbox"
+                id="loopMode"
+                checked={loopMode}
+                onChange={(e) => {
+                  setLoopMode(e.target.checked);
+                  clearValidation();
+                }}
+                className="h-4 w-4 rounded border-white/[0.12] bg-white/[0.04] text-green-500 focus:ring-cyan-500/50"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="langHi"
+                  className="block text-sm font-medium text-zinc-300 mb-1"
+                >
+                  Hindi weight
+                </label>
+                <input
+                  type="number"
+                  id="langHi"
+                  value={hiWeight}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setHiWeight(Number.isNaN(val) ? 0 : val);
+                    clearValidation();
+                  }}
+                  min={0}
+                  max={sceneCount || 10}
+                  className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="langJa"
+                  className="block text-sm font-medium text-zinc-300 mb-1"
+                >
+                  Japanese weight
+                </label>
+                <input
+                  type="number"
+                  id="langJa"
+                  value={jaWeight}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setJaWeight(Number.isNaN(val) ? 0 : val);
+                    clearValidation();
+                  }}
+                  min={0}
+                  max={sceneCount || 10}
+                  className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-zinc-500 -mt-2">
+              Sum should equal scene count ({sceneCount}). Currently:{" "}
+              {hiWeight + jaWeight}.
+            </p>
+
+            <div>
+              <label
+                htmlFor="historyStrictness"
+                className="block text-sm font-medium text-zinc-300 mb-1"
+              >
+                History Strictness
+              </label>
+              <select
+                id="historyStrictness"
+                value={historyStrictness}
+                onChange={(e) => {
+                  setHistoryStrictness(e.target.value as "hard-fail" | "warn");
+                  clearValidation();
+                }}
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              >
+                <option value="warn">Warn on history collision</option>
+                <option value="hard-fail">Hard-fail on history collision</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="model"
+                className="block text-sm font-medium text-zinc-300 mb-1"
+              >
+                Model
+              </label>
+              <select
+                id="model"
+                value={model}
+                onChange={(e) => {
+                  setModel(e.target.value);
+                  clearValidation();
+                }}
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              >
+                {models.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="notes"
+                className="block text-sm font-medium text-zinc-300 mb-1"
+              >
+                Notes (optional)
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  clearValidation();
+                }}
+                rows={3}
+                placeholder="Add any notes for this run..."
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none"
+              />
+            </div>
+
+            <input type="hidden" name="templateId" value={templateId} readOnly />
+
+            {(validationError || error) && (
+              <div className="text-red-400 text-sm p-3 bg-red-400/10 rounded-lg">
+                {validationError || error}
+              </div>
             )}
-          </div>
+          </form>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="runDate" className="block text-sm font-medium text-zinc-300 mb-1">
-              Run Date
-            </label>
-            <input
-              type="date"
-              id="runDate"
-              value={runDate}
-              onChange={(e) => {
-                setRunDate(e.target.value);
-                clearValidation();
-              }}
-              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="sceneCount" className="block text-sm font-medium text-zinc-300 mb-1">
-              Scene Count
-            </label>
-            <input
-              type="number"
-              id="sceneCount"
-              value={sceneCount}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                applySceneCount(Number.isNaN(val) ? 0 : val);
-              }}
-              min={1}
-              max={10}
-              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-            />
-            <p className="text-xs text-zinc-500 mt-1">
-              Language weights auto-adjust to match scene count.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="loopMode" className="text-sm font-medium text-zinc-300">
-              Loop Mode
-            </label>
-            <input
-              type="checkbox"
-              id="loopMode"
-              checked={loopMode}
-              onChange={(e) => {
-                setLoopMode(e.target.checked);
-                clearValidation();
-              }}
-              className="h-4 w-4 rounded border-white/[0.12] bg-white/[0.04] text-green-500 focus:ring-cyan-500/50"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="langHi" className="block text-sm font-medium text-zinc-300 mb-1">
-                Hindi weight
-              </label>
-              <input
-                type="number"
-                id="langHi"
-                value={hiWeight}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  setHiWeight(Number.isNaN(val) ? 0 : val);
-                  clearValidation();
-                }}
-                min={0}
-                max={sceneCount || 10}
-                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-              />
-            </div>
-            <div>
-              <label htmlFor="langJa" className="block text-sm font-medium text-zinc-300 mb-1">
-                Japanese weight
-              </label>
-              <input
-                type="number"
-                id="langJa"
-                value={jaWeight}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  setJaWeight(Number.isNaN(val) ? 0 : val);
-                  clearValidation();
-                }}
-                min={0}
-                max={sceneCount || 10}
-                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-              />
-            </div>
-          </div>
-          <p className="text-xs text-zinc-500 -mt-2">
-            Sum should equal scene count ({sceneCount}). Currently: {hiWeight + jaWeight}.
-          </p>
-
-          <div>
-            <label
-              htmlFor="historyStrictness"
-              className="block text-sm font-medium text-zinc-300 mb-1"
-            >
-              History Strictness
-            </label>
-            <select
-              id="historyStrictness"
-              value={historyStrictness}
-              onChange={(e) => {
-                setHistoryStrictness(e.target.value as "hard-fail" | "warn");
-                clearValidation();
-              }}
-              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-            >
-              <option value="warn">Warn on history collision</option>
-              <option value="hard-fail">Hard-fail on history collision</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="model" className="block text-sm font-medium text-zinc-300 mb-1">
-              Model
-            </label>
-            <select
-              id="model"
-              value={model}
-              onChange={(e) => {
-                setModel(e.target.value);
-                clearValidation();
-              }}
-              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-            >
-              {models.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-zinc-300 mb-1">
-              Notes (optional)
-            </label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => {
-                setNotes(e.target.value);
-                clearValidation();
-              }}
-              rows={3}
-              placeholder="Add any notes for this run..."
-              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none"
-            />
-          </div>
-
-          <input type="hidden" name="templateId" value={templateId} readOnly />
-
-          {(validationError || error) && (
-            <div className="text-red-400 text-sm p-3 bg-red-400/10 rounded-lg">
-              {validationError || error}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="pf-btn pf-btn-secondary flex-1 px-4 py-2.5"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              aria-label="Generate"
-              className={`
-                pf-btn flex-1 px-4 py-2.5 font-semibold
-                ${isLoading ? "opacity-60 cursor-not-allowed pf-btn-primary" : "pf-btn-primary"}
-              `}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                "Generate"
-              )}
-            </button>
-          </div>
-        </form>
+        <div
+          className="shrink-0 flex gap-3 px-6 py-4 border-t border-white/[0.08] bg-[#0a0a0b]/95"
+          data-testid="run-modal-actions"
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="pf-btn pf-btn-secondary flex-1 px-4 py-2.5"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="run-config-form"
+            disabled={isLoading}
+            aria-label="Generate"
+            className={`
+              pf-btn flex-1 px-4 py-2.5 font-semibold
+              ${isLoading ? "opacity-60 cursor-not-allowed pf-btn-primary" : "pf-btn-primary"}
+            `}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Generate"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
