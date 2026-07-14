@@ -56,7 +56,11 @@ export function RunButton() {
 
   const isRunning =
     status !== "idle" && status !== "done" && status !== "failed";
-  const isDisabled = !hasBlocks || isRunning;
+  // Only disable when there is nothing to run. Mid-flight status must NOT
+  // permanently disable the button — otherwise resetRun() on click never fires
+  // and the user is stuck. Concurrent runs are rejected by the API (409).
+  const isDisabled = !hasBlocks;
+  const showRunningLabel = showProgress || isRunning;
 
   const handleRun = async (config: RunConfig) => {
     setIsLoading(true);
@@ -182,12 +186,22 @@ export function RunButton() {
   return (
     <>
       <button
+        type="button"
+        data-testid="run-button"
         onClick={() => {
-          // Clear stuck generating/compiling so Run is never permanently dead
+          // Always clear stuck status + progress host before opening config
           resetRun();
+          setShowProgress(false);
+          setError(undefined);
+          setIsLoading(false);
           setIsModalOpen(true);
         }}
         disabled={isDisabled}
+        title={
+          !hasBlocks
+            ? "Add blocks to the canvas before running"
+            : "Configure and start a generation run"
+        }
         className={`
           pf-btn px-4 py-1.5 font-semibold tracking-tight
           ${
@@ -197,7 +211,7 @@ export function RunButton() {
           }
         `}
       >
-        {isRunning ? (
+        {showRunningLabel ? (
           <>
             <Loader2
               className="w-4 h-4 animate-spin"

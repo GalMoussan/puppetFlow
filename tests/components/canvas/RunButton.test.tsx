@@ -156,17 +156,37 @@ describe("RunButton", () => {
       expect(button).not.toBeDisabled();
     });
 
-    it("is disabled while a run is in progress", () => {
+    it("stays enabled when previous run status is stuck mid-flight so user can open modal", async () => {
+      const user = userEvent.setup();
       const blockNode = createBlockNode("node-1", mockCameraBlock, "VIDEO_START", 0);
       mockStore = createMockCanvasStore({
         nodes: [...createLaneNodes(), blockNode],
+        templateId: "tpl-001",
+        templateName: "Test Template",
       });
       useRunStore.getState().reset();
+      useRunStore.getState().setStatus("generating"); // stuck — must not permanently disable
+
+      render(<RunButton />);
+
+      const button = screen.getByRole("button", { name: /run|running/i });
+      expect(button).not.toBeDisabled();
+
+      await user.click(button);
+
+      expect(screen.getByTestId("run-modal")).toBeInTheDocument();
+      expect(useRunStore.getState().status).toBe("idle");
+    });
+
+    it("is disabled only when canvas has no blocks (even if status is mid-flight)", () => {
+      mockStore = createMockCanvasStore({
+        nodes: createLaneNodes(),
+      });
       useRunStore.getState().setStatus("generating");
 
       render(<RunButton />);
 
-      const button = screen.getByRole("button", { name: /run/i });
+      const button = screen.getByRole("button", { name: /run|running/i });
       expect(button).toBeDisabled();
     });
 
