@@ -107,6 +107,7 @@ export function Canvas({ className }: CanvasProps) {
         nodesDraggable
         nodesConnectable={false}
         elementsSelectable
+        proOptions={{ hideAttribution: true }}
         className="bg-neutral-950"
       >
         <Background

@@ -15,6 +15,7 @@ import { useBlockLibrary, groupBlocksByType, filterBlocksBySearch, type BlockDef
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { getTypeColor, BLOCK_GROUPS } from "@/lib/types/canvas";
 import type { BlockNodeData } from "@/lib/types/canvas";
+import { CreateBlockButton } from "./CreateBlockButton";
 
 /**
  * Props for the BlockPalette component
@@ -275,31 +276,46 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   const hasResults = groupedBlocks.size > 0;
 
   return (
-    <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4 overflow-y-auto">
-      <h2 className="text-lg font-semibold text-neutral-200 mb-4">
-        Block Library
-      </h2>
+    <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4 overflow-y-auto flex flex-col">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h2 className="text-lg font-semibold text-neutral-200">
+          Block Library
+        </h2>
+      </div>
+
+      <div className="mb-3">
+        <CreateBlockButton />
+      </div>
 
       <SearchInput value={search} onChange={setSearch} />
 
-      {!hasResults && search && (
-        <div className="text-center text-neutral-500 text-sm mt-4">
-          No blocks found matching &quot;{search}&quot;
-        </div>
-      )}
+      <div className="flex-1 overflow-y-auto">
+        {!hasResults && search && (
+          <div className="text-center text-neutral-500 text-sm mt-4">
+            No blocks found matching &quot;{search}&quot;
+          </div>
+        )}
 
-      {groupOrder.map((groupName) => {
-        const groupBlocks = groupedBlocks.get(groupName);
-        if (!groupBlocks || groupBlocks.length === 0) return null;
+        {groupOrder.map((groupName) => {
+          const groupBlocks = groupedBlocks.get(groupName);
+          if (!groupBlocks || groupBlocks.length === 0) return null;
 
-        return (
-          <BlockGroup
-            key={groupName}
-            name={groupName}
-            blocks={groupBlocks}
-          />
-        );
-      })}
+          return (
+            <BlockGroup
+              key={groupName}
+              name={groupName}
+              blocks={groupBlocks}
+            />
+          );
+        })}
+
+        {!hasResults && !search && blocks.length === 0 && (
+          <div className="text-center text-neutral-500 text-sm mt-4 space-y-2">
+            <p>No blocks in this theme pack yet.</p>
+            <p className="text-xs">Use Create Block above to add one.</p>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

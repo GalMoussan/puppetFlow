@@ -33,8 +33,19 @@ export function CreateBlockButton() {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+        disabled={!themePackId}
+        className={`
+          w-full flex items-center justify-center gap-2 px-3 py-2
+          text-sm font-medium rounded-lg transition-colors border
+          ${
+            themePackId
+              ? "text-violet-200 bg-violet-950/50 border-violet-700/50 hover:bg-violet-900/40 hover:text-white"
+              : "text-zinc-500 bg-zinc-800/50 border-zinc-700 cursor-not-allowed"
+          }
+        `}
         aria-label="Create block"
+        type="button"
+        title={themePackId ? "Create a new block" : "Theme pack required"}
       >
         <Plus className="w-4 h-4" />
         Create Block

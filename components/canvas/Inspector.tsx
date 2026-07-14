@@ -10,7 +10,8 @@
 "use client";
 
 import { useState, useCallback, type DragEvent } from "react";
-import { useCanvasStore, selectBlocksInLane } from "@/lib/store/canvas-store";
+import { useShallow } from "zustand/shallow";
+import { useCanvasStore } from "@/lib/store/canvas-store";
 import type { BlockNodeData, LaneNodeData } from "@/lib/types/canvas";
 import type { Lane } from "@/packages/domain/types";
 import type { Node } from "@xyflow/react";
@@ -277,7 +278,19 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
  * Inspector for a selected lane
  */
 function LaneInspector({ lane }: { lane: Lane }) {
-  const blocksInLane = useCanvasStore(selectBlocksInLane(lane));
+  // useShallow + stable element equality: filter/sort always returns a new array;
+  // without shallow compare, React 19 + Zustand getSnapshot loops infinitely.
+  const blocksInLane = useCanvasStore(
+    useShallow((state) =>
+      state.nodes
+        .filter((n) => n.type === "block" && n.parentId === lane)
+        .sort((a, b) => {
+          const aData = a.data as BlockNodeData;
+          const bData = b.data as BlockNodeData;
+          return aData.order - bData.order;
+        })
+    )
+  );
   const setNodes = useCanvasStore((s) => s.setNodes);
   const nodes = useCanvasStore((s) => s.nodes);
 

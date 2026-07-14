@@ -63,6 +63,12 @@ export function RunButton() {
     setError(undefined);
 
     try {
+      if (!templateId) {
+        throw new Error(
+          "No template loaded. Wait for workspace bootstrap or create a template first."
+        );
+      }
+
       // Keep canvas store runConfig in sync with modal choices
       setRunConfig({
         batchSize: config.sceneCount,
@@ -87,8 +93,21 @@ export function RunButton() {
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as {
           error?: string;
+          details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
         };
-        throw new Error(data.error || "Failed to start run");
+        const detailParts: string[] = [];
+        if (data.details?.formErrors?.length) {
+          detailParts.push(...data.details.formErrors);
+        }
+        if (data.details?.fieldErrors) {
+          for (const [field, msgs] of Object.entries(data.details.fieldErrors)) {
+            if (msgs?.length) detailParts.push(`${field}: ${msgs.join(", ")}`);
+          }
+        }
+        const message = detailParts.length
+          ? `${data.error || "Validation failed"} — ${detailParts.join("; ")}`
+          : data.error || "Failed to start run";
+        throw new Error(message);
       }
 
       if (!response.body) {
