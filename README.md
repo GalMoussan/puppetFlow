@@ -4,6 +4,8 @@
 
 A drag-and-drop flowchart tool that visually composes the 4-stage prompt pipeline (Image → Video START → Extend MIDDLE → Extend END) for the Shika & Shilshul "Master of Puppets" content series.
 
+**Status:** Phases 0–4 complete · Phase 5 (Polish & Deploy) in progress
+
 ## Overview
 
 PuppetFlow transforms the monolithic prompt-engineering workflow into a visual, modular system:

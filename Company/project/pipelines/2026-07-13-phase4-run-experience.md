@@ -1,10 +1,15 @@
 # Pipeline: Phase 4 — Run Experience
 
 **ID**: 2026-07-13-phase4-run-experience
-**Status**: Running
+**Status**: DONE
 **Type**: Feature
-**Module(s)**: components/run/, lib/store/, lib/hooks/, app/runs/
+**Module(s)**: components/run/, lib/store/, lib/hooks/, app/runs/, app/library/, lib/deepseek.ts
 **Created**: 2026-07-13T12:00:00Z
+**Completed**: 2026-07-14
+
+Phase 4 closed 2026-07-14: T401–T407 green; DeepSeek live path; generation library;
+P4-A/B/C/H complete. T408 deferred to Phase 5 with T501.
+
 
 ## Design Summary
 

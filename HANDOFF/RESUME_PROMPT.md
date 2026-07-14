@@ -15,90 +15,47 @@ I'm resuming work on PuppetFlow, a video prompt composition tool. Read these han
 4. HANDOFF/CONVENTIONS.md - Coding standards
 
 Quick context:
-- Stack: Next.js 16 (App Router), React 19, React Flow 12, Prisma 7, Zustand 5
+- Stack: Next.js App Router, React 19, React Flow 12, Prisma, Zustand
 - TDD workflow: Write tests FIRST, then implementation
-- Current phase: Phase 4 - Run Experience (mostly complete)
+- Current phase: Phase 5 - Polish & Deploy (Phase 4 Run Experience is DONE)
 
-The project has 988 tests total. 974 pass, 14 fail (pre-existing SSE timing issues in agent.test.ts - not blocking).
+Resume task: Continue Phase 5 — basic auth middleware (T501), auth Playwright smoke (T408),
+dark theme polish (T502), empty states + toasts (T503), then production deploy (T504–T506).
 
-Resume task: Verify the Run button integration works end-to-end, then complete Phase 4 verification.
+Key files:
+- middleware.ts (basic auth)
+- lib/env.ts (APP_USER / APP_PASSWORD)
+- app/library/page.tsx (generation library)
+- app/runs/[id]/page.tsx (run viewer)
 
-Key files to read first:
-- app/page.tsx (main page with RunButton in TopBar)
-- components/canvas/RunButton.tsx
-- lib/store/canvas-store.ts (Zustand state)
-
-Start by running `pnpm dev` and visually confirming the Run button appears in the top-right of the canvas page.
+Start by checking HANDOFF/STATE.md and running `pnpm test` + `pnpm typecheck`.
 ```
 
 ---
 
-## Context Summary (for AI memory)
+## Context Summary
 
 ### What PuppetFlow Does
-PuppetFlow is a visual canvas tool for composing AI video generation prompts. Users drag "blocks" (prompt fragments) onto lanes (video stages), and the system compiles them into structured prompts for Claude to generate video scene descriptions.
+Visual canvas tool for composing AI video generation prompts. Users drag blocks onto lanes; the system compiles scaffolds, assigns variety, calls an LLM (Anthropic or DeepSeek), lints, and persists runs forever (visible in `/library`).
 
-### Key Concepts
-- **ThemePack**: Creative universe (e.g., "Master of Puppets Festival")
-- **BlockDefinition**: Prompt fragment with type (HOOK, CAMERA_MOVE, etc.) and lane scope
-- **FlowTemplate**: Saved canvas configuration
-- **Run**: Execution that generates 5 scenes with variety across axes
-- **Variety Engine**: Ensures no repetition of combo assignments within batch or 30-day history
+### Phase status
+- Phases 0–4: **DONE**
+- Phase 5: **IN PROGRESS** (auth → polish → deploy)
 
-### Domain Layer Architecture
-The `packages/domain/` directory contains pure TypeScript with zero framework dependencies:
-- `types.ts` - All domain types + Zod schemas
-- `rules.ts` - R1-R15 creative rules as data
-- `compiler.ts` - Graph → scaffold (deterministic)
-- `variety.ts` - Combo assignment + collision detection
-- `linter.ts` - Output validation
-- `handshake.ts` - Frame continuity checking
-- `exporter.ts` - Markdown export
-
-This architecture means domain logic is fully testable without browser, database, or API.
-
-### State Management
-Zustand v5 with `useShallow` for stable selectors. The canvas store holds:
-- nodes/edges (React Flow graph)
-- templateId, templateName, themePackId
-- runStatus, currentRunId, runConfig
-- isDirty, saveState
-
-### SSE Progress
-Runs stream progress via Server-Sent Events. Client uses EventSource via `useRunProgress` hook.
+### Key routes
+| Route | Purpose |
+|-------|---------|
+| `/` | Canvas editor |
+| `/library` | All generations (DB history) |
+| `/runs/[id]` | Single run viewer |
 
 ---
 
-## If You Need to Debug
+## Phase 5 Checklist
 
-### Run Tests
-```bash
-pnpm test                    # All tests
-pnpm test tests/packages/domain/  # Domain only
-pnpm test --watch            # Watch mode
-```
-
-### Check Build
-```bash
-pnpm build                   # Full build
-pnpm dev                     # Dev server
-```
-
-### Database
-```bash
-pnpm db:push                 # Push schema
-pnpm db:seed                 # Seed data
-pnpm db:studio               # Prisma Studio
-```
-
----
-
-## Phase 5 Tasks (After Phase 4)
-
-When ready for Phase 5 - Polish & Deploy:
-1. Basic auth middleware (APP_USER/APP_PASSWORD env)
-2. Dark theme polish pass
-3. Empty states and error toasts
-4. Vercel deployment setup
-5. Production migration + seed
-6. Final acceptance testing
+1. Basic auth middleware (`APP_USER` / `APP_PASSWORD`)
+2. Playwright auth challenge (T408)
+3. Dark theme polish
+4. Empty states and error toasts
+5. Vercel deployment + production migration/seed
+6. README runbook + final acceptance
