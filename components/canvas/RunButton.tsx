@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Play, Loader2 } from "lucide-react";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useRunStore } from "@/lib/store/run-store";
+import { toast } from "@/lib/store/toast-store";
 import { useShallow } from "zustand/shallow";
 import { RunModal, type RunConfig } from "./RunModal";
 import { RunProgress } from "./RunProgress";
@@ -123,6 +124,7 @@ export function RunButton() {
       setError(message);
       // Keep modal open for pre-stream validation/API errors
       fail(message);
+      toast.error(message);
       setIsLoading(false);
       // Only show progress overlay if we already started streaming
       // (showProgress true means stream had begun)

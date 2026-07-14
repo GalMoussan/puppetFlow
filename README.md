@@ -4,7 +4,7 @@
 
 A drag-and-drop flowchart tool that visually composes the 4-stage prompt pipeline (Image → Video START → Extend MIDDLE → Extend END) for the Shika & Shilshul "Master of Puppets" content series.
 
-**Status:** Phases 0–4 complete · Phase 5 (Polish & Deploy) in progress
+**Status:** Phases 0–4 complete · Phase 5 polish (auth, theme, toasts) largely done · Deploy remaining
 
 ## Overview
 
@@ -13,21 +13,23 @@ PuppetFlow transforms the monolithic prompt-engineering workflow into a visual, 
 - **Stage Lanes**: Fixed, ordered lanes (`IMAGE` → `VIDEO_START` → `EXTEND_MIDDLE` → `EXTEND_END`, plus `GLOBAL`)
 - **Component Blocks**: Draggable blocks (hooks, camera moves, puppet dynamics, etc.) that snap into lanes
 - **Boundary Frame Handshakes**: Edges between lanes carrying the contract for clip continuity
-- **Run Batch**: Compiles the graph, assigns variety, calls Claude API, validates outputs, produces 5 complete scenes
-- **Export**: Download the compiled scaffold as `.md` for use in Claude Code
+- **Run Batch**: Compiles the graph, assigns variety, calls LLM (Anthropic or DeepSeek), validates outputs, persists scenes
+- **Library**: `/library` lists every generation forever (DB-backed)
+- **Export**: Download scenes or scaffold as `.md`
 
 ## Tech Stack
 
 | Layer | Choice |
 |-------|--------|
-| Framework | Next.js 15 (App Router) + TypeScript strict |
+| Framework | Next.js App Router + TypeScript strict |
 | Canvas | @xyflow/react (React Flow v12) |
-| Styling | Tailwind CSS 4 |
+| Styling | Tailwind CSS 4 (dark festival theme) |
 | State | Zustand |
-| Database | PostgreSQL via Prisma |
-| LLM | Anthropic API (claude-sonnet-4-6) |
+| Database | PostgreSQL via Prisma (Supabase) |
+| LLM | Anthropic and/or DeepSeek |
 | Validation | Zod |
 | Tests | Vitest + Playwright |
+| Auth | HTTP Basic (`APP_USER` / `APP_PASSWORD`) |
 
 ## Getting Started
 
@@ -50,10 +52,20 @@ Copy `.env.example` to `.env` and fill in:
 ```env
 DATABASE_URL=postgres://...
 DIRECT_URL=postgres://...
-ANTHROPIC_API_KEY=sk-ant-...  # Optional — degrades to export-only
+
+# LLM — at least one key for generation (export-only without)
+LLM_PROVIDER=auto
+ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_MODEL=claude-sonnet-4-6
+DEEPSEEK_API_KEY=sk-...
+DEEPSEEK_MODEL=deepseek-chat
+
+# Basic auth (browser prompt; required for protected routes)
 APP_USER=your-username
 APP_PASSWORD=your-password
+
+# Optional: skip auth locally (never in production)
+# DISABLE_BASIC_AUTH=true
 ```
 
 ### 3. Set Up Database
@@ -68,6 +80,42 @@ pnpm db:seed
 
 ```bash
 pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — enter basic-auth credentials when prompted.
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Canvas editor |
+| `/library` | All past generations |
+| `/runs/[id]` | Single run viewer |
+
+## Operator runbook
+
+### Daily generate flow
+1. Open canvas → ensure template loaded (bootstrap loads the first template).
+2. Drag blocks into lanes; **Save** if dirty.
+3. **Run** → set scene count / model (DeepSeek or Claude) → **Generate**.
+4. Watch SSE progress; on success you land on `/runs/[id]`.
+5. Copy prompts, reroll stages, or export markdown.
+6. Browse history anytime at `/library`.
+
+### Auth notes
+- Middleware challenges every page/API when `APP_USER` + `APP_PASSWORD` are set.
+- Playwright uses the same credentials via `httpCredentials` (except T408 auth-challenge tests).
+- `DISABLE_BASIC_AUTH=true` turns the gate off for local debugging only.
+
+### LLM notes
+- Provider auto-selects: DeepSeek-only key → DeepSeek; Anthropic key present → Anthropic unless `LLM_PROVIDER=deepseek`.
+- Partial JSON from DeepSeek is normalized (boundary/final frames filled when missing).
+
+### Quality gates
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:e2e
 ```
 
 ## Scripts

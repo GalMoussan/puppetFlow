@@ -14,7 +14,7 @@
  * Coverage target: >= 80% line coverage
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -22,6 +22,7 @@ import userEvent from "@testing-library/user-event";
 import { RunViewer } from "@/components/run/RunViewer";
 import { SceneCard } from "@/components/run/SceneCard";
 import { LintBadge } from "@/components/run/LintBadge";
+import { useToastStore } from "@/lib/store/toast-store";
 
 // =============================================================================
 // Test Fixtures
@@ -94,6 +95,11 @@ describe("RunViewer", () => {
     vi.clearAllMocks();
     mockFetch.mockReset();
     mockWriteText.mockResolvedValue(undefined);
+    useToastStore.getState().clear();
+  });
+
+  afterEach(() => {
+    useToastStore.getState().clear();
   });
 
   // ===========================================================================
@@ -200,6 +206,14 @@ describe("RunViewer", () => {
       await waitFor(() => {
         expect(screen.getByText(/copied/i)).toBeInTheDocument();
       });
+      // Global toast store also records success (Toaster renders it in layout)
+      expect(
+        useToastStore
+          .getState()
+          .toasts.some(
+            (t) => t.type === "success" && /copied/i.test(t.message)
+          )
+      ).toBe(true);
     });
   });
 

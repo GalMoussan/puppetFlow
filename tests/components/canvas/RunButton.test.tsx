@@ -12,7 +12,7 @@
  * Coverage target: >= 80% line coverage
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -28,6 +28,7 @@ import {
   type MockCanvasStore,
 } from "@/tests/mocks/canvas-fixtures";
 import { useRunStore } from "@/lib/store/run-store";
+import { useToastStore } from "@/lib/store/toast-store";
 
 // =============================================================================
 // Mock Setup
@@ -99,6 +100,7 @@ describe("RunButton", () => {
     vi.clearAllMocks();
     mockRouterPush.mockReset();
     useRunStore.getState().reset();
+    useToastStore.getState().clear();
     mockStore = createMockCanvasStore({
       nodes: createLaneNodes(),
       templateId: "tpl-001",
@@ -114,6 +116,10 @@ describe("RunButton", () => {
       }
       return { ok: false, status: 500, json: async () => ({ error: "not mocked" }) };
     });
+  });
+
+  afterEach(() => {
+    useToastStore.getState().clear();
   });
 
   // ===========================================================================
@@ -354,6 +360,29 @@ describe("RunButton", () => {
         expect(screen.getByText(/already running/i)).toBeInTheDocument();
       });
       expect(screen.queryByTestId("run-progress")).not.toBeInTheDocument();
+    });
+
+    it("pushes error toast in addition to modal error on API failure", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockFetchWithLlmStatus({
+        ok: false,
+        status: 409,
+        body: null,
+        json: async () => ({ error: "A batch is already running" }),
+      });
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        const toasts = useToastStore.getState().toasts;
+        expect(toasts.some((t) => /already running/i.test(t.message))).toBe(
+          true
+        );
+        expect(toasts[0]?.type).toBe("error");
+      });
     });
 
     it("navigates to /runs/[id] when SSE completes with done", async () => {

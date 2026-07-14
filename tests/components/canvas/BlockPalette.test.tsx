@@ -373,7 +373,8 @@ describe("BlockPalette", () => {
     it("shows empty state when no theme pack selected", () => {
       render(<BlockPalette themePackId={null} />);
 
-      expect(screen.getByText(/select a theme pack/i)).toBeInTheDocument();
+      expect(screen.getByTestId("palette-no-theme")).toBeInTheDocument();
+      expect(screen.getByText(/no theme pack loaded/i)).toBeInTheDocument();
     });
   });
 

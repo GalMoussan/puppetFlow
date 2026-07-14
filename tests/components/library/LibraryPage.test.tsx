@@ -113,6 +113,22 @@ describe("LibraryPage", () => {
     expect(screen.getByText(/no generations yet/i)).toBeInTheDocument();
   });
 
+  it("shows filter-specific empty copy when filtered list is empty", async () => {
+    mockFetch.mockResolvedValue(mockListResponse([], { total: 0 }));
+
+    render(<LibraryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("library-empty")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("tab", { name: /^failed$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/no failed generations/i)).toBeInTheDocument();
+    });
+  });
+
   it("shows error when API fails", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,

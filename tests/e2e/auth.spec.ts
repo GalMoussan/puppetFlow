@@ -31,11 +31,24 @@ test.describe("Basic auth challenge (T408)", () => {
     await context.close();
   });
 
-  test("unauthenticated GET /api/runs returns 401", async ({ request }) => {
-    // APIRequestContext from this test inherits test.use httpCredentials: undefined
-    const response = await request.get("/api/runs");
-    expect(response.status()).toBe(401);
-    const www = response.headers()["www-authenticate"] ?? "";
-    expect(www.toLowerCase()).toContain("basic");
+  test("unauthenticated GET /api/runs returns 401", async ({
+    playwright,
+    baseURL,
+  }) => {
+    // Playwright test runner injects config httpCredentials into newContext
+    // unless the key is present. Pass undefined explicitly to opt out
+    // (same pattern as browser.newContext above).
+    const api = await playwright.request.newContext({
+      baseURL,
+      httpCredentials: undefined,
+    });
+    try {
+      const response = await api.get("/api/runs");
+      expect(response.status()).toBe(401);
+      const www = response.headers()["www-authenticate"] ?? "";
+      expect(www.toLowerCase()).toContain("basic");
+    } finally {
+      await api.dispose();
+    }
   });
 });

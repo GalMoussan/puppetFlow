@@ -221,7 +221,10 @@ export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
             </button>
           </div>
         </div>
-        <p data-testid="image-prompt" className="text-sm text-zinc-300 mt-1">
+        <p
+          data-testid="image-prompt"
+          className="text-sm text-zinc-300 mt-1 font-prompt whitespace-pre-wrap"
+        >
           {showFullImagePrompt
             ? scene.imagePrompt
             : truncateText(scene.imagePrompt, 80)}
@@ -257,7 +260,9 @@ export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
                   <CopyIcon active={copiedKey === "start"} />
                 </button>
               </div>
-              <p className="text-sm text-zinc-300">{scene.videoStart}</p>
+              <p className="text-sm text-zinc-300 font-prompt whitespace-pre-wrap">
+                {scene.videoStart}
+              </p>
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -271,7 +276,9 @@ export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
                   <CopyIcon active={copiedKey === "middle"} />
                 </button>
               </div>
-              <p className="text-sm text-zinc-300">{scene.videoMiddle}</p>
+              <p className="text-sm text-zinc-300 font-prompt whitespace-pre-wrap">
+                {scene.videoMiddle}
+              </p>
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -285,7 +292,9 @@ export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
                   <CopyIcon active={copiedKey === "end"} />
                 </button>
               </div>
-              <p className="text-sm text-zinc-300">{scene.videoEnd}</p>
+              <p className="text-sm text-zinc-300 font-prompt whitespace-pre-wrap">
+                {scene.videoEnd}
+              </p>
             </div>
           </div>
         )}
@@ -335,7 +344,7 @@ export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
               </button>
               <button
                 onClick={handleConfirmReroll}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
                 aria-label="Confirm"
                 type="button"
               >

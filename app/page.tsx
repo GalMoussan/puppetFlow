@@ -12,10 +12,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ReactFlowProvider } from "@xyflow/react";
-import { Library } from "lucide-react";
+import { Library, LayoutTemplate } from "lucide-react";
 import { Canvas, BlockPalette, Inspector, RunButton } from "@/components/canvas";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useTemplate } from "@/lib/hooks/useTemplate";
+import { toast } from "@/lib/store/toast-store";
 import { createLaneNodes } from "@/lib/types/canvas";
 
 /**
@@ -30,10 +31,29 @@ function TopBar() {
 
   const canSave = Boolean(templateId) && isDirty;
 
+  const handleSave = async () => {
+    try {
+      await save();
+      const state = useCanvasStore.getState().saveState;
+      if (state === "saved") {
+        toast.success("Template saved");
+      } else if (state === "error") {
+        toast.error("Failed to save template");
+      }
+    } catch {
+      toast.error("Failed to save template");
+    }
+  };
+
   const getSaveIndicator = () => {
     if (!templateId) {
       return (
-        <span className="text-amber-500 text-sm">No template loaded</span>
+        <span
+          className="text-amber-500 text-sm"
+          data-testid="topbar-no-template"
+        >
+          No template loaded
+        </span>
       );
     }
     switch (saveState) {
@@ -76,7 +96,7 @@ function TopBar() {
         </Link>
         <button
           onClick={() => {
-            void save();
+            void handleSave();
           }}
           disabled={!canSave}
           title={
@@ -186,6 +206,8 @@ export default function CanvasPage() {
     }
   }, [booting, nodes.length, templateId, setNodes]);
 
+  const showNoTemplateBanner = !booting && !templateId && !bootError;
+
   return (
     <ReactFlowProvider>
       <div className="flex flex-col h-screen bg-neutral-950">
@@ -196,11 +218,37 @@ export default function CanvasPage() {
           </div>
         )}
         {booting && (
-          <div className="fixed top-12 left-0 right-0 z-40 bg-neutral-900/90 text-neutral-400 text-sm px-4 py-2 border-b border-neutral-800">
+          <div
+            className="fixed top-12 left-0 right-0 z-40 bg-neutral-900/90 text-neutral-400 text-sm px-4 py-2 border-b border-neutral-800"
+            data-testid="canvas-booting"
+          >
             Loading workspace...
           </div>
         )}
-        <div className="flex flex-1 pt-12 overflow-hidden">
+        {showNoTemplateBanner && (
+          <div
+            className="
+              fixed top-12 left-0 right-0 z-40
+              bg-amber-950/80 text-amber-100/90
+              text-sm px-4 py-2.5
+              border-b border-amber-800/50
+              flex items-center gap-3
+            "
+            data-testid="canvas-no-template"
+            role="status"
+          >
+            <LayoutTemplate className="w-4 h-4 text-amber-400 shrink-0" aria-hidden />
+            <span>
+              No template loaded — drag blocks to explore the canvas. Save and
+              Run need a template (create one via the API or seed the database).
+            </span>
+          </div>
+        )}
+        <div
+          className={`flex flex-1 overflow-hidden ${
+            booting || bootError || showNoTemplateBanner ? "pt-[4.5rem]" : "pt-12"
+          }`}
+        >
           <BlockPalette themePackId={themePackId} />
           <Canvas />
           <Inspector />

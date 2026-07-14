@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, Copy, Download, Check, Library } from "lucide-react";
+import { toast } from "@/lib/store/toast-store";
 import { SceneCard, type Scene, type RerollStage } from "./SceneCard";
 
 export interface Run {
@@ -91,15 +92,25 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
   const baseName = run.templateName.replace(/\s+/g, "-");
 
   const handleCopyAll = async () => {
-    const text = formatAllScenesForClipboard(run.scenes);
-    await navigator.clipboard.writeText(text);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
+    try {
+      const text = formatAllScenesForClipboard(run.scenes);
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(true);
+      toast.success("Copied all scenes to clipboard");
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   const handleCopyScene = async (scene: Scene) => {
-    const text = formatSceneForClipboard(scene);
-    await navigator.clipboard.writeText(text);
+    try {
+      const text = formatSceneForClipboard(scene);
+      await navigator.clipboard.writeText(text);
+      toast.success(`Copied scene ${scene.index}`);
+    } catch {
+      toast.error("Failed to copy scene");
+    }
   };
 
   const handleExportScenes = async () => {
@@ -109,8 +120,10 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
         "scenes",
         `${baseName}-${dateStr}.md`
       );
+      toast.success("Scenes export downloaded");
     } catch (error) {
       console.error("Export scenes failed:", error);
+      toast.error("Export scenes failed");
     }
   };
 
@@ -121,20 +134,22 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
         "scaffold",
         `scaffold-${baseName}-${dateStr}.md`
       );
+      toast.success("Scaffold export downloaded");
     } catch (error) {
       console.error("Export scaffold failed:", error);
+      toast.error("Export scaffold failed");
     }
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      {/* Header */}
-      <header className="border-b border-zinc-800 px-6 py-4">
+      {/* Header — zinc/violet tokens aligned with library */}
+      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={onBackToCanvas}
-              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors shrink-0"
               aria-label="Back to canvas"
               type="button"
             >
@@ -143,15 +158,20 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
             </button>
             <a
               href="/library"
-              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors shrink-0"
               aria-label="Generation library"
               data-testid="nav-library"
             >
               <Library className="w-5 h-5" />
               Library
             </a>
-            <div className="h-6 w-px bg-zinc-700" />
-            <h1 className="text-xl font-semibold">{run.templateName}</h1>
+            <div className="h-6 w-px bg-zinc-700 shrink-0" />
+            <h1 className="text-xl font-semibold truncate">
+              <span className="text-violet-400 mr-2" aria-hidden>
+                ●
+              </span>
+              {run.templateName}
+            </h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -161,7 +181,7 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
               type="button"
             >
               {copySuccess ? (
-                <Check className="w-4 h-4 text-green-500" />
+                <Check className="w-4 h-4 text-lime-400" />
               ) : (
                 <Copy className="w-4 h-4" />
               )}
@@ -169,7 +189,7 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
             </button>
             <button
               onClick={handleExportScenes}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 rounded-lg transition-colors"
               aria-label="Export scenes"
               type="button"
             >
@@ -190,14 +210,14 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
       </header>
 
       {/* Metadata */}
-      <div className="border-b border-zinc-800 px-6 py-3">
-        <div className="flex items-center gap-6 text-sm text-zinc-400">
+      <div className="border-b border-zinc-800 bg-zinc-950 px-6 py-3">
+        <div className="flex items-center gap-6 text-sm text-zinc-400 flex-wrap">
           <span>{formatDate(run.createdAt)}</span>
           <span className="flex items-center gap-1">
             <span className="text-zinc-500">{run.sceneCount} scenes</span>
           </span>
-          <span>{formatDuration(run.duration)}</span>
-          <span className="text-zinc-500">{run.model}</span>
+          <span className="text-lime-400/90">{formatDuration(run.duration)}</span>
+          <span className="font-mono text-zinc-500">{run.model}</span>
         </div>
       </div>
 

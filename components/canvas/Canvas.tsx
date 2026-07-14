@@ -108,7 +108,7 @@ export function Canvas({ className }: CanvasProps) {
         nodesConnectable={false}
         elementsSelectable
         proOptions={{ hideAttribution: true }}
-        className="bg-neutral-950"
+        className="dark bg-neutral-950"
       >
         <Background
           variant={BackgroundVariant.Dots}

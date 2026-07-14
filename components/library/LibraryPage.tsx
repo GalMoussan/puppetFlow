@@ -160,9 +160,13 @@ export function LibraryPage() {
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Library className="w-5 h-5 text-violet-400 shrink-0" aria-hidden />
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/30 shrink-0">
+              <Library className="w-4 h-4 text-violet-400" aria-hidden />
+            </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold truncate">Generation Library</h1>
+              <h1 className="text-lg font-semibold truncate text-zinc-50">
+                Generation Library
+              </h1>
               <p className="text-xs text-zinc-500">
                 {total === null
                   ? "All runs saved in the database"
@@ -175,7 +179,7 @@ export function LibraryPage() {
               type="button"
               onClick={handleRefresh}
               disabled={loading}
-              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-colors disabled:opacity-50"
               aria-label="Refresh library"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -246,10 +250,15 @@ export function LibraryPage() {
               <Film className="w-7 h-7 text-zinc-600" />
             </div>
             <div>
-              <p className="text-lg font-medium text-zinc-200">No generations yet</p>
+              <p className="text-lg font-medium text-zinc-200">
+                {filter === "ALL"
+                  ? "No generations yet"
+                  : `No ${STATUS_OPTIONS.find((o) => o.value === filter)?.label.toLowerCase() ?? "matching"} generations`}
+              </p>
               <p className="text-sm text-zinc-500 mt-1 max-w-sm">
-                Every Run from the canvas is saved here permanently. Generate a
-                batch to start building your library.
+                {filter === "ALL"
+                  ? "Every Run from the canvas is saved here permanently. Generate a batch to start building your library."
+                  : "Try another status filter, or run a new batch from the canvas."}
               </p>
             </div>
             <Link

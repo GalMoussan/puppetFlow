@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
+
   --background: #09090b;
   --foreground: #fafafa;
 
-  /* Festival accent colors */
+  /* Festival accent colors (UV-violet / acid-green) */
   --accent-violet: #8b5cf6;
   --accent-violet-light: #a78bfa;
+  --accent-violet-muted: rgba(139, 92, 246, 0.18);
   --accent-green: #84cc16;
   --accent-green-light: #a3e635;
+  --accent-green-muted: rgba(132, 204, 22, 0.18);
+
+  /* Surfaces (zinc scale — near-black festival UI) */
+  --surface: #09090b;
+  --surface-raised: #18181b;
+  --surface-overlay: #27272a;
 
   /* Lane colors (per blueprint) */
   --lane-image: #f97316;
@@ -21,6 +30,9 @@
   --muted-foreground: #a1a1aa;
   --border: #3f3f46;
   --ring: #8b5cf6;
+  --ring-green: #84cc16;
+  --selection-bg: rgba(139, 92, 246, 0.4);
+  --selection-fg: #fafafa;
 }
 
 @theme inline {
@@ -30,6 +42,9 @@
   --color-accent-violet-light: var(--accent-violet-light);
   --color-accent-green: var(--accent-green);
   --color-accent-green-light: var(--accent-green-light);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
   --color-lane-image: var(--lane-image);
   --color-lane-video-start: var(--lane-video-start);
   --color-lane-extend-middle: var(--lane-extend-middle);
@@ -42,43 +57,170 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  color-scheme: dark;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  /* Hebrew-safe stack: Geist + system UI + Hebrew-capable faces */
+  font-family:
+    var(--font-sans),
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans Hebrew",
+    "Arial Hebrew",
+    "David Libre",
+    sans-serif;
 }
 
-/* Monospace font for prompt text areas */
+/* Monospace for prompt text (blocks, inspector, run viewer) */
 .font-prompt {
-  font-family: var(--font-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
 }
 
-/* Focus ring style */
-*:focus-visible {
+/* Text selection — UV-violet wash */
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+::-moz-selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+/* Focus rings — violet festival accent (skip when Tailwind focus:ring is used) */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* React Flow controls — dark theme (default is harsh white) */
+/* Form controls inherit dark scheme */
+input,
+textarea,
+select,
+button {
+  color-scheme: dark;
+}
+
+/* ── Scrollbars (dark) ─────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── React Flow dark / festival overrides ──────────────────────── */
+/*
+ * RF ships light defaults on .react-flow and dark on .react-flow.dark.
+ * We apply festival-tuned dark tokens to both so light chrome never leaks.
+ */
+.react-flow,
+.react-flow.dark {
+  --xy-background-color: var(--background);
+  --xy-background-pattern-color: #3f3f46;
+  --xy-background-pattern-dots-color-default: #3f3f46;
+
+  --xy-node-color: var(--foreground);
+  --xy-node-background-color: var(--surface-raised);
+  --xy-node-border: 1px solid var(--border);
+  --xy-node-boxshadow-hover: 0 1px 6px 1px rgba(0, 0, 0, 0.35);
+  --xy-node-boxshadow-selected: 0 0 0 2px var(--accent-violet);
+
+  --xy-handle-background-color: var(--accent-violet);
+  --xy-handle-border-color: var(--surface-raised);
+
+  --xy-selection-background-color: var(--accent-violet-muted);
+  --xy-selection-border: 1px dotted var(--accent-violet);
+
+  --xy-edge-stroke: #52525b;
+  --xy-edge-stroke-selected: var(--accent-violet);
+  --xy-connectionline-stroke: var(--accent-violet-light);
+
+  --xy-controls-button-background-color: var(--surface-raised);
+  --xy-controls-button-background-color-hover: var(--surface-overlay);
+  --xy-controls-button-color: var(--muted-foreground);
+  --xy-controls-button-color-hover: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-controls-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+
+  --xy-edge-label-background-color: var(--surface-raised);
+  --xy-edge-label-color: var(--foreground);
+
+  --xy-minimap-background-color: var(--surface-raised);
+  --xy-minimap-mask-background-color: rgba(9, 9, 11, 0.65);
+  --xy-minimap-node-background-color: var(--surface-overlay);
+
+  --xy-attribution-background-color: transparent;
+
+  background-color: var(--background) !important;
+}
+
+.react-flow__background {
+  background-color: var(--background) !important;
+}
+
+/* Controls — zinc raised surface (overrides RF light defaults) */
 .react-flow__controls {
-  background: #18181b !important;
-  border: 1px solid #3f3f46 !important;
+  background: var(--surface-raised) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
   overflow: hidden;
 }
 
 .react-flow__controls-button {
-  background: #18181b !important;
-  border-bottom: 1px solid #3f3f46 !important;
-  color: #a1a1aa !important;
+  background: var(--surface-raised) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--muted-foreground) !important;
   width: 28px !important;
   height: 28px !important;
+  fill: currentColor !important;
 }
 
 .react-flow__controls-button:hover {
-  background: #27272a !important;
-  color: #fafafa !important;
+  background: var(--surface-overlay) !important;
+  color: var(--foreground) !important;
+}
+
+.react-flow__controls-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+  z-index: 1;
 }
 
 .react-flow__controls-button svg {
@@ -91,21 +233,48 @@ body {
   fill: currentColor !important;
 }
 
-/* Scrollbar styling for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Edge strokes — muted zinc, violet when selected */
+.react-flow__edge-path,
+.react-flow__connection-path {
+  stroke: #52525b;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--muted);
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path,
+.react-flow__edge:focus-visible .react-flow__edge-path {
+  stroke: var(--accent-violet);
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+/* Selection box */
+.react-flow__nodesselection-rect,
+.react-flow__selection {
+  background: var(--accent-violet-muted) !important;
+  border: 1px dotted var(--accent-violet) !important;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+/* Handles */
+.react-flow__handle {
+  background: var(--accent-violet) !important;
+  border-color: var(--surface-raised) !important;
+}
+
+/* Hide attribution chrome if ever shown */
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Edge labels */
+.react-flow__edge-textbg {
+  fill: var(--surface-raised) !important;
+}
+
+.react-flow__edge-text {
+  fill: var(--foreground) !important;
+}
+
+/* Minimap (if enabled later) */
+.react-flow__minimap {
+  background: var(--surface-raised) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
 }

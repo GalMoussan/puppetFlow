@@ -291,9 +291,24 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   // No theme pack selected
   if (!themePackId) {
     return (
-      <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4">
-        <div className="text-center text-neutral-500 text-sm mt-4">
-          Select a theme pack to view blocks
+      <aside
+        className="w-64 bg-neutral-900 border-r border-neutral-800 p-4"
+        data-testid="palette-no-theme"
+      >
+        <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+          Block Library
+        </h2>
+        <div className="flex flex-col items-center text-center gap-2 mt-8 px-2">
+          <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center">
+            <span className="text-neutral-500 text-lg" aria-hidden>
+              ∅
+            </span>
+          </div>
+          <p className="text-sm text-neutral-400">No theme pack loaded</p>
+          <p className="text-xs text-neutral-600 leading-relaxed">
+            Bootstrap a template or theme pack to browse and drag blocks onto
+            the canvas.
+          </p>
         </div>
       </aside>
     );
@@ -303,8 +318,15 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   if (loading) {
     return (
       <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4">
-        <div data-testid="palette-loading" className="text-center text-neutral-500 text-sm mt-4">
-          Loading blocks...
+        <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+          Block Library
+        </h2>
+        <div
+          data-testid="palette-loading"
+          className="flex flex-col items-center gap-2 text-center text-neutral-500 text-sm mt-8"
+        >
+          <div className="w-6 h-6 border-2 border-violet-500/40 border-t-violet-400 rounded-full animate-spin" />
+          <p>Loading blocks…</p>
         </div>
       </aside>
     );
@@ -314,8 +336,21 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   if (error) {
     return (
       <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4">
-        <div className="text-center text-red-500 text-sm mt-4">
-          Failed to load blocks
+        <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+          Block Library
+        </h2>
+        <div
+          className="text-center text-red-400 text-sm mt-8 space-y-2"
+          data-testid="palette-error"
+        >
+          <p>Failed to load blocks</p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="text-xs text-violet-400 hover:text-violet-300 underline"
+          >
+            Retry
+          </button>
         </div>
       </aside>
     );
