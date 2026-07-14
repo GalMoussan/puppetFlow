@@ -102,6 +102,9 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm playwright install chromium --with-deps
 
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
       - name: Build application
         run: pnpm build
         env:
@@ -109,6 +112,7 @@ jobs:
           DIRECT_URL: "postgresql://test:test@localhost:5432/test"
           APP_USER: "test"
           APP_PASSWORD: "test"
+          LLM_PROVIDER: "auto"
 
       - name: Run E2E tests
         run: pnpm test:e2e

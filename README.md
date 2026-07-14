@@ -116,6 +116,17 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm test:e2e
+pnpm deploy:check
+```
+
+### Production deploy
+
+See **[docs/DEPLOY.md](docs/DEPLOY.md)** for T504/T505:
+
+```bash
+pnpm db:prod:setup    # migrate deploy + seed (against prod DATABASE_URL)
+pnpm deploy:check     # readiness (no secrets printed)
+vercel --prod         # after vercel login + env vars
 ```
 
 ## Scripts
@@ -132,8 +143,11 @@ pnpm test:e2e
 | `pnpm test:coverage` | Run tests with coverage |
 | `pnpm test:e2e` | Run Playwright E2E tests |
 | `pnpm db:generate` | Generate Prisma client |
-| `pnpm db:migrate` | Apply database migrations |
-| `pnpm db:seed` | Seed the database |
+| `pnpm db:migrate` | Apply migrations (`prisma migrate deploy`) |
+| `pnpm db:migrate:status` | Migration status |
+| `pnpm db:seed` | Seed Master of Puppets data |
+| `pnpm db:prod:setup` | Migrate + seed (production setup) |
+| `pnpm deploy:check` | Pre-deploy env/migration checklist |
 | `pnpm db:studio` | Open Prisma Studio |
 
 ## Company Multi-Agent System
