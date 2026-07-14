@@ -11,7 +11,11 @@ const envSchema = z.object({
     .url()
     .describe("Direct connection for migrations"),
 
-  // Anthropic API (optional — degrades to export-only mode)
+  // LLM providers (optional — degrades to export-only when none set)
+  LLM_PROVIDER: z
+    .enum(["anthropic", "deepseek", "auto"])
+    .optional()
+    .describe("Force provider; omit or 'auto' to pick from available keys"),
   ANTHROPIC_API_KEY: z
     .string()
     .optional()
@@ -20,6 +24,14 @@ const envSchema = z.object({
     .string()
     .default("claude-sonnet-4-6")
     .describe("Claude model to use"),
+  DEEPSEEK_API_KEY: z
+    .string()
+    .optional()
+    .describe("DeepSeek API key (OpenAI-compatible)"),
+  DEEPSEEK_MODEL: z
+    .string()
+    .default("deepseek-chat")
+    .describe("DeepSeek model id"),
 
   // Authentication
   APP_USER: z.string().min(1).describe("Basic auth username"),
@@ -49,3 +61,5 @@ export const env = validateEnv();
 
 // Export individual checks for conditional logic
 export const hasAnthropicKey = Boolean(env.ANTHROPIC_API_KEY);
+export const hasDeepseekKey = Boolean(env.DEEPSEEK_API_KEY);
+export const hasLlmKey = hasAnthropicKey || hasDeepseekKey;
