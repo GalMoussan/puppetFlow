@@ -361,17 +361,40 @@ export const useCanvasStore = create<CanvasState>()(
                 : undefined,
             };
           }),
-          edges: state.edges.map((e) => ({
-            from: e.source as Lane,
-            to: e.target as Lane,
-            handshake: (e.data?.handshake as {
-              strictness: "verbatim" | "paraphrase";
-              trackCrowdMembers: number;
-            }) ?? {
-              strictness: "verbatim" as const,
-              trackCrowdMembers: 2,
-            },
-          })),
+          // RF edges are optional visual connections. Domain handshakes are
+          // lane→lane contracts. If the canvas has no RF edges (import / seed),
+          // persist default verbatim handshakes so compiler/import knowledge remains.
+          edges:
+            state.edges.length > 0
+              ? state.edges.map((e) => ({
+                  from: e.source as Lane,
+                  to: e.target as Lane,
+                  handshake: (e.data?.handshake as {
+                    strictness: "verbatim" | "paraphrase";
+                    trackCrowdMembers: number;
+                  }) ?? {
+                    strictness: "verbatim" as const,
+                    trackCrowdMembers: 2,
+                  },
+                }))
+              : [
+                  {
+                    from: "VIDEO_START" as Lane,
+                    to: "EXTEND_MIDDLE" as Lane,
+                    handshake: {
+                      strictness: "verbatim" as const,
+                      trackCrowdMembers: 0,
+                    },
+                  },
+                  {
+                    from: "EXTEND_MIDDLE" as Lane,
+                    to: "EXTEND_END" as Lane,
+                    handshake: {
+                      strictness: "verbatim" as const,
+                      trackCrowdMembers: 0,
+                    },
+                  },
+                ],
           // Always persist full runConfig so agent merge never sees undefined
           runConfig: {
             loopMode: state.runConfig?.loopMode ?? true,

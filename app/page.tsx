@@ -12,7 +12,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ReactFlowProvider } from "@xyflow/react";
-import type { Node, Edge } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 import { Library, LayoutTemplate, FileInput } from "lucide-react";
 import {
   Canvas,
@@ -219,19 +219,14 @@ export default function CanvasPage() {
       };
     });
 
-    const edges: Edge[] = (result.graph.edges ?? []).map((edge, i) => ({
-      id: `edge-import-${i}`,
-      source: edge.from,
-      target: edge.to,
-      type: "handshake",
-      data: { handshake: edge.handshake },
-    }));
-
+    // Domain handshake edges (lane→lane) must NOT become React Flow edges:
+    // LaneNode has no Handle components → RF error #008 ("source handle id: null")
+    // spam on every render. Logical handshakes are restored on template save.
     setNodes([
       ...(laneNodes as Node<BlockNodeData | LaneNodeData>[]),
       ...blockNodes,
     ]);
-    setEdges(edges);
+    setEdges([]);
     if (result.graph.runConfig) {
       setRunConfig(result.graph.runConfig);
     }
