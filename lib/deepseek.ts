@@ -105,7 +105,7 @@ export async function generateBatchDeepseek(
   }
 
   const apiKey = process.env.DEEPSEEK_API_KEY!;
-  const model = getDeepseekModel();
+  const model = options.model || getDeepseekModel();
   const maxAttempts = 2;
   const prompt = buildDeepseekGenerationPrompt(scaffold, assignments);
   const maxTokens = options.maxTokens ?? 8192;

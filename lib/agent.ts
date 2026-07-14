@@ -410,20 +410,42 @@ export async function runBatch(
     batchSize: 5,
   };
   const graphRunConfig = rawGraph.runConfig ?? defaultRunConfig;
+  const batchSize =
+    runConfig?.batchSize ??
+    graphRunConfig.batchSize ??
+    defaultRunConfig.batchSize;
+
+  let languages = {
+    ...defaultRunConfig.languages,
+    ...(graphRunConfig.languages ?? {}),
+    ...(runConfig?.languages ?? {}),
+  };
+
+  // Auto-fit language weights when they don't sum to batchSize.
+  // Explicitly-impossible oversized weights (sum > batch) still fail below
+  // when the request intentionally over-specifies (API/tests). UI always fits.
+  const languageTotal = (languages.hi ?? 0) + (languages.ja ?? 0);
+  if (languageTotal !== batchSize && languageTotal > 0 && languageTotal <= batchSize) {
+    // Under-specified: scale proportionally to fill batch
+    const hi = Math.round((languages.hi / languageTotal) * batchSize);
+    languages = { hi, ja: batchSize - hi };
+  } else if (languageTotal === 0) {
+    // No weights: ~60/40 split
+    const hi = Math.max(1, Math.round(batchSize * 0.6));
+    languages = { hi, ja: batchSize - hi };
+  }
+
   const config = {
     ...defaultRunConfig,
     ...graphRunConfig,
     ...runConfig,
-    languages: {
-      ...defaultRunConfig.languages,
-      ...(graphRunConfig.languages ?? {}),
-      ...(runConfig?.languages ?? {}),
-    },
-    batchSize:
-      runConfig?.batchSize ??
-      graphRunConfig.batchSize ??
-      defaultRunConfig.batchSize,
+    languages,
+    batchSize,
   };
+
+  const resolvedModel =
+    (runConfig as { model?: string } | undefined)?.model ||
+    anthropic.getModelName();
 
   // Ensure compiler/linter always see a full CanvasGraph with runConfig
   const graph: CanvasGraph = {
@@ -444,15 +466,16 @@ export async function runBatch(
     },
   };
 
-  // Early language constraint check (sum of language weights must fit batch)
-  const languageTotal = (config.languages.hi ?? 0) + (config.languages.ja ?? 0);
-  if (languageTotal > config.batchSize) {
+  // Early language constraint check (sum of language weights must not exceed batch)
+  const finalLanguageTotal =
+    (config.languages.hi ?? 0) + (config.languages.ja ?? 0);
+  if (finalLanguageTotal > config.batchSize) {
     // Create a failed run record for observability, then return FAILED
     const failedRun = await prisma.run.create({
       data: {
         templateId,
         status: "FAILED",
-        model: anthropic.getModelName(),
+        model: resolvedModel,
         error: `language constraint impossible: hi=${config.languages.hi} + ja=${config.languages.ja} exceeds batchSize=${config.batchSize}`,
       },
     });
@@ -491,7 +514,7 @@ export async function runBatch(
     data: {
       templateId,
       status: "PENDING",
-      model: anthropic.getModelName(),
+      model: resolvedModel,
     },
   });
 
@@ -569,7 +592,8 @@ export async function runBatch(
 
     const batchOutput = await anthropic.generateBatch(scaffold, assignments, {
       temperature: 1.0,
-      maxTokens: 4000,
+      maxTokens: 8000,
+      model: resolvedModel,
     });
 
     // Emit scene previews as soon as generation completes (before lint)

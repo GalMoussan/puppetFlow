@@ -76,6 +76,7 @@ export function RunButton() {
             loopMode: config.loopMode,
             languages: config.languages,
             historyStrictness: config.historyStrictness,
+            model: config.model,
           },
         }),
       });

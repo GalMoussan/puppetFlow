@@ -55,6 +55,41 @@ vi.mock("@/lib/store/canvas-store", () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+function mockLlmStatusResponse(
+  overrides: Partial<{
+    provider: string;
+    hasKey: boolean;
+    defaultModel: string;
+    models: Array<{ value: string; label: string }>;
+  }> = {}
+) {
+  return {
+    ok: true,
+    json: async () => ({
+      provider: "deepseek",
+      hasKey: true,
+      defaultModel: "deepseek-chat",
+      models: [
+        { value: "deepseek-chat", label: "DeepSeek Chat" },
+        { value: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+      ],
+      ...overrides,
+    }),
+  };
+}
+
+/** Route mockFetch: /api/llm/status → provider info; other URLs → provided response */
+function mockFetchWithLlmStatus(runResponse: unknown) {
+  mockFetch.mockImplementation(async (url: string | URL | Request) => {
+    const href =
+      typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+    if (href.includes("/api/llm/status")) {
+      return mockLlmStatusResponse();
+    }
+    return runResponse as Response;
+  });
+}
+
 // =============================================================================
 // Test Suite: RunButton
 // =============================================================================
@@ -70,6 +105,15 @@ describe("RunButton", () => {
       templateName: "Test Template",
     });
     mockFetch.mockReset();
+    // Default: status endpoint works; other calls fail until a test configures them
+    mockFetch.mockImplementation(async (url: string | URL | Request) => {
+      const href =
+        typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      if (href.includes("/api/llm/status")) {
+        return mockLlmStatusResponse();
+      }
+      return { ok: false, status: 500, json: async () => ({ error: "not mocked" }) };
+    });
   });
 
   // ===========================================================================
@@ -228,7 +272,7 @@ describe("RunButton", () => {
     it("POSTs CreateRun body with nested runConfig matching API schema", async () => {
       const user = userEvent.setup();
       setupWithBlocks();
-      mockFetch.mockResolvedValue(
+      mockFetchWithLlmStatus(
         mockSSEResponse([
           { type: "phase", phase: "COMPILING" },
           { type: "done", runId: "run-1", sceneCount: 5, duration: 100 },
@@ -240,13 +284,19 @@ describe("RunButton", () => {
       await user.click(screen.getByRole("button", { name: /generate/i }));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalled();
+        expect(
+          mockFetch.mock.calls.some(
+            (c) => typeof c[0] === "string" && c[0] === "/api/runs"
+          )
+        ).toBe(true);
       });
 
-      const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-      expect(mockFetch.mock.calls[0][0]).toBe("/api/runs");
-      expect(init.method).toBe("POST");
-      const body = JSON.parse(init.body as string);
+      const runsCall = mockFetch.mock.calls.find(
+        (c) => typeof c[0] === "string" && c[0] === "/api/runs"
+      ) as [string, RequestInit];
+      expect(runsCall[0]).toBe("/api/runs");
+      expect(runsCall[1].method).toBe("POST");
+      const body = JSON.parse(runsCall[1].body as string);
       expect(body).toEqual({
         templateId: "tpl-001",
         runConfig: {
@@ -254,6 +304,7 @@ describe("RunButton", () => {
           loopMode: true,
           languages: { hi: 3, ja: 2 },
           historyStrictness: "warn",
+          model: "deepseek-chat",
         },
       });
     });
@@ -261,7 +312,7 @@ describe("RunButton", () => {
     it("updates store runStatus from SSE phase events and shows progress UI", async () => {
       const user = userEvent.setup();
       setupWithBlocks();
-      mockFetch.mockResolvedValue(
+      mockFetchWithLlmStatus(
         mockSSEResponse([
           { type: "phase", phase: "COMPILING" },
           { type: "phase", phase: "GENERATING" },
@@ -288,7 +339,7 @@ describe("RunButton", () => {
     it("surfaces API error JSON without opening progress", async () => {
       const user = userEvent.setup();
       setupWithBlocks();
-      mockFetch.mockResolvedValue({
+      mockFetchWithLlmStatus({
         ok: false,
         status: 409,
         body: null,
@@ -308,7 +359,7 @@ describe("RunButton", () => {
     it("navigates to /runs/[id] when SSE completes with done", async () => {
       const user = userEvent.setup();
       setupWithBlocks();
-      mockFetch.mockResolvedValue(
+      mockFetchWithLlmStatus(
         mockSSEResponse([
           { type: "phase", phase: "COMPILING" },
           { type: "done", runId: "run-99", sceneCount: 5, duration: 100 },
@@ -341,6 +392,15 @@ describe("RunModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string | URL | Request) => {
+      const href =
+        typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      if (href.includes("/api/llm/status")) {
+        return mockLlmStatusResponse();
+      }
+      return { ok: false, status: 500, json: async () => ({}) };
+    });
   });
 
   // ===========================================================================
@@ -359,7 +419,8 @@ describe("RunModal", () => {
       render(<RunModal {...defaultProps} />);
 
       const modelSelect = screen.getByLabelText(/model/i);
-      expect(modelSelect).toHaveValue("claude-sonnet-4-20250514");
+      // Default before /api/llm/status resolves: DeepSeek chat
+      expect(modelSelect).toHaveValue("deepseek-chat");
     });
 
     it("renders optional notes field", () => {
@@ -456,6 +517,49 @@ describe("RunModal", () => {
         })
       );
     });
+
+    it("auto-fits language weights when scene count changes", async () => {
+      render(<RunModal {...defaultProps} />);
+
+      const sceneCountInput = screen.getByLabelText(/scene count/i);
+      fireEvent.change(sceneCountInput, { target: { value: "1" } });
+
+      expect(screen.getByLabelText(/hindi/i)).toHaveValue(1);
+      expect(screen.getByLabelText(/japanese/i)).toHaveValue(0);
+
+      fireEvent.submit(sceneCountInput.closest("form")!);
+
+      expect(defaultProps.onRun).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sceneCount: 1,
+          languages: { hi: 1, ja: 0 },
+        })
+      );
+    });
+
+    it("auto-fits languages on submit when weights sum incorrectly", async () => {
+      render(<RunModal {...defaultProps} />);
+
+      fireEvent.change(screen.getByLabelText(/hindi/i), {
+        target: { value: "9" },
+      });
+      fireEvent.change(screen.getByLabelText(/japanese/i), {
+        target: { value: "9" },
+      });
+
+      fireEvent.submit(screen.getByLabelText(/scene count/i).closest("form")!);
+
+      // Must not show the old "cannot exceed" block — auto-fit instead
+      expect(
+        screen.queryByText(/language weights cannot exceed scene count/i)
+      ).not.toBeInTheDocument();
+      expect(defaultProps.onRun).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sceneCount: 5,
+          languages: { hi: 3, ja: 2 },
+        })
+      );
+    });
   });
 
   // ===========================================================================
@@ -473,7 +577,7 @@ describe("RunModal", () => {
       const today = new Date().toISOString().slice(0, 10);
       expect(defaultProps.onRun).toHaveBeenCalledWith({
         sceneCount: 5,
-        model: "claude-sonnet-4-20250514",
+        model: "deepseek-chat",
         notes: "",
         loopMode: true,
         languages: { hi: 3, ja: 2 },

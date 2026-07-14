@@ -37,4 +37,6 @@ export type BatchOutput = z.infer<typeof BatchOutputSchema>;
 export interface GenerationOptions {
   temperature?: number;
   maxTokens?: number;
+  /** Override model id for this call */
+  model?: string;
 }

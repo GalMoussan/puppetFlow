@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 
 export interface RunConfig {
@@ -25,14 +25,43 @@ interface RunModalProps {
   defaults?: Partial<RunConfig>;
 }
 
-const MODELS = [
-  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
+interface LlmModelOption {
+  value: string;
+  label: string;
+}
+
+interface LlmStatus {
+  provider: string;
+  hasKey: boolean;
+  defaultModel: string;
+  models: LlmModelOption[];
+}
+
+const FALLBACK_ANTHROPIC: LlmModelOption[] = [
+  { value: "claude-sonnet-4-6", label: "Claude Sonnet 4" },
   { value: "claude-opus-4-20250514", label: "Claude Opus 4" },
   { value: "claude-haiku-4-20250514", label: "Claude Haiku 4" },
 ];
 
+const FALLBACK_DEEPSEEK: LlmModelOption[] = [
+  { value: "deepseek-chat", label: "DeepSeek Chat" },
+  { value: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+];
+
 function todayISODate(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Split scene count into hi/ja weights that always sum to sceneCount (~60/40). */
+export function splitLanguageWeights(sceneCount: number): {
+  hi: number;
+  ja: number;
+} {
+  if (sceneCount <= 0) return { hi: 0, ja: 0 };
+  if (sceneCount === 1) return { hi: 1, ja: 0 };
+  const hi = Math.max(1, Math.round(sceneCount * 0.6));
+  const ja = sceneCount - hi;
+  return { hi, ja: Math.max(0, ja) };
 }
 
 export function RunModal({
@@ -45,26 +74,93 @@ export function RunModal({
   error,
   defaults,
 }: RunModalProps) {
-  const [sceneCount, setSceneCount] = useState(defaults?.sceneCount ?? 5);
-  const [model, setModel] = useState(defaults?.model ?? "claude-sonnet-4-20250514");
+  const initialScenes = defaults?.sceneCount ?? 5;
+  // Prefer stored language split only when it still sums to scene count
+  const initialLang = (() => {
+    const stored = defaults?.languages;
+    if (
+      stored &&
+      stored.hi + stored.ja === initialScenes &&
+      stored.hi >= 0 &&
+      stored.ja >= 0
+    ) {
+      return stored;
+    }
+    return splitLanguageWeights(initialScenes);
+  })();
+
+  const [sceneCount, setSceneCount] = useState(initialScenes);
+  const [model, setModel] = useState(defaults?.model ?? "deepseek-chat");
   const [notes, setNotes] = useState(defaults?.notes ?? "");
   const [loopMode, setLoopMode] = useState(defaults?.loopMode ?? true);
-  const [hiWeight, setHiWeight] = useState(defaults?.languages?.hi ?? 3);
-  const [jaWeight, setJaWeight] = useState(defaults?.languages?.ja ?? 2);
-  const [historyStrictness, setHistoryStrictness] = useState<"hard-fail" | "warn">(
-    defaults?.historyStrictness ?? "warn"
-  );
+  const [hiWeight, setHiWeight] = useState(initialLang.hi);
+  const [jaWeight, setJaWeight] = useState(initialLang.ja);
+  const [historyStrictness, setHistoryStrictness] = useState<
+    "hard-fail" | "warn"
+  >(defaults?.historyStrictness ?? "warn");
   const [runDate, setRunDate] = useState(defaults?.runDate ?? todayISODate());
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [models, setModels] = useState<LlmModelOption[]>(FALLBACK_DEEPSEEK);
+  const [provider, setProvider] = useState<string>("deepseek");
+  const [hasKey, setHasKey] = useState(true);
 
   const clearValidation = () => setValidationError(null);
+
+  const applySceneCount = useCallback((n: number) => {
+    setSceneCount(n);
+    if (n >= 1 && n <= 10) {
+      const { hi, ja } = splitLanguageWeights(n);
+      setHiWeight(hi);
+      setJaWeight(ja);
+    }
+    clearValidation();
+  }, []);
+
+  // Load provider + model list when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch("/api/llm/status");
+          if (!res.ok) return;
+          const data = (await res.json()) as LlmStatus;
+          if (cancelled) return;
+          setProvider(data.provider);
+          setHasKey(data.hasKey);
+          setModels(
+            data.models?.length
+              ? data.models
+              : data.provider === "deepseek"
+                ? FALLBACK_DEEPSEEK
+                : FALLBACK_ANTHROPIC
+          );
+          setModel((prev) => {
+            const preferred = data.defaultModel || data.models?.[0]?.value;
+            if (preferred && data.models?.some((m) => m.value === preferred)) {
+              return preferred;
+            }
+            // Keep previous if still valid
+            if (data.models?.some((m) => m.value === prev)) return prev;
+            return preferred || prev;
+          });
+        } catch {
+          // keep fallbacks
+        }
+      })();
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate scene count
     if (sceneCount < 1) {
       setValidationError("At least 1 scene");
       return;
@@ -79,8 +175,21 @@ export function RunModal({
       return;
     }
 
-    if (hiWeight + jaWeight > sceneCount) {
-      setValidationError("Language weights cannot exceed scene count");
+    // Auto-fit languages if they don't match scene count
+    let hi = hiWeight;
+    let ja = jaWeight;
+    if (hi + ja !== sceneCount) {
+      const fitted = splitLanguageWeights(sceneCount);
+      hi = fitted.hi;
+      ja = fitted.ja;
+      setHiWeight(hi);
+      setJaWeight(ja);
+    }
+
+    if (!hasKey) {
+      setValidationError(
+        "No LLM API key configured. Add DEEPSEEK_API_KEY (or ANTHROPIC_API_KEY) to .env and restart."
+      );
       return;
     }
 
@@ -89,7 +198,7 @@ export function RunModal({
       model,
       notes,
       loopMode,
-      languages: { hi: hiWeight, ja: jaWeight },
+      languages: { hi, ja },
       historyStrictness,
       runDate,
     });
@@ -122,8 +231,19 @@ export function RunModal({
           </button>
         </div>
 
-        <div className="text-sm text-zinc-400 mb-4">
-          Template: <span className="text-white">{templateName}</span>
+        <div className="text-sm text-zinc-400 mb-4 space-y-1">
+          <div>
+            Template: <span className="text-white">{templateName}</span>
+          </div>
+          <div>
+            Provider:{" "}
+            <span className="text-violet-300 capitalize" data-testid="llm-provider">
+              {provider}
+            </span>
+            {!hasKey && (
+              <span className="text-red-400 ml-2">(no API key)</span>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -153,13 +273,15 @@ export function RunModal({
               value={sceneCount}
               onChange={(e) => {
                 const val = parseInt(e.target.value, 10);
-                setSceneCount(Number.isNaN(val) ? 0 : val);
-                clearValidation();
+                applySceneCount(Number.isNaN(val) ? 0 : val);
               }}
               min={1}
               max={10}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             />
+            <p className="text-xs text-zinc-500 mt-1">
+              Language weights auto-adjust to match scene count.
+            </p>
           </div>
 
           <div className="flex items-center justify-between gap-3">
@@ -193,7 +315,7 @@ export function RunModal({
                   clearValidation();
                 }}
                 min={0}
-                max={10}
+                max={sceneCount || 10}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -211,11 +333,14 @@ export function RunModal({
                   clearValidation();
                 }}
                 min={0}
-                max={10}
+                max={sceneCount || 10}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
           </div>
+          <p className="text-xs text-zinc-500 -mt-2">
+            Sum should equal scene count ({sceneCount}). Currently: {hiWeight + jaWeight}.
+          </p>
 
           <div>
             <label
@@ -251,7 +376,7 @@ export function RunModal({
               }}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              {MODELS.map((m) => (
+              {models.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
                 </option>
@@ -276,7 +401,6 @@ export function RunModal({
             />
           </div>
 
-          {/* templateId available for future display; kept for API callers */}
           <input type="hidden" name="templateId" value={templateId} readOnly />
 
           {(validationError || error) && (

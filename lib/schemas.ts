@@ -191,6 +191,8 @@ export const RunConfigInputSchema = z.object({
   }).default({ hi: 0, ja: 0 }),
   batchSize: z.number().int().min(1).max(10).default(5),
   historyStrictness: z.enum(["hard-fail", "warn"]).default("warn"),
+  /** Optional model id override for the active LLM provider */
+  model: z.string().min(1).optional(),
 });
 
 export type RunConfigInput = z.infer<typeof RunConfigInputSchema>;

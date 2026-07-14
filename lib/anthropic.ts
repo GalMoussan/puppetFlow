@@ -66,7 +66,8 @@ async function generateBatchAnthropic(
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY!;
-  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+  const model =
+    options.model || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
   const maxAttempts = 2;
 
   const prompt = buildGenerationPrompt(scaffold, assignments);
