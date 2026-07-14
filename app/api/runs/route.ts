@@ -57,7 +57,9 @@ export async function GET(request: NextRequest) {
       where.status = filters.status;
     }
 
-    // Execute query
+    // List payload: template name + scene count + first-scene preview.
+    // Full scenes load on GET /api/runs/[id] (run viewer). Library needs every
+    // historical run forever as the DB grows — keep list light and paginated.
     const [runs, total] = await Promise.all([
       prisma.run.findMany({
         where,
@@ -65,12 +67,23 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
         include: {
           template: {
-            include: {
-              themePack: true,
+            select: {
+              id: true,
+              name: true,
             },
           },
           scenes: {
             orderBy: { index: "asc" },
+            take: 1,
+            select: {
+              id: true,
+              index: true,
+              lyrics: true,
+              imagePrompt: true,
+            },
+          },
+          _count: {
+            select: { scenes: true },
           },
         },
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -78,16 +91,16 @@ export async function GET(request: NextRequest) {
       prisma.run.count({ where }),
     ]);
 
-    // Determine if there are more results
-    const hasMore = runs.length === effectiveLimit && total > effectiveLimit;
-    const nextCursor = hasMore && runs.length > 0
-      ? runs[runs.length - 1].id
-      : null;
+    // Determine if there are more results (cursor pagination)
+    const hasMore = runs.length === effectiveLimit;
+    const nextCursor =
+      hasMore && runs.length > 0 ? runs[runs.length - 1].id : null;
 
     return NextResponse.json({
       data: runs,
       cursor: nextCursor,
       hasMore,
+      total,
     });
   } catch (err) {
     console.error("GET /api/runs error:", err);

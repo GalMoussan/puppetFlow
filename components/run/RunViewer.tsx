@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Copy, Download, Check } from "lucide-react";
+import { ArrowLeft, Copy, Download, Check, Library } from "lucide-react";
 import { SceneCard, type Scene, type RerollStage } from "./SceneCard";
 
 export interface Run {
@@ -139,8 +139,17 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
               type="button"
             >
               <ArrowLeft className="w-5 h-5" />
-              Back to Canvas
+              Canvas
             </button>
+            <a
+              href="/library"
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+              aria-label="Generation library"
+              data-testid="nav-library"
+            >
+              <Library className="w-5 h-5" />
+              Library
+            </a>
             <div className="h-6 w-px bg-zinc-700" />
             <h1 className="text-xl font-semibold">{run.templateName}</h1>
           </div>

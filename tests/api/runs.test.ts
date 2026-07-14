@@ -652,6 +652,7 @@ describe("api/runs", () => {
       expect(body.data).toHaveLength(10);
       expect(body.hasMore).toBe(true);
       expect(body.cursor).toBeDefined();
+      expect(body.total).toBe(25);
     });
 
     it("orders by createdAt DESC (most recent first)", async () => {

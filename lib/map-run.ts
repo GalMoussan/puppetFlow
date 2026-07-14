@@ -43,10 +43,28 @@ export interface ApiRun {
   templateId: string;
   status: string;
   model?: string | null;
+  error?: string | null;
   createdAt: string | Date;
   updatedAt?: string | Date;
   template?: { id?: string; name?: string } | null;
   scenes?: ApiScene[];
+  /** Present on list/library responses */
+  _count?: { scenes?: number };
+}
+
+/** Compact run card for the generation library */
+export interface LibraryRunItem {
+  id: string;
+  templateId: string;
+  templateName: string;
+  status: string;
+  model: string;
+  sceneCount: number;
+  createdAt: string;
+  updatedAt: string;
+  error?: string | null;
+  previewLyrics: string;
+  previewImage: string;
 }
 
 // =============================================================================
@@ -121,6 +139,32 @@ function mapStatus(status: string): ViewerRun["status"] {
   if (upper === "DONE") return "done";
   if (upper === "FAILED") return "failed";
   return "generating";
+}
+
+/**
+ * Map GET /api/runs list item to a library card model.
+ */
+export function mapApiRunToLibraryItem(apiRun: ApiRun): LibraryRunItem {
+  const scenes = apiRun.scenes ?? [];
+  const first = scenes[0];
+  const extra = apiRun as ApiRun & { sceneCount?: number };
+  const sceneCount =
+    apiRun._count?.scenes ??
+    (typeof extra.sceneCount === "number" ? extra.sceneCount : scenes.length);
+
+  return {
+    id: apiRun.id,
+    templateId: apiRun.templateId,
+    templateName: apiRun.template?.name ?? "Untitled template",
+    status: apiRun.status,
+    model: apiRun.model ?? "unknown",
+    sceneCount,
+    createdAt: toIso(apiRun.createdAt),
+    updatedAt: toIso(apiRun.updatedAt ?? apiRun.createdAt),
+    error: apiRun.error ?? null,
+    previewLyrics: first?.lyrics?.trim() || "",
+    previewImage: first?.imagePrompt?.trim() || "",
+  };
 }
 
 /**

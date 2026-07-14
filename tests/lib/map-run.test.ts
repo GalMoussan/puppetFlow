@@ -5,7 +5,11 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { mapApiRunToViewerRun, mapLintReportToResult } from "@/lib/map-run";
+import {
+  mapApiRunToViewerRun,
+  mapApiRunToLibraryItem,
+  mapLintReportToResult,
+} from "@/lib/map-run";
 
 const apiScene = {
   id: "scene-1",
@@ -98,10 +102,43 @@ describe("lib/map-run", () => {
       const run = mapApiRunToViewerRun({ ...apiRun, status: "FAILED" });
       expect(run.status).toBe("failed");
     });
+  });
 
-    it("falls back template name when template missing", () => {
-      const run = mapApiRunToViewerRun({ ...apiRun, template: undefined });
-      expect(run.templateName).toBe("Untitled");
+  describe("mapApiRunToLibraryItem", () => {
+    it("maps list payload with _count and first-scene preview", () => {
+      const item = mapApiRunToLibraryItem({
+        id: "run-1",
+        templateId: "tpl-1",
+        status: "DONE",
+        model: "deepseek-chat",
+        createdAt: "2026-07-14T10:00:00.000Z",
+        template: { id: "tpl-1", name: "Master of Puppets" },
+        scenes: [
+          {
+            id: "s1",
+            index: 0,
+            lyrics: "Preview lyrics",
+            imagePrompt: "Preview image",
+            startPrompt: "",
+            middlePrompt: "",
+            endPrompt: "",
+            boundaryFrame1: "",
+            boundaryFrame2: "",
+          },
+        ],
+        _count: { scenes: 5 },
+      });
+
+      expect(item.templateName).toBe("Master of Puppets");
+      expect(item.sceneCount).toBe(5);
+      expect(item.previewLyrics).toBe("Preview lyrics");
+      expect(item.model).toBe("deepseek-chat");
+      expect(item.status).toBe("DONE");
     });
+  });
+
+  it("falls back template name when template missing", () => {
+    const run = mapApiRunToViewerRun({ ...apiRun, template: undefined });
+    expect(run.templateName).toBe("Untitled");
   });
 });

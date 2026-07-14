@@ -10,7 +10,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ReactFlowProvider } from "@xyflow/react";
+import { Library } from "lucide-react";
 import { Canvas, BlockPalette, Inspector, RunButton } from "@/components/canvas";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useTemplate } from "@/lib/hooks/useTemplate";
@@ -59,6 +61,19 @@ function TopBar() {
 
       <div className="flex items-center gap-4">
         {getSaveIndicator()}
+        <Link
+          href="/library"
+          className="
+            flex items-center gap-1.5 px-3 py-1.5 rounded
+            text-sm font-medium text-neutral-300
+            hover:text-white hover:bg-neutral-800
+            transition-colors
+          "
+          data-testid="nav-library"
+        >
+          <Library className="w-4 h-4" aria-hidden />
+          Library
+        </Link>
         <button
           onClick={() => {
             void save();

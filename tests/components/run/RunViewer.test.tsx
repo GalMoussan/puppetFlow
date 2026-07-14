@@ -222,13 +222,36 @@ describe("RunViewer", () => {
       });
       global.URL.createObjectURL = vi.fn(() => "blob:url");
       global.URL.revokeObjectURL = vi.fn();
-      const mockLink = { href: "", download: "", click: vi.fn() };
-      const originalCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
-        if (tagName === "a") {
-          return mockLink as unknown as HTMLAnchorElement;
+      const mockLink = {
+        href: "",
+        download: "",
+        click: vi.fn(),
+        style: {} as CSSStyleDeclaration,
+        setAttribute: vi.fn(),
+        remove: vi.fn(),
+      };
+      const originalCreateElement = Document.prototype.createElement;
+      vi.spyOn(document, "createElement").mockImplementation(function (
+        this: Document,
+        tagName: string,
+        options?: ElementCreationOptions
+      ) {
+        // Only intercept ephemeral download anchors (export flow), not nav links
+        if (String(tagName).toLowerCase() === "a") {
+          const el = originalCreateElement.call(this, tagName, options);
+          // Prefer real anchors for in-DOM nav; use mock only when not yet attached
+          // Export creates an off-DOM <a> and calls click immediately.
+          Object.defineProperty(el, "click", {
+            configurable: true,
+            value: () => {
+              mockLink.href = (el as HTMLAnchorElement).href;
+              mockLink.download = (el as HTMLAnchorElement).download;
+              mockLink.click();
+            },
+          });
+          return el;
         }
-        return originalCreateElement(tagName);
+        return originalCreateElement.call(this, tagName, options);
       });
       return mockLink;
     }
