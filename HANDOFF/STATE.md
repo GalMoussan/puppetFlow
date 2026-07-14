@@ -4,7 +4,9 @@
 **Last Session:** Claude Code (Opus 4.5)
 **Current Branch:** main
 
-## Project Status: Phase 4 IN PROGRESS
+## Project Status: Phase 4 CLOSE-OUT IN PROGRESS
+
+**Last update:** 2026-07-14 (P4-A green gates; P4-B P0 audit)
 
 ### Completed Phases
 
@@ -18,29 +20,27 @@
 ### Current Phase: Phase 4 - Run Experience
 
 **Pipeline ID:** `2026-07-13-phase4-run-experience`
-**Pipeline Status:** RUNNING (paused at integration step)
+**Pipeline Status:** CLOSE-OUT (feature-complete; polish items remain)
 
 #### Tasks Status
 
 | Task | Description | Status |
 |------|-------------|--------|
-| T401 | RunButton component with modal | DONE |
-| T402 | SSE Progress component | DONE |
-| T403 | Run Viewer page | DONE |
-| T404 | Create Block UI | DONE |
+| T401 | RunButton + modal + SSE wire | DONE |
+| T402 | SSE Progress | DONE |
+| T403 | Run Viewer `/runs/[id]` | DONE |
+| T404–T407 | Copy, reroll, export, Playwright | DONE |
+| P4-A | typecheck/lint/test/e2e green | DONE |
+| P4-B | P0 runtime audit | DONE (see `HANDOFF/P0_STATUS.md`) |
+| P4-C | useRunStore / useRunStream | IN PROGRESS |
+| P4-H | API keys + real generation | PENDING (with user) |
 
-**Integration Status:** Components are implemented and exported. RunButton is integrated into TopBar in `app/page.tsx`.
+### Next Steps
 
-### Next Steps (Resume Here)
-
-1. **Run the app and visually verify RunButton appears** in the top bar
-2. **Test the run flow** end-to-end:
-   - Click Run button
-   - Fill modal (template, batch size, loop mode)
-   - Submit and watch SSE progress
-   - View generated scenes in Run Viewer
-3. **Address any runtime issues** discovered during manual testing
-4. **Complete Phase 4 verification** (all component tests pass: 172/172)
+1. Finish P4-C (run store split)
+2. P4-H with user (Anthropic/Deepseek keys)
+3. Optional: toasts, template switcher, library, chips (P4-D–G)
+4. Doc mark Phase 4 DONE
 
 ### Remaining Phases
 

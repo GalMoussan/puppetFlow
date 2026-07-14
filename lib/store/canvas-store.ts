@@ -27,7 +27,6 @@ import {
   type BlockNodeData,
   type LaneNodeData,
   type SaveState,
-  type RunStatus,
 } from "@/lib/types/canvas";
 
 // =============================================================================
@@ -74,9 +73,7 @@ export interface CanvasState {
   isDirty: boolean;
   saveState: SaveState;
 
-  // Run state
-  runStatus: RunStatus;
-  currentRunId: string | null;
+  // Template-level run config (saved with graph; execution state lives in useRunStore)
   runConfig: RunConfig;
 
   // Actions
@@ -97,8 +94,6 @@ export interface CanvasState {
   saveTemplate: () => Promise<void>;
 
   setThemePackId: (themePackId: string | null) => void;
-  setRunStatus: (status: RunStatus) => void;
-  setCurrentRunId: (runId: string | null) => void;
   setRunConfig: (config: Partial<RunConfig>) => void;
 }
 
@@ -124,8 +119,6 @@ export const useCanvasStore = create<CanvasState>()(
     themePackId: null,
     isDirty: false,
     saveState: "idle",
-    runStatus: "idle",
-    currentRunId: null,
     runConfig: {
       loopMode: true,
       languages: { hi: 3, ja: 2 },
@@ -413,14 +406,6 @@ export const useCanvasStore = create<CanvasState>()(
 
     setThemePackId: (themePackId) => {
       set({ themePackId });
-    },
-
-    setRunStatus: (runStatus) => {
-      set({ runStatus });
-    },
-
-    setCurrentRunId: (currentRunId) => {
-      set({ currentRunId });
     },
 
     setRunConfig: (config) => {

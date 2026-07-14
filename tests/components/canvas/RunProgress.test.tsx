@@ -25,6 +25,7 @@ import {
   type MockCanvasStore,
   type RunStatus,
 } from "@/tests/mocks/canvas-fixtures";
+import { useRunStore } from "@/lib/store/run-store";
 
 // =============================================================================
 // Mock Setup
@@ -88,10 +89,10 @@ describe("RunProgress", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockStore = createMockCanvasStore({
-      runStatus: "generating",
-      currentRunId: "run-001",
-    });
+    mockStore = createMockCanvasStore({});
+    useRunStore.getState().reset();
+    useRunStore.getState().setStatus("generating");
+    useRunStore.getState().setCurrentRunId("run-001");
   });
 
   afterEach(() => {
@@ -104,10 +105,10 @@ describe("RunProgress", () => {
 
   describe("Progress States", () => {
     it("shows compiling state", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "compiling",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("compiling");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -119,10 +120,10 @@ describe("RunProgress", () => {
     });
 
     it("shows generating state with scene progress", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "generating",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("generating");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(
         <RunProgress
@@ -136,10 +137,10 @@ describe("RunProgress", () => {
     });
 
     it("shows linting state", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "linting",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("linting");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -147,10 +148,10 @@ describe("RunProgress", () => {
     });
 
     it("shows repairing state", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "repairing",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("repairing");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -158,10 +159,10 @@ describe("RunProgress", () => {
     });
 
     it("shows done state", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "done",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("done");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -169,10 +170,10 @@ describe("RunProgress", () => {
     });
 
     it("shows failed state with message", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "failed",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("failed");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} errorMessage="API rate limit exceeded" />);
 
@@ -206,10 +207,10 @@ describe("RunProgress", () => {
     });
 
     it("progress bar is indeterminate during compiling", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "compiling",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("compiling");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -263,10 +264,10 @@ describe("RunProgress", () => {
     });
 
     it("marks completed steps", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "linting",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("linting");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -305,10 +306,10 @@ describe("RunProgress", () => {
     });
 
     it("hides cancel button when done", () => {
-      mockStore = createMockCanvasStore({
-        runStatus: "done",
-        currentRunId: "run-001",
-      });
+      mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("done");
+      useRunStore.getState().setCurrentRunId("run-001");
 
       render(<RunProgress {...defaultProps} />);
 
@@ -335,10 +336,8 @@ describe("useRunProgress", () => {
     vi.clearAllMocks();
     mockEventSourceInstance = null;
     mockEventSourceInstances = [];
-    mockStore = createMockCanvasStore({
-      runStatus: "idle",
-      currentRunId: null,
-    });
+    mockStore = createMockCanvasStore({});
+      useRunStore.getState().reset();
   });
 
   it("connects to SSE endpoint", async () => {

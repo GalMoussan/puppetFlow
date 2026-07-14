@@ -27,6 +27,7 @@ import {
   mockCameraBlock,
   type MockCanvasStore,
 } from "@/tests/mocks/canvas-fixtures";
+import { useRunStore } from "@/lib/store/run-store";
 
 // =============================================================================
 // Mock Setup
@@ -62,6 +63,7 @@ describe("RunButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRouterPush.mockReset();
+    useRunStore.getState().reset();
     mockStore = createMockCanvasStore({
       nodes: createLaneNodes(),
       templateId: "tpl-001",
@@ -108,8 +110,9 @@ describe("RunButton", () => {
       const blockNode = createBlockNode("node-1", mockCameraBlock, "VIDEO_START", 0);
       mockStore = createMockCanvasStore({
         nodes: [...createLaneNodes(), blockNode],
-        runStatus: "generating",
       });
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("generating");
 
       render(<RunButton />);
 
@@ -121,8 +124,9 @@ describe("RunButton", () => {
       const blockNode = createBlockNode("node-1", mockCameraBlock, "VIDEO_START", 0);
       mockStore = createMockCanvasStore({
         nodes: [...createLaneNodes(), blockNode],
-        runStatus: "generating",
       });
+      useRunStore.getState().reset();
+      useRunStore.getState().setStatus("generating");
 
       render(<RunButton />);
 
@@ -276,11 +280,8 @@ describe("RunButton", () => {
       });
 
       await waitFor(() => {
-        expect(mockStore.setRunStatus).toHaveBeenCalledWith("compiling");
-        expect(mockStore.setRunStatus).toHaveBeenCalledWith("generating");
-        expect(mockStore.setRunStatus).toHaveBeenCalledWith("linting");
-        expect(mockStore.setRunStatus).toHaveBeenCalledWith("done");
-        expect(mockStore.setCurrentRunId).toHaveBeenCalledWith("run-42");
+        expect(useRunStore.getState().status).toBe("done");
+        expect(useRunStore.getState().currentRunId).toBe("run-42");
       });
     });
 

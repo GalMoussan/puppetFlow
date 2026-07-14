@@ -401,8 +401,6 @@ export interface MockCanvasStore {
   themePackId: string | null;
   isDirty: boolean;
   saveState: SaveState;
-  runStatus: RunStatus;
-  currentRunId: string | null;
   runConfig: {
     loopMode: boolean;
     languages: { hi: number; ja: number };
@@ -423,8 +421,6 @@ export interface MockCanvasStore {
   loadTemplate: ReturnType<typeof vi.fn<(templateId: string) => Promise<void>>>;
   saveTemplate: ReturnType<typeof vi.fn<() => Promise<void>>>;
   setThemePackId: ReturnType<typeof vi.fn<(themePackId: string | null) => void>>;
-  setRunStatus: ReturnType<typeof vi.fn<(status: RunStatus) => void>>;
-  setCurrentRunId: ReturnType<typeof vi.fn<(runId: string | null) => void>>;
   setRunConfig: ReturnType<typeof vi.fn<(config: Partial<MockCanvasStore["runConfig"]>) => void>>;
 }
 
@@ -438,8 +434,6 @@ export function createMockCanvasStore(overrides?: Partial<MockCanvasStore>): Moc
     themePackId: null,
     isDirty: false,
     saveState: "idle",
-    runStatus: "idle",
-    currentRunId: null,
     runConfig: {
       loopMode: true,
       languages: { hi: 3, ja: 2 },
@@ -458,8 +452,6 @@ export function createMockCanvasStore(overrides?: Partial<MockCanvasStore>): Moc
     loadTemplate: vi.fn(),
     saveTemplate: vi.fn().mockResolvedValue(undefined),
     setThemePackId: vi.fn(),
-    setRunStatus: vi.fn(),
-    setCurrentRunId: vi.fn(),
     setRunConfig: vi.fn(),
     ...overrides,
   };

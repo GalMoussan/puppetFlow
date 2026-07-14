@@ -4,22 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Play, Loader2 } from "lucide-react";
 import { useCanvasStore } from "@/lib/store/canvas-store";
+import { useRunStore } from "@/lib/store/run-store";
 import { useShallow } from "zustand/shallow";
 import { RunModal, type RunConfig } from "./RunModal";
 import { RunProgress } from "./RunProgress";
-import {
-  consumeRunSSEStream,
-  type RunUIState,
-} from "@/lib/run-sse";
-
-const initialUIState = (): RunUIState => ({
-  runStatus: "idle",
-  currentRunId: null,
-  progress: null,
-  duration: 0,
-  errorMessage: null,
-  finished: false,
-});
+import { useRunStream } from "@/lib/hooks/useRunStream";
 
 export function RunButton() {
   const router = useRouter();
@@ -27,35 +16,36 @@ export function RunButton() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [showProgress, setShowProgress] = useState(false);
-  const [progressState, setProgressState] = useState<RunUIState>(initialUIState);
 
-  const {
-    hasBlocks,
-    runStatus,
-    templateId,
-    templateName,
-    runConfig,
-    setRunStatus,
-    setCurrentRunId,
-    setRunConfig,
-  } = useCanvasStore(
-    useShallow((state) => {
-      const blockNodes = state.nodes.filter((n) => n.type === "block");
-      return {
-        hasBlocks: blockNodes.length > 0,
-        runStatus: state.runStatus,
-        templateId: state.templateId,
-        templateName: state.templateName,
-        runConfig: state.runConfig,
-        setRunStatus: state.setRunStatus,
-        setCurrentRunId: state.setCurrentRunId,
-        setRunConfig: state.setRunConfig,
-      };
-    })
-  );
+  const { hasBlocks, templateId, templateName, runConfig, setRunConfig } =
+    useCanvasStore(
+      useShallow((state) => {
+        const blockNodes = state.nodes.filter((n) => n.type === "block");
+        return {
+          hasBlocks: blockNodes.length > 0,
+          templateId: state.templateId,
+          templateName: state.templateName,
+          runConfig: state.runConfig,
+          setRunConfig: state.setRunConfig,
+        };
+      })
+    );
+
+  const { status, currentRunId, progress, duration, errorMessage } =
+    useRunStore(
+      useShallow((s) => ({
+        status: s.status,
+        currentRunId: s.currentRunId,
+        progress: s.progress,
+        duration: s.duration,
+        errorMessage: s.errorMessage,
+      }))
+    );
+
+  const { consumeStream, reset: resetRun, fail } = useRunStream();
 
   const isRunning =
-    runStatus !== "idle" && runStatus !== "done" && runStatus !== "failed";
+    status !== "idle" && status !== "done" && status !== "failed";
   const isDisabled = !hasBlocks || isRunning;
 
   const handleRun = async (config: RunConfig) => {
@@ -69,7 +59,7 @@ export function RunButton() {
         );
       }
 
-      // Keep canvas store runConfig in sync with modal choices
+      // Keep canvas runConfig (saved with template graph) in sync with modal
       setRunConfig({
         batchSize: config.sceneCount,
         loopMode: config.loopMode,
@@ -93,7 +83,10 @@ export function RunButton() {
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as {
           error?: string;
-          details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
+          details?: {
+            fieldErrors?: Record<string, string[]>;
+            formErrors?: string[];
+          };
         };
         const detailParts: string[] = [];
         if (data.details?.formErrors?.length) {
@@ -114,53 +107,39 @@ export function RunButton() {
         throw new Error("No response stream from run API");
       }
 
-      // Close modal and show progress while SSE streams
       setIsModalOpen(false);
       setShowProgress(true);
       setIsLoading(false);
 
-      const start: RunUIState = {
-        ...initialUIState(),
-        runStatus: "compiling",
-      };
-      setProgressState(start);
-      setRunStatus("compiling");
+      const finalState = await consumeStream(response);
 
-      const finalState = await consumeRunSSEStream(response.body, start, (next) => {
-        setProgressState(next);
-        setRunStatus(next.runStatus);
-        if (next.currentRunId) {
-          setCurrentRunId(next.currentRunId);
-        }
-      });
-
-      // Navigate to run viewer when batch completes successfully
       if (finalState.runStatus === "done" && finalState.currentRunId) {
         router.push(`/runs/${finalState.currentRunId}`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start run");
-      setRunStatus("failed");
+      const message =
+        err instanceof Error ? err.message : "Failed to start run";
+      setError(message);
+      // Keep modal open for pre-stream validation/API errors
+      fail(message);
       setIsLoading(false);
+      // Only show progress overlay if we already started streaming
+      // (showProgress true means stream had begun)
     }
   };
 
   const handleProgressComplete = () => {
-    if (progressState.currentRunId) {
-      router.push(`/runs/${progressState.currentRunId}`);
+    if (currentRunId) {
+      router.push(`/runs/${currentRunId}`);
     }
   };
 
   const handleProgressCancel = () => {
     setShowProgress(false);
-    setRunStatus("idle");
-    setCurrentRunId(null);
-    setProgressState(initialUIState());
+    resetRun();
   };
 
-  const progressRunId =
-    progressState.currentRunId ??
-    (showProgress ? "pending" : "");
+  const progressRunId = currentRunId ?? (showProgress ? "pending" : "");
 
   return (
     <>
@@ -169,9 +148,11 @@ export function RunButton() {
         disabled={isDisabled}
         className={`
           flex items-center gap-2 px-4 py-2 rounded-lg font-medium
-          ${isDisabled
-            ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-            : "bg-green-600 hover:bg-green-500 text-white"}
+          ${
+            isDisabled
+              ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-500 text-white"
+          }
           transition-colors
         `}
       >
@@ -210,13 +191,13 @@ export function RunButton() {
         <div className="fixed bottom-4 right-4 z-50 w-full max-w-md shadow-2xl">
           <RunProgress
             runId={progressRunId}
-            progress={progressState.progress ?? undefined}
-            duration={progressState.duration}
-            errorMessage={progressState.errorMessage ?? undefined}
+            progress={progress ?? undefined}
+            duration={duration}
+            errorMessage={errorMessage ?? undefined}
             onComplete={handleProgressComplete}
             onCancel={handleProgressCancel}
             onError={() => {
-              setRunStatus("failed");
+              fail(errorMessage ?? "Run failed");
             }}
           />
         </div>

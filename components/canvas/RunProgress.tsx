@@ -1,18 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X, Check, Loader2, AlertCircle } from "lucide-react";
-import { useCanvasStore } from "@/lib/store/canvas-store";
-import { useShallow } from "zustand/shallow";
-
-type RunStatus =
-  | "idle"
-  | "compiling"
-  | "generating"
-  | "linting"
-  | "repairing"
-  | "done"
-  | "failed";
+import { Check, Loader2, AlertCircle } from "lucide-react";
+import { useRunStore } from "@/lib/store/run-store";
+import type { RunStatus } from "@/lib/types/canvas";
 
 interface Progress {
   sceneIndex?: number;
@@ -25,9 +16,12 @@ interface RunProgressProps {
   onComplete?: () => void;
   onError?: (error: Error) => void;
   onCancel?: () => void;
+  /** Optional overrides for tests; defaults to useRunStore */
   progress?: Progress;
   duration?: number;
   errorMessage?: string;
+  /** Optional status override for tests */
+  status?: RunStatus;
 }
 
 const STEPS: { id: string; label: string; status: RunStatus[] }[] = [
@@ -88,19 +82,26 @@ function estimateRemaining(
 }
 
 export function RunProgress({
-  runId,
-  onComplete,
-  onError,
+  runId: _runId,
+  onComplete: _onComplete,
+  onError: _onError,
   onCancel,
-  progress,
-  duration = 0,
-  errorMessage,
+  progress: progressProp,
+  duration: durationProp,
+  errorMessage: errorMessageProp,
+  status: statusProp,
 }: RunProgressProps) {
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const runStatus = useCanvasStore(
-    useShallow((state) => state.runStatus as RunStatus)
-  );
+  const storeStatus = useRunStore((s) => s.status);
+  const storeProgress = useRunStore((s) => s.progress);
+  const storeDuration = useRunStore((s) => s.duration);
+  const storeError = useRunStore((s) => s.errorMessage);
+
+  const runStatus = statusProp ?? storeStatus;
+  const progress = progressProp ?? storeProgress ?? undefined;
+  const duration = durationProp ?? storeDuration;
+  const errorMessage = errorMessageProp ?? storeError ?? undefined;
 
   const isIndeterminate = runStatus === "compiling";
   const isDone = runStatus === "done";
