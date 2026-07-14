@@ -41,31 +41,154 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+/** Full canon pools — variety engine needs ≥ batchSize unique values per axis (batch up to 10). */
+const DEMO_CANON = {
+  hooks: [
+    "surprise entrance",
+    "dramatic lighting",
+    "crowd chant",
+    "sudden silence",
+    "UV blackout",
+    "string snap tease",
+    "mirror reveal",
+    "pyro flash",
+    "crowd part",
+    "silhouette rise",
+  ],
+  cameras: [
+    "dolly",
+    "pan",
+    "crane up",
+    "whip pan",
+    "tracking shot",
+    "push-in",
+    "pull-back",
+    "steadicam",
+    "handheld",
+    "aerial",
+  ],
+  dynamics: [
+    "synchronized",
+    "call-response",
+    "wave",
+    "mirror",
+    "tandem",
+    "battle",
+    "orbit",
+    "leapfrog",
+    "lockstep",
+    "duet break",
+  ],
+  visuals: [
+    "neon strings",
+    "golden glow",
+    "puppet shadows",
+    "sparkle trail",
+    "UV reactive",
+    "smoke",
+    "particles",
+    "laser lattice",
+    "strobe freeze",
+    "hologram flicker",
+  ],
+  gags: [
+    "tangled strings",
+    "puppet falls",
+    "wrong puppet",
+    "delayed reaction",
+    "wrong stage",
+    "collision",
+    "stuck",
+    "hat steal",
+    "mic drop fail",
+    "shoe fly",
+  ],
+  payoffs: [
+    "crowd sync",
+    "confetti burst",
+    "puppet bow",
+    "stage reveal",
+    "light explosion",
+    "freeze",
+    "unity",
+    "chant peak",
+    "drop impact",
+    "hands skyward",
+  ],
+  chaosThreads: [
+    "rogue balloon",
+    "lost phone",
+    "drunk fan",
+    "pyro misfire",
+    "beach ball",
+    "smoke drift",
+    "confetti",
+    "security jog",
+    "flag wave",
+    "drone buzz",
+  ],
+  stages: [
+    "Main Stage",
+    "Pyramid Stage",
+    "The Other Stage",
+    "West Holts",
+    "Secret Stage",
+    "Campground",
+    "The Park",
+    "Arcadia",
+    "Glade",
+    "Field of Avalon",
+  ],
+  moments: [
+    "Sunset Arrival",
+    "Peak Hour",
+    "Headliner",
+    "Secret Set",
+    "Dawn Chorus",
+    "After Hours",
+    "Midnight",
+    "Golden Hour",
+    "Blue Hour",
+    "Dawn",
+  ],
+  languages: ["hi", "ja"],
+  subgenres: [
+    "psycore",
+    "techno",
+    "house",
+    "dubstep",
+    "drum and bass",
+    "trance",
+    "hardstyle",
+    "minimal",
+    "progressive",
+    "breaks",
+  ],
+};
+
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // Create demo theme pack
-  const themePack = await prisma.themePack.create({
-    data: {
+  // Upsert demo theme pack so re-seed refreshes thin canon pools
+  const themePack = await prisma.themePack.upsert({
+    where: { name: "Festival Demo Pack" },
+    create: {
       name: "Festival Demo Pack",
       active: true,
-      canon: {
-        hooks: ["surprise entrance", "dramatic lighting", "crowd chant"],
-        cameras: ["dolly", "pan", "crane up", "whip pan", "tracking shot"],
-        dynamics: ["synchronized", "call-response", "wave", "mirror"],
-        visuals: ["neon strings", "golden glow", "puppet shadows", "sparkle trail"],
-        gags: ["tangled strings", "puppet falls", "wrong puppet", "delayed reaction"],
-        payoffs: ["crowd sync", "confetti burst", "puppet bow", "stage reveal"],
-        chaosThreads: ["rogue balloon", "lost phone", "drunk fan", "pyro misfire"],
-        stages: ["Main Stage", "Pyramid Stage", "The Other Stage", "West Holts"],
-        moments: ["Sunset Arrival", "Peak Hour", "Headliner", "Secret Set", "Dawn Chorus"],
-        languages: ["en", "hi", "ja", "es"],
-        subgenres: ["psycore", "techno", "house", "dubstep", "drum and bass"],
-      },
+      canon: DEMO_CANON,
+    },
+    update: {
+      active: true,
+      canon: DEMO_CANON,
     },
   });
 
-  console.log(`✅ Created theme pack: ${themePack.name} (${themePack.id})`);
+  console.log(`✅ Theme pack ready: ${themePack.name} (${themePack.id})`);
+
+  // Clear prior demo blocks for this pack so seed is idempotent
+  await prisma.blockDefinition.deleteMany({
+    where: { themePackId: themePack.id },
+  });
 
   // Create block definitions
   const blocks = await Promise.all([
@@ -220,26 +343,37 @@ async function main() {
 
   console.log(`✅ Created ${blocks.length} block definitions`);
 
-  // Create a sample flow template (full CanvasGraph so agent never sees missing runConfig)
-  const template = await prisma.flowTemplate.create({
-    data: {
-      name: "Demo Festival Flow",
-      themePackId: themePack.id,
-      graph: {
-        version: 1,
-        lanes: ["GLOBAL", "IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
-        nodes: [],
-        edges: [],
-        runConfig: {
-          loopMode: true,
-          languages: { hi: 3, ja: 2 },
-          batchSize: 5,
-        },
-      },
+  // Upsert demo flow template (full CanvasGraph so agent never sees missing runConfig)
+  const demoGraph = {
+    version: 1,
+    lanes: ["GLOBAL", "IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+    nodes: [],
+    edges: [],
+    runConfig: {
+      loopMode: true,
+      languages: { hi: 3, ja: 2 },
+      batchSize: 5,
     },
+  };
+
+  const existingTemplate = await prisma.flowTemplate.findFirst({
+    where: { name: "Demo Festival Flow", themePackId: themePack.id },
   });
 
-  console.log(`✅ Created template: ${template.name} (${template.id})`);
+  const template = existingTemplate
+    ? await prisma.flowTemplate.update({
+        where: { id: existingTemplate.id },
+        data: { graph: demoGraph },
+      })
+    : await prisma.flowTemplate.create({
+        data: {
+          name: "Demo Festival Flow",
+          themePackId: themePack.id,
+          graph: demoGraph,
+        },
+      });
+
+  console.log(`✅ Template ready: ${template.name} (${template.id})`);
 
   console.log("\n🎉 Seed complete!");
   console.log(`   Theme Pack ID: ${themePack.id}`);

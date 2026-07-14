@@ -142,23 +142,185 @@ function rerollCombo(
 }
 
 /**
- * Build variety pool from canon data
+ * Ensure a pool has at least `min` unique values so variety.assign can fill a batch.
+ * Theme pack canon is often thin (3–4 items); pad with fallbacks without duplicates.
+ */
+export function padPool(
+  values: string[] | undefined,
+  fallbacks: string[],
+  min: number = 10
+): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const v of values ?? []) {
+    const key = String(v).trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(key);
+  }
+
+  // Already large enough — do not append fallbacks
+  if (result.length >= min) {
+    return result;
+  }
+
+  for (const v of fallbacks) {
+    if (result.length >= min) break;
+    const key = String(v).trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(key);
+  }
+
+  let n = 1;
+  const base = fallbacks[0] ?? "variant";
+  while (result.length < min) {
+    const candidate = `${base} ${n++}`;
+    if (seen.has(candidate)) continue;
+    seen.add(candidate);
+    result.push(candidate);
+  }
+
+  return result;
+}
+
+/**
+ * Build variety pool from canon data.
+ * Pads each axis to ≥10 so default batchSize 5–10 never fails on thin seed canon.
  */
 function buildVarietyPool(canon: Record<string, string[]>): VarietyPool {
+  const cameras = padPool(canon.cameras, [
+    "dolly",
+    "pan",
+    "crane up",
+    "whip pan",
+    "tracking shot",
+    "push-in",
+    "pull-back",
+    "steadicam",
+    "handheld",
+    "aerial",
+  ]);
+
   return {
-    hook: canon.hooks || ["surprise entrance", "dramatic lighting", "crowd surge"],
-    camera_start: canon.cameras || ["dolly", "pan", "crane up", "push-in"],
-    camera_middle: canon.cameras || ["pan", "dolly", "steadicam", "handheld"],
-    camera_end: canon.cameras || ["crane up", "dolly out", "aerial", "pull-back"],
-    dynamic: canon.dynamics || ["synchronized", "call-response", "battle", "mirror", "tandem"],
-    visual: canon.visuals || ["neon strings", "golden glow", "UV reactive", "smoke", "particles"],
-    gag: canon.gags || ["tangled strings", "puppet falls", "wrong stage", "collision", "stuck"],
-    payoff: canon.payoffs || ["crowd sync", "confetti burst", "light explosion", "freeze", "unity"],
-    chaosThread: canon.chaosThreads || ["rogue balloon", "lost phone", "beach ball", "smoke drift", "confetti"],
-    stageArea: canon.stages || ["Main Stage", "Pyramid Stage", "Other Stage", "Secret Stage", "Campground"],
-    festivalMoment: canon.moments || ["Sunset Arrival", "Peak Hour", "After Hours", "Dawn", "Midnight"],
-    language: canon.languages || ["hi", "ja"],
-    subgenre: canon.subgenres || ["psycore", "techno", "house", "trance", "dubstep"],
+    hook: padPool(canon.hooks, [
+      "surprise entrance",
+      "dramatic lighting",
+      "crowd surge",
+      "sudden silence",
+      "UV blackout",
+      "string snap tease",
+      "mirror reveal",
+      "pyro flash",
+      "crowd part",
+      "silhouette rise",
+    ]),
+    camera_start: cameras,
+    camera_middle: cameras,
+    camera_end: cameras,
+    dynamic: padPool(canon.dynamics, [
+      "synchronized",
+      "call-response",
+      "battle",
+      "mirror",
+      "tandem",
+      "wave",
+      "orbit",
+      "leapfrog",
+      "lockstep",
+      "duet break",
+    ]),
+    visual: padPool(canon.visuals, [
+      "neon strings",
+      "golden glow",
+      "UV reactive",
+      "smoke",
+      "particles",
+      "puppet shadows",
+      "sparkle trail",
+      "laser lattice",
+      "strobe freeze",
+      "hologram flicker",
+    ]),
+    gag: padPool(canon.gags, [
+      "tangled strings",
+      "puppet falls",
+      "wrong stage",
+      "collision",
+      "stuck",
+      "delayed reaction",
+      "wrong puppet",
+      "hat steal",
+      "mic drop fail",
+      "shoe fly",
+    ]),
+    payoff: padPool(canon.payoffs, [
+      "crowd sync",
+      "confetti burst",
+      "light explosion",
+      "freeze",
+      "unity",
+      "puppet bow",
+      "stage reveal",
+      "chant peak",
+      "drop impact",
+      "hands skyward",
+    ]),
+    chaosThread: padPool(canon.chaosThreads, [
+      "rogue balloon",
+      "lost phone",
+      "beach ball",
+      "smoke drift",
+      "confetti",
+      "drunk fan",
+      "pyro misfire",
+      "security jog",
+      "flag wave",
+      "drone buzz",
+    ]),
+    stageArea: padPool(canon.stages, [
+      "Main Stage",
+      "Pyramid Stage",
+      "Other Stage",
+      "Secret Stage",
+      "Campground",
+      "West Holts",
+      "The Park",
+      "Arcadia",
+      "Glade",
+      "Field of Avalon",
+    ]),
+    festivalMoment: padPool(canon.moments, [
+      "Sunset Arrival",
+      "Peak Hour",
+      "After Hours",
+      "Dawn",
+      "Midnight",
+      "Headliner",
+      "Secret Set",
+      "Dawn Chorus",
+      "Golden Hour",
+      "Blue Hour",
+    ]),
+    // Languages used for assignment weights (hi/ja) — keep distinct codes
+    language: padPool(
+      (canon.languages ?? []).filter((l) => l === "hi" || l === "ja"),
+      ["hi", "ja"],
+      2
+    ),
+    subgenre: padPool(canon.subgenres, [
+      "psycore",
+      "techno",
+      "house",
+      "trance",
+      "dubstep",
+      "drum and bass",
+      "hardstyle",
+      "minimal",
+      "progressive",
+      "breaks",
+    ]),
   };
 }
 

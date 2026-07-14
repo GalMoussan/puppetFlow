@@ -18,6 +18,7 @@ import {
   runBatch,
   AgentEventEmitter,
   VarietyError,
+  padPool,
   type SSEEmitter,
   type RunResult,
 } from "@/lib/agent";
@@ -125,6 +126,20 @@ function defaultAssignments(batchSize: number) {
 }
 
 describe("lib/agent", () => {
+  describe("padPool", () => {
+    it("pads thin canon pools to at least min unique values", () => {
+      const padded = padPool(["a", "b", "c"], ["x", "y", "z", "w", "v"], 5);
+      expect(padded.length).toBeGreaterThanOrEqual(5);
+      expect(new Set(padded).size).toBe(padded.length);
+      expect(padded.slice(0, 3)).toEqual(["a", "b", "c"]);
+    });
+
+    it("does not shrink already-large pools", () => {
+      const big = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
+      expect(padPool(big, ["x"], 10)).toEqual(big);
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
 
