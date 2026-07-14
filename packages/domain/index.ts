@@ -205,6 +205,23 @@ export {
 } from "./compiler";
 
 // =============================================================================
+// Scene import
+// =============================================================================
+
+export {
+  parseSceneMarkdown,
+  planImport,
+  importSceneFromMarkdown,
+  type SceneStageKey,
+  type ParsedStage,
+  type ParsedScene,
+  type ParsedCharacterLock,
+  type PlannedBlock,
+  type ImportPlan,
+  type PlanImportOptions,
+} from "./scene-import";
+
+// =============================================================================
 // Linter
 // =============================================================================
 

@@ -12,17 +12,36 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ReactFlowProvider } from "@xyflow/react";
-import { Library, LayoutTemplate } from "lucide-react";
-import { Canvas, BlockPalette, Inspector, RunButton } from "@/components/canvas";
+import type { Node, Edge } from "@xyflow/react";
+import { Library, LayoutTemplate, FileInput } from "lucide-react";
+import {
+  Canvas,
+  BlockPalette,
+  Inspector,
+  RunButton,
+  ImportSceneModal,
+  type ImportSceneResult,
+} from "@/components/canvas";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useTemplate } from "@/lib/hooks/useTemplate";
 import { toast } from "@/lib/store/toast-store";
-import { createLaneNodes } from "@/lib/types/canvas";
+import {
+  createLaneNodes,
+  type BlockNodeData,
+  type LaneNodeData,
+} from "@/lib/types/canvas";
+import type { BlockType, Lane } from "@/packages/domain/types";
 
 /**
  * Top bar with template name and save indicator
  */
-function TopBar() {
+function TopBar({
+  onImportClick,
+  canImport,
+}: {
+  onImportClick: () => void;
+  canImport: boolean;
+}) {
   const templateName = useCanvasStore((s) => s.templateName);
   const templateId = useCanvasStore((s) => s.templateId);
   // Pass null so we don't re-fetch — page bootstrap already called loadTemplate.
@@ -114,6 +133,25 @@ function TopBar() {
           Library
         </Link>
         <button
+          type="button"
+          onClick={onImportClick}
+          disabled={!canImport}
+          title={
+            canImport
+              ? "Import a scene paste into blocks + canvas"
+              : "Load a theme pack first"
+          }
+          data-testid="nav-import-scene"
+          className={`pf-btn px-3 py-1.5 ${
+            canImport
+              ? "pf-btn-ghost"
+              : "pf-btn-ghost opacity-40 cursor-not-allowed"
+          }`}
+        >
+          <FileInput className="w-4 h-4" aria-hidden />
+          Import
+        </button>
+        <button
           onClick={() => {
             void handleSave();
           }}
@@ -142,13 +180,70 @@ function TopBar() {
  */
 export default function CanvasPage() {
   const setNodes = useCanvasStore((s) => s.setNodes);
+  const setEdges = useCanvasStore((s) => s.setEdges);
   const setThemePackId = useCanvasStore((s) => s.setThemePackId);
+  const setRunConfig = useCanvasStore((s) => s.setRunConfig);
   const loadTemplate = useCanvasStore((s) => s.loadTemplate);
   const templateId = useCanvasStore((s) => s.templateId);
   const themePackId = useCanvasStore((s) => s.themePackId);
   const nodes = useCanvasStore((s) => s.nodes);
   const [bootError, setBootError] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
+  const [importOpen, setImportOpen] = useState(false);
+  const [paletteKey, setPaletteKey] = useState(0);
+
+  const applyImport = (result: ImportSceneResult) => {
+    const byId = new Map(result.blocks.map((b) => [b.id, b]));
+    const laneNodes = createLaneNodes();
+    const blockNodes: Node<BlockNodeData>[] = result.graph.nodes.map((node) => {
+      const def = byId.get(node.blockDefId);
+      const scope = (def?.stageScope as Lane[] | undefined) ?? [node.lane];
+      return {
+        id: node.id,
+        type: "block",
+        parentId: node.lane,
+        extent: "parent" as const,
+        position: { x: 10, y: node.order * 100 + 40 },
+        data: {
+          blockDefId: node.blockDefId,
+          name: def?.name ?? "Imported",
+          type: (def?.type as BlockType) ?? "CUSTOM",
+          fragment: def?.promptFragment ?? "",
+          stageScope: scope,
+          pinned: node.pinned ?? false,
+          valid: scope.includes(node.lane),
+          order: node.order,
+        },
+        draggable: true,
+        selectable: true,
+      };
+    });
+
+    const edges: Edge[] = (result.graph.edges ?? []).map((edge, i) => ({
+      id: `edge-import-${i}`,
+      source: edge.from,
+      target: edge.to,
+      type: "handshake",
+      data: { handshake: edge.handshake },
+    }));
+
+    setNodes([
+      ...(laneNodes as Node<BlockNodeData | LaneNodeData>[]),
+      ...blockNodes,
+    ]);
+    setEdges(edges);
+    if (result.graph.runConfig) {
+      setRunConfig(result.graph.runConfig);
+    }
+    // Force palette remount to pick up new blocks
+    setPaletteKey((k) => k + 1);
+    useCanvasStore.setState({ isDirty: true });
+    toast.success(
+      `Imported ${result.stats.created} new block${result.stats.created === 1 ? "" : "s"}` +
+        (result.stats.reused ? ` (${result.stats.reused} reused)` : "") +
+        " · canvas flow updated"
+    );
+  };
 
   // Bootstrap: load first template (or fall back to theme pack + empty lanes)
   useEffect(() => {
@@ -223,7 +318,16 @@ export default function CanvasPage() {
   return (
     <ReactFlowProvider>
       <div className="pf-shell flex flex-col h-screen">
-        <TopBar />
+        <TopBar
+          onImportClick={() => setImportOpen(true)}
+          canImport={Boolean(themePackId)}
+        />
+        <ImportSceneModal
+          isOpen={importOpen}
+          onClose={() => setImportOpen(false)}
+          themePackId={themePackId || ""}
+          onImported={applyImport}
+        />
         {bootError && (
           <div className="fixed top-14 left-0 right-0 z-40 bg-red-950/80 text-red-200 text-sm px-5 py-2.5 border-b border-red-500/30 backdrop-blur-md">
             {bootError}
@@ -262,7 +366,7 @@ export default function CanvasPage() {
             booting || bootError || showNoTemplateBanner ? "pt-[5.5rem]" : "pt-14"
           }`}
         >
-          <BlockPalette themePackId={themePackId} />
+          <BlockPalette key={paletteKey} themePackId={themePackId} />
           <Canvas />
           <Inspector />
         </div>

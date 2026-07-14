@@ -16,3 +16,5 @@ export { RunProgress } from "./RunProgress";
 export { CreateBlockButton } from "./CreateBlockButton";
 export { CreateBlockModal } from "./CreateBlockModal";
 export { RunModal } from "./RunModal";
+export { ImportSceneModal } from "./ImportSceneModal";
+export type { ImportSceneResult } from "./ImportSceneModal";

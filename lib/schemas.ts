@@ -95,6 +95,19 @@ export const CreateBlockSchema = z.object({
 export type CreateBlock = z.infer<typeof CreateBlockSchema>;
 
 /**
+ * Import a pasted multi-stage scene into blocks (+ optional canvas graph)
+ */
+export const ImportSceneSchema = z.object({
+  raw: z.string().min(1, "Paste is empty"),
+  themePackId: z.string().min(1, "themePackId is required"),
+  pinCharacterLocks: z.boolean().optional().default(true),
+  namePrefix: z.string().min(1).max(40).optional(),
+});
+
+export type ImportSceneInput = z.infer<typeof ImportSceneSchema>;
+
+
+/**
  * Update block request (all fields optional)
  */
 export const UpdateBlockSchema = z.object({
