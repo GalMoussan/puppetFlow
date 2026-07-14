@@ -207,7 +207,7 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
       </header>
 
       {/* Metadata */}
-      <div className="border-b border-white/[0.08] bg-black px-6 py-3">
+      <div className="border-b border-white/[0.08] bg-black/40 backdrop-blur-sm px-6 py-3">
         <div className="flex items-center gap-6 text-sm text-zinc-500 flex-wrap">
           <span>{formatDate(run.createdAt)}</span>
           <span className="flex items-center gap-1">

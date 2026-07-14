@@ -82,7 +82,7 @@ export function RunViewerPage({ runId }: RunViewerPageProps) {
   if (loading) {
     return (
       <div
-        className="min-h-screen bg-black text-zinc-500 flex items-center justify-center"
+        className="pf-shell min-h-screen text-zinc-500 flex items-center justify-center"
         data-testid="run-viewer-loading"
       >
         Loading run...
@@ -92,7 +92,7 @@ export function RunViewerPage({ runId }: RunViewerPageProps) {
 
   if (error || !run) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-4">
+      <div className="pf-shell min-h-screen text-white flex flex-col items-center justify-center gap-4">
         <p className="text-red-400" data-testid="run-viewer-error">
           {error || "Run not found"}
         </p>

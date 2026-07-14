@@ -156,7 +156,7 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white" data-testid="library-page">
+    <div className="pf-shell min-h-screen text-white" data-testid="library-page">
       <header className="pf-header sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">

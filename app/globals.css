@@ -103,25 +103,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle tech grid behind the whole app */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 20%, transparent 75%);
-  opacity: 0.9;
-}
-
-body > * {
-  position: relative;
-  z-index: 1;
-}
+/* Space background canvas sits at z-0; app chrome stacks above */
 
 .font-prompt {
   font-family: var(--font-mono), ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
@@ -157,7 +139,8 @@ button {
 /* ── Design utilities ─────────────────────────────────────────── */
 
 .pf-shell {
-  background: var(--background);
+  /* Transparent so SpaceBackground stars show through */
+  background: transparent;
   color: var(--foreground);
 }
 
@@ -324,7 +307,7 @@ button {
 /* ── React Flow ───────────────────────────────────────────────── */
 .react-flow,
 .react-flow.dark {
-  --xy-background-color: #000000;
+  --xy-background-color: transparent;
   --xy-background-pattern-color: rgba(255, 255, 255, 0.06);
   --xy-background-pattern-dots-color-default: rgba(255, 255, 255, 0.07);
 
@@ -361,11 +344,11 @@ button {
 
   --xy-attribution-background-color: transparent;
 
-  background-color: #000 !important;
+  background-color: transparent !important;
 }
 
 .react-flow__background {
-  background-color: #000 !important;
+  background-color: transparent !important;
 }
 
 .react-flow__controls {

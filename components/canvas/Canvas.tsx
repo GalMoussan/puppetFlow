@@ -87,7 +87,7 @@ export function Canvas({ className }: CanvasProps) {
   return (
     <div
       data-testid="react-flow-canvas"
-      className={`flex-1 h-full bg-black ${className || ""}`}
+      className={`flex-1 h-full bg-transparent ${className || ""}`}
     >
       <ReactFlow<Node<BlockNodeData | LaneNodeData>>
         nodes={nodes}
@@ -108,13 +108,13 @@ export function Canvas({ className }: CanvasProps) {
         nodesConnectable={false}
         elementsSelectable
         proOptions={{ hideAttribution: true }}
-        className="dark bg-black"
+        className="dark bg-transparent"
       >
         <Background
           variant={BackgroundVariant.Dots}
-          gap={20}
+          gap={28}
           size={1}
-          color="#333"
+          color="rgba(255,255,255,0.05)"
         />
         <Controls
           showZoom
