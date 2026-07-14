@@ -50,7 +50,7 @@
 
 ### Next Steps
 
-1. Finish T501 basic auth + T408 e2e
+1. Verify T408 e2e (`pnpm test:e2e tests/e2e/auth.spec.ts`)
 2. T502 / T503 UI polish (theme, toasts, empty states)
 3. T504–T506 production deploy + runbook
 
