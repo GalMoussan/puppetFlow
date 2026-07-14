@@ -48,6 +48,14 @@ async function copyText(text: string): Promise<void> {
   await navigator.clipboard.writeText(text);
 }
 
+function CopyIcon({ active }: { active: boolean }) {
+  return active ? (
+    <Check className="w-3.5 h-3.5 text-green-500" />
+  ) : (
+    <Copy className="w-3.5 h-3.5" />
+  );
+}
+
 export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
   const [showVideoPrompts, setShowVideoPrompts] = useState(false);
   const [showFullImagePrompt, setShowFullImagePrompt] = useState(false);
@@ -100,13 +108,6 @@ export function SceneCard({ scene, onCopy, onReroll }: SceneCardProps) {
     pendingReroll === "full"
       ? "Regenerate this scene? This will replace the current content."
       : `Regenerate the ${pendingReroll?.replace("_", " ")} stage?`;
-
-  const CopyIcon = ({ active }: { active: boolean }) =>
-    active ? (
-      <Check className="w-3.5 h-3.5 text-green-500" />
-    ) : (
-      <Copy className="w-3.5 h-3.5" />
-    );
 
   return (
     <div

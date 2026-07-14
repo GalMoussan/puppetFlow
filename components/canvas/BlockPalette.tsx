@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, type DragEvent } from "react";
+import { useState, useMemo, useCallback, type DragEvent } from "react";
 import { useShallow } from "zustand/shallow";
 import { useBlockLibrary, groupBlocksByType, filterBlocksBySearch, type BlockDefinition } from "@/lib/hooks/useBlockLibrary";
 import { useCanvasStore } from "@/lib/store/canvas-store";
@@ -234,18 +234,14 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
     []
   );
 
-  // Drop optimistic entries once server list includes them
-  useEffect(() => {
-    if (optimisticBlocks.length === 0) return;
-    setOptimisticBlocks((prev) =>
-      prev.filter((ob) => !blocks.some((b) => b.id === ob.id))
-    );
-  }, [blocks, optimisticBlocks.length]);
-
+  // Derive list without an effect: drop optimistic rows once server has them
   const effectiveBlocks = useMemo(() => {
     if (optimisticBlocks.length === 0) return blocks;
     const ids = new Set(blocks.map((b) => b.id));
-    return [...optimisticBlocks.filter((b) => !ids.has(b.id)), ...blocks];
+    const stillPending = optimisticBlocks.filter((b) => !ids.has(b.id));
+    return stillPending.length === 0
+      ? blocks
+      : [...stillPending, ...blocks];
   }, [blocks, optimisticBlocks]);
 
   const handleBlockCreated = useCallback(
@@ -274,9 +270,14 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
         createdAt: raw.createdAt ? new Date(raw.createdAt) : now,
         updatedAt: raw.updatedAt ? new Date(raw.updatedAt) : now,
       };
-      setOptimisticBlocks((prev) => [created, ...prev]);
-      // Persist-backed refresh so list stays complete after reload
-      void refetch();
+      setOptimisticBlocks((prev) => [created, ...prev.filter((b) => b.id !== created.id)]);
+      // Persist-backed refresh; optimistic row remains until server list includes it
+      void refetch().then(() => {
+        // Clear optimistics that are now on the server (async, not in effect)
+        setOptimisticBlocks((prev) =>
+          prev.filter((ob) => ob.id !== created.id)
+        );
+      });
     },
     [refetch, themePackId]
   );

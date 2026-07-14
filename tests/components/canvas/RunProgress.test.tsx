@@ -45,25 +45,34 @@ vi.mock("@/lib/store/canvas-store", () => ({
 let mockEventSourceInstance: MockEventSource | null = null;
 let mockEventSourceInstances: MockEventSource[] = [];
 
-class MockEventSource {
-  onopen: (() => void) | null = null;
-  onmessage: ((event: { data: string }) => void) | null = null;
-  onerror: (() => void) | null = null;
-  readyState = 0;
-  close = vi.fn();
-
-  constructor(public url: string) {
-    mockEventSourceInstance = this;
-    mockEventSourceInstances.push(this);
-    setTimeout(() => {
-      this.readyState = 1;
-      this.onopen?.();
-    }, 0);
-  }
+function createMockEventSource(url: string): MockEventSource {
+  const instance: MockEventSource = {
+    url,
+    onopen: null,
+    onmessage: null,
+    onerror: null,
+    readyState: 0,
+    close: vi.fn(),
+  };
+  mockEventSourceInstance = instance;
+  mockEventSourceInstances.push(instance);
+  setTimeout(() => {
+    instance.readyState = 1;
+    instance.onopen?.();
+  }, 0);
+  return instance;
 }
 
-// @ts-expect-error - Mocking EventSource
-global.EventSource = MockEventSource;
+type MockEventSource = {
+  url: string;
+  onopen: (() => void) | null;
+  onmessage: ((event: { data: string }) => void) | null;
+  onerror: (() => void) | null;
+  readyState: number;
+  close: ReturnType<typeof vi.fn>;
+};
+
+global.EventSource = createMockEventSource as unknown as typeof EventSource;
 
 // =============================================================================
 // Test Suite: RunProgress Component
@@ -489,7 +498,7 @@ describe("useRunProgress", () => {
 
 // Helper for testing hooks
 function renderHook<T>(hookFn: () => T): { result: { current: T }; unmount: () => void } {
-  let result: { current: T } = { current: undefined as T };
+  const result: { current: T } = { current: undefined as T };
 
   const TestComponent = () => {
     result.current = hookFn();

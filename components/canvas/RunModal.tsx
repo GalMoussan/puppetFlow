@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 
 export interface RunConfig {
@@ -57,10 +57,7 @@ export function RunModal({
   const [runDate, setRunDate] = useState(defaults?.runDate ?? todayISODate());
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Clear validation error when inputs change
-  useEffect(() => {
-    setValidationError(null);
-  }, [sceneCount, model, notes, loopMode, hiWeight, jaWeight, historyStrictness, runDate]);
+  const clearValidation = () => setValidationError(null);
 
   if (!isOpen) return null;
 
@@ -138,7 +135,10 @@ export function RunModal({
               type="date"
               id="runDate"
               value={runDate}
-              onChange={(e) => setRunDate(e.target.value)}
+              onChange={(e) => {
+                setRunDate(e.target.value);
+                clearValidation();
+              }}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
@@ -154,6 +154,7 @@ export function RunModal({
               onChange={(e) => {
                 const val = parseInt(e.target.value, 10);
                 setSceneCount(Number.isNaN(val) ? 0 : val);
+                clearValidation();
               }}
               min={1}
               max={10}
@@ -169,7 +170,10 @@ export function RunModal({
               type="checkbox"
               id="loopMode"
               checked={loopMode}
-              onChange={(e) => setLoopMode(e.target.checked)}
+              onChange={(e) => {
+                setLoopMode(e.target.checked);
+                clearValidation();
+              }}
               className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-green-500 focus:ring-green-500"
             />
           </div>
@@ -186,6 +190,7 @@ export function RunModal({
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10);
                   setHiWeight(Number.isNaN(val) ? 0 : val);
+                  clearValidation();
                 }}
                 min={0}
                 max={10}
@@ -203,6 +208,7 @@ export function RunModal({
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10);
                   setJaWeight(Number.isNaN(val) ? 0 : val);
+                  clearValidation();
                 }}
                 min={0}
                 max={10}
@@ -221,9 +227,10 @@ export function RunModal({
             <select
               id="historyStrictness"
               value={historyStrictness}
-              onChange={(e) =>
-                setHistoryStrictness(e.target.value as "hard-fail" | "warn")
-              }
+              onChange={(e) => {
+                setHistoryStrictness(e.target.value as "hard-fail" | "warn");
+                clearValidation();
+              }}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="warn">Warn on history collision</option>
@@ -238,7 +245,10 @@ export function RunModal({
             <select
               id="model"
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={(e) => {
+                setModel(e.target.value);
+                clearValidation();
+              }}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               {MODELS.map((m) => (
@@ -256,7 +266,10 @@ export function RunModal({
             <textarea
               id="notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                clearValidation();
+              }}
               rows={3}
               placeholder="Add any notes for this run..."
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"

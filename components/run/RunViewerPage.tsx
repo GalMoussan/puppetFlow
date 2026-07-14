@@ -37,8 +37,18 @@ export function RunViewerPage({ runId }: RunViewerPageProps) {
     }
   }, [runId]);
 
+  // Defer fetch so setState is not synchronous inside the effect body
   useEffect(() => {
-    void loadRun();
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (!cancelled) {
+        void loadRun();
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [loadRun]);
 
   const handleBackToCanvas = () => {

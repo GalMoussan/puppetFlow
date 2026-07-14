@@ -54,9 +54,10 @@ export function useRunProgress(
   const [duration, setDuration] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
@@ -118,9 +119,9 @@ export function useRunProgress(
       setIsConnected(false);
       setError(new Error("Connection lost"));
 
-      // Attempt reconnect
+      // Attempt reconnect via ref to avoid TDZ / before-declaration issues
       reconnectRef.current = setTimeout(() => {
-        connect();
+        connectRef.current();
       }, RECONNECT_DELAY);
     };
 
@@ -134,12 +135,18 @@ export function useRunProgress(
   }, [runId, onComplete, onError, cleanup]);
 
   useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
+
+  useEffect(() => {
     startTimeRef.current = Date.now();
     connect();
 
     // Update duration every second
     const durationInterval = setInterval(() => {
-      setDuration(Date.now() - startTimeRef.current);
+      if (startTimeRef.current > 0) {
+        setDuration(Date.now() - startTimeRef.current);
+      }
     }, 1000);
 
     return () => {

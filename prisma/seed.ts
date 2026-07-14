@@ -193,7 +193,7 @@ async function main() {
     type: string;
     name: string;
     promptFragment: string;
-    stageScope: string[];
+    stageScope: readonly string[];
     rotationGroup?: string | null;
   }) {
     const existing = await prisma.blockDefinition.findFirst({
@@ -205,7 +205,7 @@ async function main() {
         data: {
           type: data.type as never,
           promptFragment: data.promptFragment,
-          stageScope: data.stageScope,
+          stageScope: [...data.stageScope],
           rotationGroup: data.rotationGroup ?? null,
           archived: false,
         },
@@ -217,7 +217,7 @@ async function main() {
         type: data.type as never,
         name: data.name,
         promptFragment: data.promptFragment,
-        stageScope: data.stageScope,
+        stageScope: [...data.stageScope],
         rotationGroup: data.rotationGroup ?? null,
       },
     });

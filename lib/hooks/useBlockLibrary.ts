@@ -35,6 +35,16 @@ interface UseBlockLibraryReturn {
   refetch: () => Promise<void>;
 }
 
+function mapBlocks(fetchedBlocks: BlockDefinition[]): BlockDefinition[] {
+  return fetchedBlocks
+    .filter((b) => !b.archived)
+    .map((b) => ({
+      ...b,
+      createdAt: new Date(b.createdAt),
+      updatedAt: new Date(b.updatedAt),
+    }));
+}
+
 /**
  * Hook for fetching block definitions by theme pack
  *
@@ -45,7 +55,7 @@ export function useBlockLibrary(
   themePackId: string | null
 ): UseBlockLibraryReturn {
   const [blocks, setBlocks] = useState<BlockDefinition[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(themePackId));
   const [error, setError] = useState<Error | null>(null);
 
   const fetchBlocks = useCallback(async () => {
@@ -71,17 +81,7 @@ export function useBlockLibrary(
 
       const data = await response.json();
       const fetchedBlocks = (data.data || data) as BlockDefinition[];
-
-      // Filter out archived blocks and map dates
-      const activeBlocks = fetchedBlocks
-        .filter((b) => !b.archived)
-        .map((b) => ({
-          ...b,
-          createdAt: new Date(b.createdAt),
-          updatedAt: new Date(b.updatedAt),
-        }));
-
-      setBlocks(activeBlocks);
+      setBlocks(mapBlocks(fetchedBlocks));
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Unknown error"));
       setBlocks([]);
@@ -90,10 +90,53 @@ export function useBlockLibrary(
     }
   }, [themePackId]);
 
-  // Fetch on mount and when themePackId changes
+  // Fetch when themePackId changes — defer setState past the effect body
   useEffect(() => {
-    void fetchBlocks();
-  }, [fetchBlocks]);
+    if (!themePackId) {
+      // Defer so we don't sync-setState inside the effect body (lint rule)
+      const t = setTimeout(() => {
+        setBlocks([]);
+        setLoading(false);
+        setError(null);
+      }, 0);
+      return () => clearTimeout(t);
+    }
+
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await fetch(
+            `/api/blocks?themePackId=${encodeURIComponent(themePackId)}&limit=200&archived=false`
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to fetch blocks: ${response.status}`);
+          }
+          const data = await response.json();
+          const fetchedBlocks = (data.data || data) as BlockDefinition[];
+          if (!cancelled) {
+            setBlocks(mapBlocks(fetchedBlocks));
+          }
+        } catch (err) {
+          if (!cancelled) {
+            setError(err instanceof Error ? err : new Error("Unknown error"));
+            setBlocks([]);
+          }
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      })();
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [themePackId]);
 
   return {
     blocks,

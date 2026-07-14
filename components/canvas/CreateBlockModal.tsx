@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import type { BlockType, Lane } from "@/packages/domain/types";
 
@@ -71,27 +71,31 @@ export function CreateBlockModal({
   const [name, setName] = useState("");
   const [type, setType] = useState<BlockType>("HOOK");
   const [promptFragment, setPromptFragment] = useState("");
-  const [stageScope, setStageScope] = useState<Lane[]>(["GLOBAL"]);
+  const [stageScope, setStageScope] = useState<Lane[]>(() => [
+    ...(TYPE_DEFAULT_SCOPES.HOOK.length > 0
+      ? TYPE_DEFAULT_SCOPES.HOOK
+      : (["GLOBAL"] as Lane[])),
+  ]);
   const [rotationGroup, setRotationGroup] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  // Update default stage scopes when type changes
-  useEffect(() => {
-    const defaults = TYPE_DEFAULT_SCOPES[type] || [];
-    if (defaults.length > 0) {
-      setStageScope(defaults);
-    }
-  }, [type]);
+  if (!isOpen) return null;
 
-  // Clear errors when inputs change
-  useEffect(() => {
+  const clearFieldErrors = () => {
     setValidationErrors({});
     setError(null);
-  }, [name, type, promptFragment, stageScope]);
+  };
 
-  if (!isOpen) return null;
+  const handleTypeChange = (next: BlockType) => {
+    setType(next);
+    const defaults = TYPE_DEFAULT_SCOPES[next] || [];
+    if (defaults.length > 0) {
+      setStageScope([...defaults]);
+    }
+    clearFieldErrors();
+  };
 
   const toggleScope = (scope: Lane) => {
     setStageScope((prev) =>
@@ -99,6 +103,7 @@ export function CreateBlockModal({
         ? prev.filter((s) => s !== scope)
         : [...prev, scope]
     );
+    clearFieldErrors();
   };
 
   const validate = (): boolean => {
@@ -169,7 +174,7 @@ export function CreateBlockModal({
       const newBlock = (payload?.data ?? payload) as BlockData;
       onCreated(newBlock);
       onClose();
-    } catch (err) {
+    } catch {
       setError("Network error - please try again");
     } finally {
       setIsSubmitting(false);
@@ -212,7 +217,10 @@ export function CreateBlockModal({
               type="text"
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                clearFieldErrors();
+              }}
               placeholder="e.g., Dramatic Whip Pan"
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -229,7 +237,7 @@ export function CreateBlockModal({
             <select
               id="type"
               value={type}
-              onChange={(e) => setType(e.target.value as BlockType)}
+              onChange={(e) => handleTypeChange(e.target.value as BlockType)}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {BLOCK_TYPES.map((t) => (
@@ -248,7 +256,10 @@ export function CreateBlockModal({
             <textarea
               id="promptFragment"
               value={promptFragment}
-              onChange={(e) => setPromptFragment(e.target.value)}
+              onChange={(e) => {
+                setPromptFragment(e.target.value);
+                clearFieldErrors();
+              }}
               rows={4}
               placeholder="Describe how this block should appear in the generated scene..."
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
