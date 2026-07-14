@@ -25,6 +25,7 @@ import {
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useTemplate } from "@/lib/hooks/useTemplate";
 import { toast } from "@/lib/store/toast-store";
+import { useRunStore } from "@/lib/store/run-store";
 import {
   createLaneNodes,
   type BlockNodeData,
@@ -104,7 +105,10 @@ function TopBar({
   };
 
   return (
-    <header className="pf-header fixed top-0 left-0 right-0 h-14 z-50 flex items-center justify-between px-5">
+    <header
+      data-testid="app-topbar"
+      className="pf-header fixed top-0 left-0 right-0 h-14 z-[200] flex items-center justify-between px-5 pointer-events-auto"
+    >
       <div className="flex items-center gap-3 min-w-0">
         <div className="pf-logo-mark shrink-0" aria-hidden />
         <div className="flex items-baseline gap-2 min-w-0">
@@ -233,6 +237,8 @@ export default function CanvasPage() {
     // Force palette remount to pick up new blocks
     setPaletteKey((k) => k + 1);
     useCanvasStore.setState({ isDirty: true });
+    // Clear stuck run status so Run is not permanently disabled after a prior fail
+    useRunStore.getState().reset();
     toast.success(
       `Imported ${result.stats.created} new block${result.stats.created === 1 ? "" : "s"}` +
         (result.stats.reused ? ` (${result.stats.reused} reused)` : "") +

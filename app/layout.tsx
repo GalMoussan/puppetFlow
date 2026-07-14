@@ -30,8 +30,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* z-0 + pointer-events-none so fixed header/modals are never trapped under canvas */}
         <SpaceBackground />
-        <div className="relative z-[1] flex min-h-full flex-1 flex-col">
+        <div className="relative flex min-h-full flex-1 flex-col">
           {children}
         </div>
         <Toaster />

@@ -212,12 +212,12 @@ export function RunModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain"
+      className="fixed inset-x-0 bottom-0 top-14 z-[150] overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm"
       data-testid="run-modal-backdrop"
       onClick={handleBackdropClick}
     >
       {/*
-        Centering via min-h-full + flex so tall panels stay in viewport middle.
+        Leave top-14 free so app topbar (z-200) stays clickable.
         Flex column panel: header + scroll body + sticky actions.
       */}
       <div className="flex min-h-full items-center justify-center p-4 sm:p-6">

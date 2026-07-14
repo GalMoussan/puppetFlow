@@ -771,11 +771,12 @@ describe("RunModal", () => {
       expect(actions.className).toMatch(/shrink-0/);
     });
 
-    it("raises modal stacking above the top bar (z-50)", () => {
+    it("raises modal stacking and leaves top bar free (top-14 + high z)", () => {
       render(<RunModal {...defaultProps} />);
       const backdrop = screen.getByTestId("run-modal-backdrop");
-      // z-[100] or higher
-      expect(backdrop.className).toMatch(/z-\[(1[0-9]{2}|[2-9][0-9]{2,})\]|z-\[100\]/);
+      // Below topbar (z-200): z-[150], and offset so header stays clickable
+      expect(backdrop.className).toMatch(/z-\[(1[0-9]{2}|[2-9][0-9]{2,})\]/);
+      expect(backdrop.className).toMatch(/top-14/);
     });
   });
 

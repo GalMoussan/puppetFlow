@@ -103,13 +103,15 @@ export function ImportSceneModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-x-0 bottom-0 top-14 z-[150] overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm"
       data-testid="import-scene-backdrop"
       onClick={handleBackdrop}
     >
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
       <div
-        className="bg-[#0a0a0b]/95 rounded-2xl p-6 w-full max-w-2xl border border-white/[0.1] max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.08)]"
+        className="bg-[#0a0a0b]/95 rounded-2xl p-6 w-full max-w-2xl border border-white/[0.1] max-h-[min(85vh,40rem)] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.08)] my-auto"
         data-testid="import-scene-modal"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start mb-4 gap-3">
           <div>
@@ -222,6 +224,7 @@ export function ImportSceneModal({
             )}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
