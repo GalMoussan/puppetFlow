@@ -244,6 +244,18 @@ export default function CanvasPage() {
         (result.stats.reused ? ` (${result.stats.reused} reused)` : "") +
         " · canvas flow updated"
     );
+
+    // Persist graph so Library → Canvas reload keeps imported structure
+    const tid = useCanvasStore.getState().templateId;
+    if (tid) {
+      void useCanvasStore
+        .getState()
+        .saveTemplate()
+        .then(() => toast.success("Imported flow saved to template"))
+        .catch(() =>
+          toast.error("Import applied but save failed — click Save manually")
+        );
+    }
   };
 
   // Bootstrap: load first template (or fall back to theme pack + empty lanes)

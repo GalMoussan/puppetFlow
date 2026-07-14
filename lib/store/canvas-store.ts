@@ -259,62 +259,88 @@ export const useCanvasStore = create<CanvasState>()(
 
       const data = await response.json();
       const template = data.data || data;
+      const themePackId: string | null = template.themePackId ?? null;
+      const graphNodes: Array<{
+        id: string;
+        blockDefId: string;
+        lane: Lane;
+        order: number;
+        pinned?: boolean;
+        overrides?: { promptFragment?: string };
+      }> = template.graph?.nodes ?? [];
 
-      // Create lane nodes
+      // Hydrate blockDefs so nodes never stay as "Loading..." placeholders
+      const defById = new Map<
+        string,
+        {
+          id: string;
+          name: string;
+          type: BlockType;
+          promptFragment: string;
+          stageScope: Lane[];
+        }
+      >();
+
+      if (themePackId) {
+        try {
+          const blocksRes = await fetch(
+            `/api/blocks?themePackId=${encodeURIComponent(themePackId)}&limit=200&archived=false`
+          );
+          if (blocksRes.ok) {
+            const blocksJson = (await blocksRes.json()) as {
+              data?: Array<{
+                id: string;
+                name: string;
+                type: BlockType;
+                promptFragment: string;
+                stageScope: Lane[];
+              }>;
+            };
+            for (const b of blocksJson.data ?? []) {
+              defById.set(b.id, b);
+            }
+          }
+        } catch {
+          // Graph still loads; missing defs show a clear fallback name
+        }
+      }
+
       const laneNodes = createLaneNodes();
 
-      // Transform graph nodes to React Flow nodes
-      const blockNodes: Node<BlockNodeData>[] = template.graph.nodes.map(
-        (node: {
-          id: string;
-          blockDefId: string;
-          lane: Lane;
-          order: number;
-          pinned?: boolean;
-          overrides?: { promptFragment?: string };
-        }) => {
-          // Note: In production, we'd fetch block definitions to get full data
-          // For now, we create placeholder data that will be hydrated by the component
-          return {
-            id: node.id,
-            type: "block",
-            parentId: node.lane,
-            extent: "parent" as const,
-            position: { x: 10, y: node.order * 100 + 40 },
-            data: {
-              blockDefId: node.blockDefId,
-              name: "Loading...",
-              type: "CUSTOM" as BlockType,
-              fragment: "",
-              stageScope: [node.lane],
-              pinned: node.pinned ?? false,
-              valid: true,
-              override: node.overrides?.promptFragment,
-              order: node.order,
-            },
-            draggable: true,
-            selectable: true,
-          };
-        }
-      );
+      const blockNodes: Node<BlockNodeData>[] = graphNodes.map((node) => {
+        const def = defById.get(node.blockDefId);
+        const stageScope = def?.stageScope?.length
+          ? def.stageScope
+          : ([node.lane] as Lane[]);
+        return {
+          id: node.id,
+          type: "block",
+          parentId: node.lane,
+          extent: "parent" as const,
+          position: { x: 10, y: node.order * 100 + 40 },
+          data: {
+            blockDefId: node.blockDefId,
+            name: def?.name ?? `Missing block (${node.blockDefId.slice(0, 8)})`,
+            type: def?.type ?? ("CUSTOM" as BlockType),
+            fragment: def?.promptFragment ?? "",
+            stageScope,
+            pinned: node.pinned ?? false,
+            valid: def ? stageScope.includes(node.lane) : false,
+            override: node.overrides?.promptFragment,
+            order: node.order,
+          },
+          draggable: true,
+          selectable: true,
+        };
+      });
 
       set({
         nodes: [...laneNodes, ...blockNodes],
-        edges: template.graph.edges?.map(
-          (
-            edge: { from: Lane; to: Lane; handshake?: unknown },
-            i: number
-          ) => ({
-            id: `edge-${i}`,
-            source: edge.from,
-            target: edge.to,
-            type: "handshake",
-            data: { handshake: edge.handshake },
-          })
-        ) ?? [],
+        // Domain handshakes in graph JSON must NOT become RF edges (no Handles on lanes)
+        edges: [],
         templateId: template.id,
         templateName: template.name,
-        themePackId: template.themePackId ?? null,
+        themePackId,
         isDirty: false,
         saveState: "idle",
         selectedId: null,

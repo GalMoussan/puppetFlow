@@ -182,7 +182,11 @@ export function RunButton() {
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          // Clear stuck generating/compiling so Run is never permanently dead
+          resetRun();
+          setIsModalOpen(true);
+        }}
         disabled={isDisabled}
         className={`
           pf-btn px-4 py-1.5 font-semibold tracking-tight

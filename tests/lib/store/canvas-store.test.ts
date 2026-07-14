@@ -49,6 +49,7 @@ const mockNode = {
 const mockTemplate = {
   id: "tpl-001",
   name: "Festival Template v1",
+  themePackId: "pack-001",
   graph: {
     version: 1,
     lanes: ["GLOBAL", "IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
@@ -61,10 +62,37 @@ const mockTemplate = {
         pinned: false,
       },
     ],
-    edges: [],
+    edges: [
+      {
+        from: "VIDEO_START" as Lane,
+        to: "EXTEND_MIDDLE" as Lane,
+        handshake: { strictness: "verbatim" as const, trackCrowdMembers: 0 },
+      },
+    ],
     runConfig: null,
   },
 };
+
+/** Template + block library responses for loadTemplate hydration */
+function mockTemplateAndBlocksFetches(
+  template: typeof mockTemplate = mockTemplate,
+  blocks: unknown[] = [mockBlockDef]
+) {
+  mockFetch.mockImplementation(async (url: string | URL | Request) => {
+    const href =
+      typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+    if (href.includes("/api/blocks")) {
+      return {
+        ok: true,
+        json: async () => ({ data: blocks }),
+      };
+    }
+    return {
+      ok: true,
+      json: async () => template,
+    };
+  });
+}
 
 // =============================================================================
 // Mock Setup
@@ -327,10 +355,7 @@ describe("Canvas Store", () => {
   describe("Template Operations", () => {
     describe("loadTemplate", () => {
       it("populates nodes from template graph", async () => {
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockTemplate),
-        });
+        mockTemplateAndBlocksFetches();
 
         await useCanvasStore.getState().loadTemplate("tpl-001");
 
@@ -339,11 +364,33 @@ describe("Canvas Store", () => {
         expect(state.templateId).toBe("tpl-001");
       });
 
+      it("hydrates block name/type/fragment from block library (not Loading...)", async () => {
+        mockTemplateAndBlocksFetches();
+
+        await useCanvasStore.getState().loadTemplate("tpl-001");
+
+        const blocks = useCanvasStore
+          .getState()
+          .nodes.filter((n) => n.type === "block");
+        expect(blocks).toHaveLength(1);
+        expect(blocks[0].data.name).toBe("Whip Pan");
+        expect(blocks[0].data.name).not.toBe("Loading...");
+        expect(blocks[0].data.type).toBe("CAMERA_MOVE");
+        expect(blocks[0].data.fragment).toContain("whips horizontally");
+      });
+
+      it("does not create React Flow edges from domain handshakes", async () => {
+        mockTemplateAndBlocksFetches();
+
+        await useCanvasStore.getState().loadTemplate("tpl-001");
+
+        // Domain graph may have handshakes; RF store edges must stay empty
+        // (LaneNode has no Handles — RF error #008)
+        expect(useCanvasStore.getState().edges).toEqual([]);
+      });
+
       it("sets templateId and templateName", async () => {
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockTemplate),
-        });
+        mockTemplateAndBlocksFetches();
 
         await useCanvasStore.getState().loadTemplate("tpl-001");
 
@@ -353,10 +400,7 @@ describe("Canvas Store", () => {
       });
 
       it("resets dirty state after load", async () => {
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockTemplate),
-        });
+        mockTemplateAndBlocksFetches();
 
         useCanvasStore.setState({ isDirty: true });
         await useCanvasStore.getState().loadTemplate("tpl-001");
@@ -365,10 +409,7 @@ describe("Canvas Store", () => {
       });
 
       it("clears selection on load", async () => {
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockTemplate),
-        });
+        mockTemplateAndBlocksFetches();
 
         useCanvasStore.setState({ selectedId: "some-node" });
         await useCanvasStore.getState().loadTemplate("tpl-001");
@@ -377,10 +418,10 @@ describe("Canvas Store", () => {
       });
 
       it("handles load errors", async () => {
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockImplementation(async () => ({
           ok: false,
           status: 404,
-        });
+        }));
 
         await expect(
           useCanvasStore.getState().loadTemplate("nonexistent")
