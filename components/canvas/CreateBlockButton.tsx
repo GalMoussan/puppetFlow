@@ -16,7 +16,12 @@ interface BlockData {
   rotationGroup?: string;
 }
 
-export function CreateBlockButton() {
+interface CreateBlockButtonProps {
+  /** Called after a block is persisted so the palette can refetch */
+  onCreated?: (block: BlockData) => void;
+}
+
+export function CreateBlockButton({ onCreated }: CreateBlockButtonProps = {}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const themePackId = useCanvasStore(
@@ -24,9 +29,8 @@ export function CreateBlockButton() {
   );
 
   const handleCreated = (block: BlockData) => {
-    // The block library will be refreshed by the modal
-    // For now, just close the modal
     setIsModalOpen(false);
+    onCreated?.(block);
   };
 
   return (

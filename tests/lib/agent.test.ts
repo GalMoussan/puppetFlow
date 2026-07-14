@@ -192,6 +192,39 @@ describe("lib/agent", () => {
   // ==========================================================================
 
   describe("happy path: compile -> generate -> lint -> persist", () => {
+    it("handles template graph missing runConfig without crashing", async () => {
+      const template = createMockTemplate();
+      // Legacy/seed graphs may omit runConfig entirely
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (template.graph as any).runConfig = undefined;
+
+      mockPrisma.flowTemplate.findUnique.mockResolvedValue(template);
+      mockPrisma.run.create.mockResolvedValue({
+        id: "run-legacy",
+        templateId: template.id,
+        status: "PENDING",
+      });
+      mockPrisma.run.update.mockResolvedValue({ id: "run-legacy" });
+      mockPrisma.scene.createMany.mockResolvedValue({ count: 5 });
+      mockPrisma.usageLog.createMany.mockResolvedValue({ count: 5 });
+      mockGenerateBatch.mockResolvedValue(createMockBatchOutput("run-legacy", 5));
+
+      const result = await runBatch(
+        template.id,
+        {
+          batchSize: 5,
+          loopMode: true,
+          languages: { hi: 3, ja: 2 },
+          historyStrictness: "warn",
+        },
+        vi.fn()
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe("DONE");
+      expect(result.sceneCount).toBe(5);
+    });
+
     it("successful batch generation end-to-end", async () => {
       const template = createMockTemplate();
       const batchOutput = createMockBatchOutput("run-1", 5);

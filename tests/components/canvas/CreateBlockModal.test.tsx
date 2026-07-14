@@ -202,9 +202,14 @@ describe("CreateBlockModal", () => {
       const promptInput = screen.getByLabelText(/prompt fragment/i);
       await user.type(promptInput, "This is a valid prompt fragment");
 
-      // Uncheck the default scope (GLOBAL is pre-selected for HOOK type)
-      const globalCheckbox = screen.getByLabelText(/global/i);
-      await user.click(globalCheckbox);
+      // Uncheck all default scopes (HOOK may preselect GLOBAL + IMAGE)
+      const stageLabels = [/global/i, /image/i, /video start/i, /video middle/i, /video end/i];
+      for (const label of stageLabels) {
+        const box = screen.getByLabelText(label);
+        if ((box as HTMLInputElement).checked) {
+          await user.click(box);
+        }
+      }
 
       const form = nameInput.closest("form")!;
       fireEvent.submit(form);

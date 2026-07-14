@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useState, useMemo, useCallback, type DragEvent } from "react";
+import { useState, useMemo, useCallback, useEffect, type DragEvent } from "react";
 import { useShallow } from "zustand/shallow";
 import { useBlockLibrary, groupBlocksByType, filterBlocksBySearch, type BlockDefinition } from "@/lib/hooks/useBlockLibrary";
 import { useCanvasStore } from "@/lib/store/canvas-store";
@@ -227,14 +227,65 @@ function BlockGroup({ name, blocks }: BlockGroupProps) {
  * Block palette sidebar component
  */
 export function BlockPalette({ themePackId }: BlockPaletteProps) {
-  const { blocks, loading, error } = useBlockLibrary(themePackId);
+  const { blocks, loading, error, refetch } = useBlockLibrary(themePackId);
   const [search, setSearch] = useState("");
+  /** Optimistic prepend after create until refetch completes */
+  const [optimisticBlocks, setOptimisticBlocks] = useState<BlockDefinition[]>(
+    []
+  );
+
+  // Drop optimistic entries once server list includes them
+  useEffect(() => {
+    if (optimisticBlocks.length === 0) return;
+    setOptimisticBlocks((prev) =>
+      prev.filter((ob) => !blocks.some((b) => b.id === ob.id))
+    );
+  }, [blocks, optimisticBlocks.length]);
+
+  const effectiveBlocks = useMemo(() => {
+    if (optimisticBlocks.length === 0) return blocks;
+    const ids = new Set(blocks.map((b) => b.id));
+    return [...optimisticBlocks.filter((b) => !ids.has(b.id)), ...blocks];
+  }, [blocks, optimisticBlocks]);
+
+  const handleBlockCreated = useCallback(
+    (raw: {
+      id: string;
+      name: string;
+      type: BlockDefinition["type"];
+      promptFragment: string;
+      stageScope: BlockDefinition["stageScope"];
+      rotationGroup?: string;
+      themePackId?: string;
+      archived?: boolean;
+      createdAt?: string | Date;
+      updatedAt?: string | Date;
+    }) => {
+      const now = new Date();
+      const created: BlockDefinition = {
+        id: raw.id,
+        name: raw.name,
+        type: raw.type,
+        promptFragment: raw.promptFragment,
+        stageScope: raw.stageScope ?? [],
+        rotationGroup: raw.rotationGroup,
+        themePackId: raw.themePackId ?? themePackId ?? "",
+        archived: raw.archived ?? false,
+        createdAt: raw.createdAt ? new Date(raw.createdAt) : now,
+        updatedAt: raw.updatedAt ? new Date(raw.updatedAt) : now,
+      };
+      setOptimisticBlocks((prev) => [created, ...prev]);
+      // Persist-backed refresh so list stays complete after reload
+      void refetch();
+    },
+    [refetch, themePackId]
+  );
 
   // Filter and group blocks
   const groupedBlocks = useMemo(() => {
-    const filtered = filterBlocksBySearch(blocks, search);
+    const filtered = filterBlocksBySearch(effectiveBlocks, search);
     return groupBlocksByType(filtered);
-  }, [blocks, search]);
+  }, [effectiveBlocks, search]);
 
   // No theme pack selected
   if (!themePackId) {
@@ -284,7 +335,7 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
       </div>
 
       <div className="mb-3">
-        <CreateBlockButton />
+        <CreateBlockButton onCreated={handleBlockCreated} />
       </div>
 
       <SearchInput value={search} onChange={setSearch} />
@@ -309,7 +360,7 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
           );
         })}
 
-        {!hasResults && !search && blocks.length === 0 && (
+        {!hasResults && !search && effectiveBlocks.length === 0 && (
           <div className="text-center text-neutral-500 text-sm mt-4 space-y-2">
             <p>No blocks in this theme pack yet.</p>
             <p className="text-xs">Use Create Block above to add one.</p>

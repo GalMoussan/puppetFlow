@@ -106,6 +106,27 @@ export const LANE_ORDER: readonly Lane[] = [
   "EXTEND_END",
 ] as const;
 
+/** Default lane height for React Flow parent nodes (must be set for child extent) */
+export const LANE_HEIGHT = 560;
+
+/**
+ * Build the five lane group nodes with dimensions for subflow parenting.
+ */
+export function createLaneNodes(): import("@xyflow/react").Node<LaneNodeData>[] {
+  return LANE_ORDER.map((lane) => ({
+    id: lane,
+    type: "lane",
+    position: { x: LANE_CONFIG[lane].x, y: 0 },
+    data: { lane },
+    style: {
+      width: LANE_CONFIG[lane].width,
+      height: LANE_HEIGHT,
+    },
+    draggable: false,
+    selectable: true,
+  }));
+}
+
 // =============================================================================
 // Block Type Colors
 // =============================================================================

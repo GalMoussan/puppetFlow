@@ -237,16 +237,48 @@ export async function runBatch(
     throw new NotFoundError("Template not found");
   }
 
-  // 2. Validate and parse graph
-  const graph = template.graph as CanvasGraph;
-
-  // Merge run config with template defaults
+  // 2. Validate and parse graph (normalize incomplete seed/legacy graphs)
+  const rawGraph = template.graph as Partial<CanvasGraph> & {
+    nodes?: CanvasGraph["nodes"];
+    edges?: CanvasGraph["edges"];
+  };
+  const defaultRunConfig = {
+    loopMode: true,
+    languages: { hi: 3, ja: 2 },
+    batchSize: 5,
+  };
+  const graphRunConfig = rawGraph.runConfig ?? defaultRunConfig;
   const config = {
-    ...graph.runConfig,
+    ...defaultRunConfig,
+    ...graphRunConfig,
     ...runConfig,
     languages: {
-      ...graph.runConfig.languages,
-      ...runConfig?.languages,
+      ...defaultRunConfig.languages,
+      ...(graphRunConfig.languages ?? {}),
+      ...(runConfig?.languages ?? {}),
+    },
+    batchSize:
+      runConfig?.batchSize ??
+      graphRunConfig.batchSize ??
+      defaultRunConfig.batchSize,
+  };
+
+  // Ensure compiler/linter always see a full CanvasGraph with runConfig
+  const graph: CanvasGraph = {
+    version: (rawGraph.version as 1) ?? 1,
+    lanes: rawGraph.lanes ?? [
+      "GLOBAL",
+      "IMAGE",
+      "VIDEO_START",
+      "EXTEND_MIDDLE",
+      "EXTEND_END",
+    ],
+    nodes: rawGraph.nodes ?? [],
+    edges: rawGraph.edges ?? [],
+    runConfig: {
+      loopMode: config.loopMode,
+      languages: config.languages,
+      batchSize: config.batchSize,
     },
   };
 

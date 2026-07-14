@@ -14,9 +14,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas, BlockPalette, Inspector, RunButton } from "@/components/canvas";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useTemplate } from "@/lib/hooks/useTemplate";
-import { LANE_ORDER, LANE_CONFIG } from "@/lib/types/canvas";
-import type { LaneNodeData } from "@/lib/types/canvas";
-import type { Node } from "@xyflow/react";
+import { createLaneNodes } from "@/lib/types/canvas";
 
 /**
  * Top bar with template name and save indicator
@@ -90,20 +88,6 @@ function TopBar() {
       </div>
     </header>
   );
-}
-
-/**
- * Create initial lane nodes for the canvas
- */
-function createLaneNodes(): Node<LaneNodeData>[] {
-  return LANE_ORDER.map((lane) => ({
-    id: lane,
-    type: "lane",
-    position: { x: LANE_CONFIG[lane].x, y: 0 },
-    data: { lane },
-    draggable: false,
-    selectable: true,
-  }));
 }
 
 /**

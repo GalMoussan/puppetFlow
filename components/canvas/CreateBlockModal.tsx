@@ -28,22 +28,22 @@ const STAGE_SCOPES: { value: Lane; label: string }[] = [
 
 // Default stage scopes by block type
 const TYPE_DEFAULT_SCOPES: Record<BlockType, Lane[]> = {
-  HOOK: ["GLOBAL"],
-  CAMERA_MOVE: ["IMAGE"],
+  HOOK: ["GLOBAL", "IMAGE"],
+  CAMERA_MOVE: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
   PUPPET_DYNAMIC: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
   PUPPET_VISUAL: ["IMAGE"],
   PHYSICAL_GAG: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
   CHAOS_THREAD: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
   PAYOFF: ["EXTEND_END"],
-  STYLE_LOCK: ["GLOBAL"],
+  STYLE_LOCK: ["GLOBAL", "IMAGE"],
   STAGE_AREA: ["GLOBAL", "IMAGE"],
-  FESTIVAL_MOMENT: ["VIDEO_START", "EXTEND_MIDDLE"],
+  FESTIVAL_MOMENT: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE"],
   THEME_PACK_REF: ["GLOBAL"],
-  CHARACTER_LOCK: ["GLOBAL"],
+  CHARACTER_LOCK: ["GLOBAL", "IMAGE"],
   SONG_SECTION: ["GLOBAL"],
   LANGUAGE: ["GLOBAL"],
   LOOP_CLOSURE: ["EXTEND_END"],
-  CUSTOM: [],
+  CUSTOM: ["GLOBAL", "IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
 };
 
 interface BlockData {
@@ -158,7 +158,9 @@ export function CreateBlockModal({
         return;
       }
 
-      const newBlock = await response.json();
+      const payload = await response.json();
+      // Support both bare block JSON and { data: block } envelopes
+      const newBlock = (payload?.data ?? payload) as BlockData;
       onCreated(newBlock);
       onClose();
     } catch (err) {

@@ -125,7 +125,7 @@ async function main() {
       },
     }),
 
-    // Puppet visuals
+    // Puppet visuals (IMAGE lane)
     prisma.blockDefinition.create({
       data: {
         themePackId: themePack.id,
@@ -134,6 +134,28 @@ async function main() {
         promptFragment: "Puppet strings glow with vibrant neon colors, pulsing to the beat",
         stageScope: ["GLOBAL", "IMAGE"],
         rotationGroup: "visuals",
+      },
+    }),
+    prisma.blockDefinition.create({
+      data: {
+        themePackId: themePack.id,
+        type: "PUPPET_VISUAL",
+        name: "Wide Establishing Shot",
+        promptFragment:
+          "Wide festival establishing frame: packed crowd, LED walls, golden-hour haze, two puppets center stage",
+        stageScope: ["IMAGE"],
+        rotationGroup: "visuals",
+      },
+    }),
+    prisma.blockDefinition.create({
+      data: {
+        themePackId: themePack.id,
+        type: "STAGE_AREA",
+        name: "Image Main Stage Plate",
+        promptFragment:
+          "Main Stage environment plate for still generation: LED backdrop, UV haze, dense crowd midground",
+        stageScope: ["IMAGE", "GLOBAL"],
+        rotationGroup: null,
       },
     }),
 
@@ -198,14 +220,21 @@ async function main() {
 
   console.log(`✅ Created ${blocks.length} block definitions`);
 
-  // Create a sample flow template
+  // Create a sample flow template (full CanvasGraph so agent never sees missing runConfig)
   const template = await prisma.flowTemplate.create({
     data: {
       name: "Demo Festival Flow",
       themePackId: themePack.id,
       graph: {
+        version: 1,
+        lanes: ["GLOBAL", "IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
         nodes: [],
         edges: [],
+        runConfig: {
+          loopMode: true,
+          languages: { hi: 3, ja: 2 },
+          batchSize: 5,
+        },
       },
     },
   });

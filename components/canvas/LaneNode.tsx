@@ -14,7 +14,7 @@ import type { NodeProps, Node } from "@xyflow/react";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { getDragValidationState } from "@/lib/snap-validation";
 import type { Lane } from "@/packages/domain/types";
-import { LANE_CONFIG, type LaneNodeData } from "@/lib/types/canvas";
+import { LANE_CONFIG, LANE_HEIGHT, type LaneNodeData } from "@/lib/types/canvas";
 
 /**
  * Display names for lanes
@@ -111,7 +111,10 @@ export const LaneNode = memo(function LaneNode({
         const validationState = getDragValidationState(stageScope, lane);
 
         if (validationState === "invalid") {
-          // Could show toast here
+          // Visible feedback when block stageScope does not include this lane
+          window.alert(
+            `This block cannot go in ${lane}. Allowed lanes: ${stageScope.join(", ") || "(none)"}. Check stage scope when creating the block.`
+          );
           return;
         }
 
@@ -121,7 +124,17 @@ export const LaneNode = memo(function LaneNode({
         );
         if (blockDataJson) {
           const blockData = JSON.parse(blockDataJson);
-          addBlock(blockData, lane, blocksInLane);
+          // Normalize API shape: ensure stageScope is an array
+          const normalized = {
+            ...blockData,
+            id: blockData.id,
+            promptFragment:
+              blockData.promptFragment ?? blockData.fragment ?? "",
+            stageScope: Array.isArray(blockData.stageScope)
+              ? blockData.stageScope
+              : stageScope,
+          };
+          addBlock(normalized, lane, blocksInLane);
         }
       } catch (error) {
         console.error("Drop error:", error);
@@ -134,7 +147,7 @@ export const LaneNode = memo(function LaneNode({
     <div
       data-testid={`lane-${lane}`}
       className={`
-        flex flex-col
+        flex flex-col h-full
         bg-neutral-900 border border-neutral-700 rounded-lg
         ${selected ? "ring-2 ring-violet-500" : ""}
         ${dragState === "valid" ? "ring-2 ring-green-500 bg-green-500/10" : ""}
@@ -143,7 +156,8 @@ export const LaneNode = memo(function LaneNode({
       `}
       style={{
         width: laneConfig.width,
-        minHeight: 500,
+        height: LANE_HEIGHT,
+        minHeight: LANE_HEIGHT,
       }}
       onClick={handleClick}
       onDragOver={handleDragOver}
@@ -163,14 +177,21 @@ export const LaneNode = memo(function LaneNode({
         {LANE_DISPLAY_NAMES[lane]}
       </div>
 
-      {/* Lane Dropzone */}
+      {/* Lane Dropzone — child block nodes render here via React Flow parentId */}
       <div
         data-testid={`lane-dropzone-${lane}`}
-        className="flex-1 p-2 min-h-[400px]"
+        className="flex-1 p-2 relative"
+        style={{ minHeight: LANE_HEIGHT - 48 }}
       >
         {blocksInLane === 0 && dragState === "idle" && (
-          <div className="text-center text-neutral-500 text-sm mt-4">
+          <div className="text-center text-neutral-500 text-sm mt-4 pointer-events-none">
             Drop blocks here
+            {lane === "IMAGE" && (
+              <p className="text-xs mt-2 text-neutral-600 px-2">
+                Needs blocks with IMAGE in stage scope (e.g. Puppet Visual,
+                Stage Area, or Create Block with Image checked)
+              </p>
+            )}
           </div>
         )}
       </div>

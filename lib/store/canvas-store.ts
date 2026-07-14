@@ -22,8 +22,8 @@ import type {
 import { applyNodeChanges, applyEdgeChanges, addEdge } from "@xyflow/react";
 import type { Lane, BlockType } from "@/packages/domain/types";
 import {
-  LANE_CONFIG,
   LANE_ORDER,
+  createLaneNodes,
   type BlockNodeData,
   type LaneNodeData,
   type SaveState,
@@ -103,20 +103,6 @@ export interface CanvasState {
 }
 
 /**
- * Create lane nodes for initial canvas setup
- */
-function createLaneNodes(): Node<LaneNodeData>[] {
-  return LANE_ORDER.map((lane) => ({
-    id: lane,
-    type: "lane",
-    position: { x: LANE_CONFIG[lane].x, y: 0 },
-    data: { lane },
-    draggable: false,
-    selectable: true,
-  }));
-}
-
-/**
  * Generate a unique node ID
  */
 function generateNodeId(): string {
@@ -183,19 +169,21 @@ export const useCanvasStore = create<CanvasState>()(
 
     addBlock: (blockDef, lane, order) => {
       const nodeId = generateNodeId();
-      const isValid = blockDef.stageScope.includes(lane);
+      const scope = blockDef.stageScope ?? [];
+      const isValid = scope.includes(lane);
 
       const newNode: Node<BlockNodeData> = {
         id: nodeId,
         type: "block",
         parentId: lane,
-        position: { x: 10, y: order * 100 + 50 },
+        extent: "parent",
+        position: { x: 10, y: order * 100 + 40 },
         data: {
           blockDefId: blockDef.id,
           name: blockDef.name,
           type: blockDef.type,
           fragment: blockDef.promptFragment,
-          stageScope: blockDef.stageScope,
+          stageScope: scope,
           pinned: false,
           valid: isValid,
           order,
@@ -298,7 +286,8 @@ export const useCanvasStore = create<CanvasState>()(
             id: node.id,
             type: "block",
             parentId: node.lane,
-            position: { x: 10, y: node.order * 100 + 50 },
+            extent: "parent" as const,
+            position: { x: 10, y: node.order * 100 + 40 },
             data: {
               blockDefId: node.blockDefId,
               name: "Loading...",
@@ -358,8 +347,14 @@ export const useCanvasStore = create<CanvasState>()(
         // Transform nodes back to graph format
         const blockNodes = state.nodes.filter((n) => n.type === "block");
         const graph = {
-          version: 1,
-          lanes: LANE_ORDER,
+          version: 1 as const,
+          lanes: [...LANE_ORDER] as [
+            "GLOBAL",
+            "IMAGE",
+            "VIDEO_START",
+            "EXTEND_MIDDLE",
+            "EXTEND_END",
+          ],
           nodes: blockNodes.map((n) => {
             const data = n.data as BlockNodeData;
             return {
@@ -374,14 +369,25 @@ export const useCanvasStore = create<CanvasState>()(
             };
           }),
           edges: state.edges.map((e) => ({
-            from: e.source,
-            to: e.target,
-            handshake: e.data?.handshake ?? {
-              strictness: "verbatim",
+            from: e.source as Lane,
+            to: e.target as Lane,
+            handshake: (e.data?.handshake as {
+              strictness: "verbatim" | "paraphrase";
+              trackCrowdMembers: number;
+            }) ?? {
+              strictness: "verbatim" as const,
               trackCrowdMembers: 2,
             },
           })),
-          runConfig: state.runConfig,
+          // Always persist full runConfig so agent merge never sees undefined
+          runConfig: {
+            loopMode: state.runConfig?.loopMode ?? true,
+            languages: {
+              hi: state.runConfig?.languages?.hi ?? 3,
+              ja: state.runConfig?.languages?.ja ?? 2,
+            },
+            batchSize: state.runConfig?.batchSize ?? 5,
+          },
         };
 
         const response = await fetch(`/api/templates/${state.templateId}`, {
