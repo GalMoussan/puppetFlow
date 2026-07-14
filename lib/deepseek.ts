@@ -10,11 +10,11 @@ import { z } from "zod";
 import { AnthropicError } from "./errors";
 import type { ComboAssignment } from "@/packages/domain/types";
 import {
-  BatchOutputSchema,
   type BatchOutput,
   type GenerationOptions,
   type GeneratedScene,
 } from "./anthropic-types";
+import { parseBatchOutput } from "./llm-batch-output";
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
@@ -67,21 +67,28 @@ ${assignmentText || "(use scaffold defaults)"}
 
 Generate exactly ${count} scene(s) following these assignments.
 
-Respond with a single JSON object only (no markdown fences) in this shape:
+Respond with a single JSON object only (no markdown fences).
+EVERY scene MUST include ALL eight string keys below — never omit any key:
+
 {
   "scenes": [
     {
-      "lyrics": "string",
-      "imagePrompt": "string",
-      "startPrompt": "string",
-      "middlePrompt": "string",
-      "endPrompt": "string",
-      "boundaryFrame1": "string",
-      "boundaryFrame2": "string",
-      "finalFrame": "string"
+      "lyrics": "chant/lyrics text",
+      "imagePrompt": "IMAGE stage still description",
+      "startPrompt": "VIDEO_START motion prompt with camera verb",
+      "middlePrompt": "EXTEND_MIDDLE motion prompt with camera verb",
+      "endPrompt": "EXTEND_END motion prompt with camera verb and drop",
+      "boundaryFrame1": "ENDING FRAME [EXACT]: verbatim START->MIDDLE handshake freeze",
+      "boundaryFrame2": "ENDING FRAME [EXACT]: verbatim MIDDLE->END handshake freeze",
+      "finalFrame": "FINAL FRAME: loop-closure tableau description"
     }
   ]
-}`;
+}
+
+Rules:
+- boundaryFrame1 / boundaryFrame2 / finalFrame are REQUIRED on every scene (not optional).
+- Use the exact key names above (camelCase).
+- Output JSON only — no commentary.`;
 }
 
 function extractJsonObject(text: string): unknown {
@@ -126,7 +133,7 @@ export async function generateBatchDeepseek(
             {
               role: "system",
               content:
-                "You are a precise JSON generator for AI video prompt pipelines. Output only valid JSON matching the requested schema.",
+                "You are a precise JSON generator for AI video prompt pipelines. Output only valid JSON. Every scene object MUST include: lyrics, imagePrompt, startPrompt, middlePrompt, endPrompt, boundaryFrame1, boundaryFrame2, finalFrame (all strings, never null/omitted).",
             },
             { role: "user", content: prompt },
           ],
@@ -188,7 +195,8 @@ export async function generateBatchDeepseek(
         );
       }
 
-      return BatchOutputSchema.parse(parsed);
+      // Normalize partial DeepSeek JSON (often omits boundary/final frames)
+      return parseBatchOutput(parsed);
     } catch (err) {
       attempt++;
 
@@ -198,9 +206,18 @@ export async function generateBatchDeepseek(
           await new Promise((r) => setTimeout(r, (err.retryAfter || 5) * 1000));
           continue;
         }
+        // validation_error: retry once if attempts remain
+        if (err.code === "validation_error" && attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, 1000 * attempt));
+          continue;
+        }
       }
 
       if (err instanceof z.ZodError) {
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, 1000 * attempt));
+          continue;
+        }
         throw new AnthropicError(
           `Structured output validation failed: ${err.message}`,
           "validation_error"

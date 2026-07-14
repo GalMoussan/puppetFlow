@@ -15,6 +15,7 @@ import {
   type GenerationOptions,
   type GeneratedScene,
 } from "./anthropic-types";
+import { parseBatchOutput } from "./llm-batch-output";
 import { getLlmProvider, hasLlmKey } from "./llm-provider";
 import {
   generateBatchDeepseek,
@@ -176,7 +177,8 @@ async function generateBatchAnthropic(
         throw new AnthropicError("No tool use in response");
       }
 
-      return BatchOutputSchema.parse(toolUseBlock.input);
+      // Normalize then parse (shared path with DeepSeek for partial fields)
+      return parseBatchOutput(toolUseBlock.input);
     } catch (err) {
       attempt++;
 

@@ -286,9 +286,9 @@ describe("lib/anthropic", () => {
       expect(result.scenes[0].lyrics).toBe("Test lyrics");
     });
 
-    it("throws immediately on validation failure (no retry)", async () => {
-      // Implementation does NOT retry on Zod validation failures - throws immediately
-      const invalidResponse = { scenes: [{ id: 123 }] };
+    it("throws immediately on unrecoverable validation failure (no retry)", async () => {
+      // Partial scenes are normalized; truly broken shapes still fail without retry
+      const invalidResponse = { scenes: "not-an-array" };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -303,6 +303,32 @@ describe("lib/anthropic", () => {
 
       // Should only call once - no retry for validation errors
       expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("normalizes partial scenes missing boundary frames", async () => {
+      process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+      const partialResponse = {
+        scenes: [
+          {
+            lyrics: "Hi",
+            imagePrompt: "Img",
+            startPrompt: "Start freeze here.",
+            middlePrompt: "Middle freeze here.",
+            endPrompt: "End freeze here.",
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          content: [{ type: "tool_use", input: partialResponse }],
+        }),
+      });
+
+      const result = await generateBatch("scaffold", createMockAssignments(1));
+      expect(result.scenes[0].boundaryFrame1).toMatch(/ENDING FRAME/);
+      expect(result.scenes[0].finalFrame).toMatch(/FINAL FRAME/);
     });
   });
 

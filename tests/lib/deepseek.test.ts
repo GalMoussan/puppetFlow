@@ -118,6 +118,34 @@ describe("lib/deepseek + provider routing", () => {
     );
   });
 
+  it("generateBatchDeepseek accepts scenes missing boundary/final frames", async () => {
+    process.env.DEEPSEEK_API_KEY = "sk-ds";
+    const partialBatch = {
+      scenes: [
+        {
+          lyrics: "Shika!",
+          imagePrompt: "Festival stage",
+          startPrompt: "Camera dollies in to freeze.",
+          middlePrompt: "Camera pans across freeze.",
+          endPrompt: "Camera cranes [DROP] freeze.",
+          // omit boundaryFrame1, boundaryFrame2, finalFrame — real DeepSeek miss
+        },
+      ],
+    };
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify(partialBatch) } }],
+      }),
+    });
+
+    const result = await generateBatchDeepseek("scaffold", [sampleCombo]);
+    expect(result.scenes).toHaveLength(1);
+    expect(result.scenes[0].boundaryFrame1).toMatch(/ENDING FRAME/);
+    expect(result.scenes[0].boundaryFrame2).toMatch(/ENDING FRAME/);
+    expect(result.scenes[0].finalFrame).toMatch(/FINAL FRAME/);
+  });
+
   it("generateBatch facade routes to DeepSeek when provider is deepseek", async () => {
     process.env.DEEPSEEK_API_KEY = "sk-ds";
     process.env.LLM_PROVIDER = "deepseek";
