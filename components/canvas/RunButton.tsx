@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Play, Loader2 } from "lucide-react";
 import { useCanvasStore } from "@/lib/store/canvas-store";
@@ -63,6 +64,12 @@ export function RunButton() {
   const showRunningLabel = showProgress || isRunning;
 
   const handleRun = async (config: RunConfig) => {
+    console.info("[RunButton] generate", {
+      templateId,
+      sceneCount: config.sceneCount,
+      model: config.model,
+      isDirty,
+    });
     setIsLoading(true);
     setError(undefined);
 
@@ -183,19 +190,99 @@ export function RunButton() {
 
   const progressRunId = currentRunId ?? (showProgress ? "pending" : "");
 
+  // Portal target: fixed overlays must NOT be descendants of .pf-header
+  // (backdrop-filter creates a containing block that clips position:fixed).
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalEl(document.body);
+  }, []);
+
+  const openRunModal = () => {
+    const disabled = !hasBlocks;
+    // Diagnostic trail — DevTools Console (filter: RunButton)
+    console.info("[RunButton] click", {
+      hasBlocks,
+      templateId,
+      isDisabled: disabled,
+      status,
+      isModalOpenBefore: isModalOpen,
+      showProgress,
+    });
+
+    if (disabled) {
+      console.warn("[RunButton] blocked: no blocks on canvas");
+      toast.error("Add blocks to the canvas before running");
+      return;
+    }
+
+    resetRun();
+    setShowProgress(false);
+    setError(undefined);
+    setIsLoading(false);
+    setIsModalOpen(true);
+
+    queueMicrotask(() => {
+      const modal = document.querySelector('[data-testid="run-modal"]');
+      console.info("[RunButton] after open", {
+        isModalOpen: true,
+        modalInDom: Boolean(modal),
+        modalParent: modal?.parentElement?.tagName ?? null,
+        underTopbar: Boolean(
+          document
+            .querySelector('[data-testid="app-topbar"]')
+            ?.contains(modal)
+        ),
+      });
+    });
+  };
+
+  const overlays =
+    portalEl &&
+    createPortal(
+      <>
+        <RunModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onRun={handleRun}
+          templateId={templateId || ""}
+          templateName={templateName || ""}
+          isLoading={isLoading}
+          error={error}
+          defaults={{
+            sceneCount: runConfig.batchSize,
+            loopMode: runConfig.loopMode,
+            languages: runConfig.languages,
+          }}
+        />
+
+        {showProgress && progressRunId && (
+          <div
+            className="fixed bottom-4 right-4 z-[110] w-full max-w-md shadow-2xl pointer-events-auto"
+            data-testid="run-progress-host"
+          >
+            <RunProgress
+              runId={progressRunId}
+              progress={progress ?? undefined}
+              duration={duration}
+              errorMessage={errorMessage ?? undefined}
+              onComplete={handleProgressComplete}
+              onCancel={handleProgressCancel}
+              onError={() => {
+                fail(errorMessage ?? "Run failed");
+              }}
+            />
+          </div>
+        )}
+      </>,
+      portalEl
+    );
+
   return (
     <>
       <button
         type="button"
         data-testid="run-button"
-        onClick={() => {
-          // Always clear stuck status + progress host before opening config
-          resetRun();
-          setShowProgress(false);
-          setError(undefined);
-          setIsLoading(false);
-          setIsModalOpen(true);
-        }}
+        onClick={openRunModal}
         disabled={isDisabled}
         title={
           !hasBlocks
@@ -226,40 +313,7 @@ export function RunButton() {
           </>
         )}
       </button>
-
-      <RunModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onRun={handleRun}
-        templateId={templateId || ""}
-        templateName={templateName || ""}
-        isLoading={isLoading}
-        error={error}
-        defaults={{
-          sceneCount: runConfig.batchSize,
-          loopMode: runConfig.loopMode,
-          languages: runConfig.languages,
-        }}
-      />
-
-      {showProgress && progressRunId && (
-        <div
-          className="fixed bottom-4 right-4 z-[110] w-full max-w-md shadow-2xl pointer-events-auto"
-          data-testid="run-progress-host"
-        >
-          <RunProgress
-            runId={progressRunId}
-            progress={progress ?? undefined}
-            duration={duration}
-            errorMessage={errorMessage ?? undefined}
-            onComplete={handleProgressComplete}
-            onCancel={handleProgressCancel}
-            onError={() => {
-              fail(errorMessage ?? "Run failed");
-            }}
-          />
-        </div>
-      )}
+      {overlays}
     </>
   );
 }

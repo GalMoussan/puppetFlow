@@ -178,6 +178,31 @@ describe("RunButton", () => {
       expect(useRunStore.getState().status).toBe("idle");
     });
 
+    it("portals run modal outside the app-topbar (escapes backdrop-filter trap)", async () => {
+      const user = userEvent.setup();
+      const blockNode = createBlockNode("node-1", mockCameraBlock, "VIDEO_START", 0);
+      mockStore = createMockCanvasStore({
+        nodes: [...createLaneNodes(), blockNode],
+        templateId: "tpl-001",
+        templateName: "Test Template",
+      });
+
+      render(
+        <header data-testid="app-topbar" className="pf-header">
+          <RunButton />
+        </header>
+      );
+
+      await user.click(screen.getByTestId("run-button"));
+
+      const modal = screen.getByTestId("run-modal");
+      expect(modal).toBeInTheDocument();
+      const topbar = screen.getByTestId("app-topbar");
+      // Modal must not be a descendant of the header (fixed+backdrop-filter trap)
+      expect(topbar.contains(modal)).toBe(false);
+      expect(document.body.contains(modal)).toBe(true);
+    });
+
     it("is disabled only when canvas has no blocks (even if status is mid-flight)", () => {
       mockStore = createMockCanvasStore({
         nodes: createLaneNodes(),
