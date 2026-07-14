@@ -49,7 +49,7 @@ function TopBar() {
     if (!templateId) {
       return (
         <span
-          className="text-amber-500 text-sm"
+          className="text-amber-400/90 text-xs font-medium tracking-wide"
           data-testid="topbar-no-template"
         >
           No template loaded
@@ -58,37 +58,56 @@ function TopBar() {
     }
     switch (saveState) {
       case "saving":
-        return <span className="text-yellow-500 text-sm">Saving...</span>;
+        return (
+          <span className="text-cyan-400/80 text-xs font-medium tracking-wide">
+            Saving…
+          </span>
+        );
       case "saved":
-        return <span className="text-green-500 text-sm">Saved</span>;
+        return (
+          <span className="text-emerald-400/90 text-xs font-medium tracking-wide">
+            Saved
+          </span>
+        );
       case "error":
-        return <span className="text-red-500 text-sm">Error saving</span>;
+        return (
+          <span className="text-red-400 text-xs font-medium tracking-wide">
+            Error saving
+          </span>
+        );
       default:
         return isDirty ? (
-          <span className="text-neutral-500 text-sm">Unsaved changes</span>
+          <span className="text-zinc-500 text-xs font-medium tracking-wide">
+            Unsaved
+          </span>
         ) : null;
     }
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-12 bg-neutral-900 border-b border-neutral-800 z-50 flex items-center justify-between px-4">
-      <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold text-neutral-200">PuppetFlow</h1>
-        {templateName && (
-          <span className="text-sm text-neutral-400">/ {templateName}</span>
-        )}
+    <header className="pf-header fixed top-0 left-0 right-0 h-14 z-50 flex items-center justify-between px-5">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="pf-logo-mark shrink-0" aria-hidden />
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h1 className="text-[15px] font-semibold tracking-tight text-white">
+            PuppetFlow
+          </h1>
+          {templateName && (
+            <>
+              <span className="text-zinc-600 text-sm">/</span>
+              <span className="text-sm text-zinc-500 truncate font-medium">
+                {templateName}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2.5">
         {getSaveIndicator()}
         <Link
           href="/library"
-          className="
-            flex items-center gap-1.5 px-3 py-1.5 rounded
-            text-sm font-medium text-neutral-300
-            hover:text-white hover:bg-neutral-800
-            transition-colors
-          "
+          className="pf-btn pf-btn-ghost px-3 py-1.5"
           data-testid="nav-library"
         >
           <Library className="w-4 h-4" aria-hidden />
@@ -106,16 +125,9 @@ function TopBar() {
                 ? "No changes to save"
                 : "Save template"
           }
-          className={`
-            px-3 py-1.5 rounded
-            text-sm font-medium
-            transition-colors
-            ${
-              canSave
-                ? "bg-violet-600 text-white hover:bg-violet-500"
-                : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-            }
-          `}
+          className={`pf-btn px-3.5 py-1.5 ${
+            canSave ? "pf-btn-secondary" : "pf-btn-ghost opacity-40 cursor-not-allowed"
+          }`}
         >
           Save
         </button>
@@ -210,28 +222,29 @@ export default function CanvasPage() {
 
   return (
     <ReactFlowProvider>
-      <div className="flex flex-col h-screen bg-neutral-950">
+      <div className="pf-shell flex flex-col h-screen">
         <TopBar />
         {bootError && (
-          <div className="fixed top-12 left-0 right-0 z-40 bg-red-950/90 text-red-200 text-sm px-4 py-2 border-b border-red-800">
+          <div className="fixed top-14 left-0 right-0 z-40 bg-red-950/80 text-red-200 text-sm px-5 py-2.5 border-b border-red-500/30 backdrop-blur-md">
             {bootError}
           </div>
         )}
         {booting && (
           <div
-            className="fixed top-12 left-0 right-0 z-40 bg-neutral-900/90 text-neutral-400 text-sm px-4 py-2 border-b border-neutral-800"
+            className="fixed top-14 left-0 right-0 z-40 bg-black/80 text-zinc-500 text-sm px-5 py-2.5 border-b border-white/[0.06] backdrop-blur-md"
             data-testid="canvas-booting"
           >
-            Loading workspace...
+            Loading workspace…
           </div>
         )}
         {showNoTemplateBanner && (
           <div
             className="
-              fixed top-12 left-0 right-0 z-40
-              bg-amber-950/80 text-amber-100/90
-              text-sm px-4 py-2.5
-              border-b border-amber-800/50
+              fixed top-14 left-0 right-0 z-40
+              bg-amber-500/5 text-amber-100/90
+              text-sm px-5 py-2.5
+              border-b border-amber-500/20
+              backdrop-blur-md
               flex items-center gap-3
             "
             data-testid="canvas-no-template"
@@ -246,7 +259,7 @@ export default function CanvasPage() {
         )}
         <div
           className={`flex flex-1 overflow-hidden ${
-            booting || bootError || showNoTemplateBanner ? "pt-[4.5rem]" : "pt-12"
+            booting || bootError || showNoTemplateBanner ? "pt-[5.5rem]" : "pt-14"
           }`}
         >
           <BlockPalette themePackId={themePackId} />

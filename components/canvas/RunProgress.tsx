@@ -142,7 +142,7 @@ export function RunProgress({
 
   return (
     <div
-      className="bg-zinc-900 rounded-xl p-6 border border-zinc-700 space-y-4"
+      className="bg-[#0a0a0b] rounded-xl p-6 border border-white/[0.1] space-y-4"
       data-testid="run-progress"
     >
       {/* Header */}
@@ -151,7 +151,7 @@ export function RunProgress({
         {showCancelButton && (
           <button
             onClick={handleCancelClick}
-            className="text-zinc-400 hover:text-white transition-colors text-sm"
+            className="text-zinc-500 hover:text-white transition-colors text-sm"
             aria-label="Cancel"
           >
             Cancel
@@ -171,7 +171,7 @@ export function RunProgress({
         <span className="text-white">{getStatusLabel()}</span>
         {progress?.sceneIndex !== undefined &&
           progress?.sceneCount !== undefined && (
-            <span className="text-zinc-400 text-sm">
+            <span className="text-zinc-500 text-sm">
               {progress.sceneIndex} of {progress.sceneCount}
             </span>
           )}
@@ -185,7 +185,7 @@ export function RunProgress({
           aria-valuemin={0}
           aria-valuemax={100}
           data-indeterminate={isIndeterminate ? "true" : undefined}
-          className="h-2 bg-zinc-800 rounded-full overflow-hidden"
+          className="h-2 bg-white/[0.04] rounded-full overflow-hidden"
         >
           <div
             className={`h-full transition-all duration-300 ${
@@ -203,14 +203,14 @@ export function RunProgress({
           />
         </div>
         {progress?.percent !== undefined && !isIndeterminate && (
-          <div className="text-right text-sm text-zinc-400">
+          <div className="text-right text-sm text-zinc-500">
             {progress.percent}%
           </div>
         )}
       </div>
 
       {/* Time Info */}
-      <div className="flex justify-between text-sm text-zinc-400">
+      <div className="flex justify-between text-sm text-zinc-500">
         <span>Elapsed: {formatDuration(duration)}</span>
         {progress?.sceneIndex !== undefined &&
           progress?.sceneCount !== undefined &&
@@ -235,7 +235,7 @@ export function RunProgress({
               {index > 0 && (
                 <div
                   className={`w-8 h-0.5 ${
-                    state === "completed" ? "bg-green-500" : "bg-zinc-700"
+                    state === "completed" ? "bg-green-500" : "bg-white/[0.08]"
                   }`}
                 />
               )}
@@ -275,14 +275,14 @@ export function RunProgress({
       {/* Cancel Confirmation */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 rounded-xl p-6 max-w-sm border border-zinc-700">
+          <div className="bg-[#0a0a0b] rounded-xl p-6 max-w-sm border border-white/[0.1]">
             <p className="text-white mb-4">
               Are you sure you want to cancel this run?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleCancelConfirm}
-                className="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white rounded-lg transition-colors"
               >
                 No, continue
               </button>

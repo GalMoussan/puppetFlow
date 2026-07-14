@@ -34,13 +34,13 @@ function statusMeta(status: string): {
     case "REPAIRING":
       return {
         label: upper.charAt(0) + upper.slice(1).toLowerCase(),
-        className: "bg-violet-500/15 text-violet-300 border-violet-500/30",
+        className: "bg-cyan-400/15 text-cyan-300 border-violet-500/30",
         Icon: Loader2,
       };
     default:
       return {
         label: status,
-        className: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
+        className: "bg-zinc-500/15 text-zinc-500 border-zinc-500/30",
         Icon: AlertCircle,
       };
   }
@@ -73,11 +73,7 @@ export function RunLibraryCard({ run }: RunLibraryCardProps) {
       href={`/runs/${run.id}`}
       data-testid="library-run-card"
       data-run-id={run.id}
-      className="
-        group block rounded-xl border border-zinc-800 bg-zinc-900/80
-        hover:border-violet-500/50 hover:bg-zinc-900
-        transition-colors p-4
-      "
+      className="pf-card group block p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -101,17 +97,17 @@ export function RunLibraryCard({ run }: RunLibraryCardProps) {
             <span className="mx-1.5 text-zinc-700">·</span>
             {run.sceneCount} scene{run.sceneCount === 1 ? "" : "s"}
             <span className="mx-1.5 text-zinc-700">·</span>
-            <span className="font-mono text-zinc-400">{run.model}</span>
+            <span className="font-mono text-zinc-500">{run.model}</span>
           </p>
           <p
-            className="text-sm text-zinc-400 line-clamp-2 font-mono"
+            className="text-sm text-zinc-500 line-clamp-2 font-mono"
             data-testid="library-run-preview"
           >
             {preview}
           </p>
         </div>
         <ChevronRight
-          className="w-5 h-5 text-zinc-600 group-hover:text-violet-400 shrink-0 mt-1 transition-colors"
+          className="w-5 h-5 text-zinc-600 group-hover:text-cyan-400 shrink-0 mt-1 transition-colors"
           aria-hidden
         />
       </div>

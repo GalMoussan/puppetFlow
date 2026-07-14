@@ -156,18 +156,18 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white" data-testid="library-page">
-      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+    <div className="min-h-screen bg-black text-white" data-testid="library-page">
+      <header className="pf-header sticky top-0 z-40">
+        <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/30 shrink-0">
-              <Library className="w-4 h-4 text-violet-400" aria-hidden />
+            <div className="pf-logo-mark shrink-0 flex items-center justify-center">
+              <Library className="w-3.5 h-3.5 text-black" aria-hidden />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold truncate text-zinc-50">
+              <h1 className="text-[15px] font-semibold tracking-tight truncate text-white">
                 Generation Library
               </h1>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 tracking-wide">
                 {total === null
                   ? "All runs saved in the database"
                   : `${total} generation${total === 1 ? "" : "s"} stored`}
@@ -179,15 +179,12 @@ export function LibraryPage() {
               type="button"
               onClick={handleRefresh}
               disabled={loading}
-              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-colors disabled:opacity-50"
+              className="pf-btn pf-btn-ghost p-2 disabled:opacity-50"
               aria-label="Refresh library"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
-            <Link
-              href="/"
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition-colors"
-            >
+            <Link href="/" className="pf-btn pf-btn-primary px-3.5 py-1.5">
               Canvas
             </Link>
           </div>
@@ -210,11 +207,11 @@ export function LibraryPage() {
                 aria-selected={active}
                 onClick={() => setFilter(opt.value)}
                 className={`
-                  px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                  px-3 py-1.5 rounded-full text-sm font-medium tracking-tight transition-all
                   ${
                     active
-                      ? "bg-violet-600 text-white"
-                      : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
+                      ? "bg-cyan-500 text-black shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+                      : "bg-white/[0.03] text-zinc-500 hover:text-white border border-white/[0.08]"
                   }
                 `}
               >
@@ -238,7 +235,7 @@ export function LibraryPage() {
             className="flex flex-col items-center justify-center py-20 text-zinc-500 gap-3"
             data-testid="library-loading"
           >
-            <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
             <p className="text-sm">Loading generations…</p>
           </div>
         ) : runs.length === 0 ? (
@@ -246,7 +243,7 @@ export function LibraryPage() {
             className="flex flex-col items-center justify-center py-20 text-center gap-4"
             data-testid="library-empty"
           >
-            <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#0a0a0b] border border-white/[0.08] flex items-center justify-center">
               <Film className="w-7 h-7 text-zinc-600" />
             </div>
             <div>
@@ -263,7 +260,7 @@ export function LibraryPage() {
             </div>
             <Link
               href="/"
-              className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-medium transition-colors"
+              className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-white text-sm font-medium transition-colors"
             >
               Go to canvas
             </Link>
@@ -286,8 +283,8 @@ export function LibraryPage() {
                   disabled={loadingMore}
                   className="
                     px-4 py-2 rounded-lg text-sm font-medium
-                    bg-zinc-900 border border-zinc-700 text-zinc-200
-                    hover:border-violet-500/50 hover:text-white
+                    bg-[#0a0a0b] border border-white/[0.1] text-zinc-200
+                    hover:border-cyan-500/40 hover:text-white
                     disabled:opacity-50 transition-colors
                   "
                   data-testid="library-load-more"

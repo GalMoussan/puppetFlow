@@ -1,7 +1,6 @@
 /**
  * Global toast host — mount once in root layout.
- *
- * Dark UI with violet/green festival accents.
+ * Tech-black glass cards with cyan/emerald/red accents.
  *
  * @module components/ui/Toaster
  */
@@ -16,21 +15,21 @@ const TYPE_STYLES: Record<
   { border: string; icon: typeof CheckCircle2; iconClass: string; testId: string }
 > = {
   success: {
-    border: "border-green-500/40",
+    border: "border-emerald-500/30",
     icon: CheckCircle2,
-    iconClass: "text-green-400",
+    iconClass: "text-emerald-400",
     testId: "toast-success",
   },
   error: {
-    border: "border-red-500/40",
+    border: "border-red-500/30",
     icon: XCircle,
     iconClass: "text-red-400",
     testId: "toast-error",
   },
   info: {
-    border: "border-violet-500/40",
+    border: "border-cyan-500/30",
     icon: Info,
-    iconClass: "text-violet-400",
+    iconClass: "text-cyan-400",
     testId: "toast-info",
   },
 };
@@ -45,7 +44,7 @@ export function Toaster() {
     <div
       data-testid="toaster"
       className="
-        fixed bottom-4 right-4 z-[100]
+        fixed bottom-5 right-5 z-[100]
         flex flex-col gap-2
         w-full max-w-sm pointer-events-none
       "
@@ -64,16 +63,15 @@ export function Toaster() {
             className={`
               pointer-events-auto
               flex items-start gap-3
-              px-4 py-3 rounded-lg
-              bg-zinc-900/95 backdrop-blur
+              px-4 py-3 rounded-xl
+              bg-black/85 backdrop-blur-xl
               border ${style.border}
-              shadow-lg shadow-black/40
-              text-sm text-zinc-100
-              animate-in fade-in slide-in-from-bottom-2
+              shadow-[0_8px_32px_rgba(0,0,0,0.6)]
+              text-sm text-zinc-100 tracking-tight
             `}
           >
             <Icon
-              className={`w-5 h-5 shrink-0 mt-0.5 ${style.iconClass}`}
+              className={`w-4.5 h-4.5 shrink-0 mt-0.5 ${style.iconClass}`}
               aria-hidden
             />
             <p className="flex-1 min-w-0 leading-snug">{t.message}</p>
@@ -81,8 +79,8 @@ export function Toaster() {
               type="button"
               onClick={() => dismiss(t.id)}
               className="
-                shrink-0 p-0.5 rounded
-                text-zinc-500 hover:text-zinc-200
+                shrink-0 p-0.5 rounded-md
+                text-zinc-600 hover:text-zinc-200
                 transition-colors
               "
               aria-label="Dismiss notification"

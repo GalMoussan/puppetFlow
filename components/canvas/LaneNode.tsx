@@ -148,7 +148,7 @@ export const LaneNode = memo(function LaneNode({
       data-testid={`lane-${lane}`}
       className={`
         flex flex-col h-full
-        bg-neutral-900 border border-neutral-700 rounded-lg
+        bg-[#0a0a0b] border border-white/[0.1] rounded-lg
         ${selected ? "ring-2 ring-violet-500" : ""}
         ${dragState === "valid" ? "ring-2 ring-green-500 bg-green-500/10" : ""}
         ${dragState === "invalid" ? "ring-2 ring-red-500 bg-red-500/10" : ""}
@@ -169,9 +169,9 @@ export const LaneNode = memo(function LaneNode({
       <div
         className="
           px-3 py-2
-          bg-neutral-800 border-b border-neutral-700
+          bg-white/[0.04] border-b border-white/[0.1]
           rounded-t-lg
-          text-sm font-medium text-neutral-200
+          text-sm font-medium text-zinc-100
         "
       >
         {LANE_DISPLAY_NAMES[lane]}
@@ -184,10 +184,10 @@ export const LaneNode = memo(function LaneNode({
         style={{ minHeight: LANE_HEIGHT - 48 }}
       >
         {blocksInLane === 0 && dragState === "idle" && (
-          <div className="text-center text-neutral-500 text-sm mt-4 pointer-events-none">
+          <div className="text-center text-zinc-500 text-sm mt-4 pointer-events-none">
             Drop blocks here
             {lane === "IMAGE" && (
-              <p className="text-xs mt-2 text-neutral-600 px-2">
+              <p className="text-xs mt-2 text-zinc-600 px-2">
                 Needs blocks with IMAGE in stage scope (e.g. Puppet Visual,
                 Stage Area, or Create Block with Image checked)
               </p>

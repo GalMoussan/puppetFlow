@@ -194,14 +194,14 @@ export function CreateBlockModal({
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-zinc-900 rounded-xl p-6 w-full max-w-lg border border-zinc-700 max-h-[90vh] overflow-y-auto"
+        className="bg-[#0a0a0b] rounded-xl p-6 w-full max-w-lg border border-white/[0.1] max-h-[90vh] overflow-y-auto"
         data-testid="create-block-modal"
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">Create Block</h2>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white transition-colors"
+            className="text-zinc-500 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -222,7 +222,7 @@ export function CreateBlockModal({
                 clearFieldErrors();
               }}
               placeholder="e.g., Dramatic Whip Pan"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             />
             {validationErrors.name && (
               <p className="text-red-400 text-sm mt-1">{validationErrors.name}</p>
@@ -238,7 +238,7 @@ export function CreateBlockModal({
               id="type"
               value={type}
               onChange={(e) => handleTypeChange(e.target.value as BlockType)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             >
               {BLOCK_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -262,7 +262,7 @@ export function CreateBlockModal({
               }}
               rows={4}
               placeholder="Describe how this block should appear in the generated scene..."
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none"
             />
             {validationErrors.promptFragment && (
               <p className="text-red-400 text-sm mt-1">{validationErrors.promptFragment}</p>
@@ -282,8 +282,8 @@ export function CreateBlockModal({
                     className={`
                       flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors
                       ${stageScope.includes(scope.value)
-                        ? "bg-blue-600 text-white"
-                        : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}
+                        ? "bg-cyan-600 text-white"
+                        : "bg-white/[0.04] text-zinc-500 hover:bg-white/[0.08]"}
                     `}
                   >
                     <input
@@ -314,7 +314,7 @@ export function CreateBlockModal({
               value={rotationGroup}
               onChange={(e) => setRotationGroup(e.target.value)}
               placeholder="e.g., camera, gag, payoff"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             />
           </div>
 
@@ -322,9 +322,9 @@ export function CreateBlockModal({
           <div
             data-testid="block-preview"
             data-type={type}
-            className="p-4 bg-zinc-800 rounded-lg border border-zinc-700"
+            className="p-4 bg-white/[0.04] rounded-lg border border-white/[0.1]"
           >
-            <div className="text-sm text-zinc-400 mb-1">Preview</div>
+            <div className="text-sm text-zinc-500 mb-1">Preview</div>
             <div className="font-medium text-white">
               {name || "Block Name"}
             </div>
@@ -352,7 +352,7 @@ export function CreateBlockModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+              className="flex-1 px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white rounded-lg transition-colors"
             >
               Cancel
             </button>
@@ -363,7 +363,7 @@ export function CreateBlockModal({
                 flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium
                 ${isSubmitting
                   ? "bg-blue-700 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-500"}
+                  : "bg-cyan-600 hover:bg-cyan-500"}
                 text-white transition-colors
               `}
             >

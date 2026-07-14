@@ -23,28 +23,28 @@ function EmptyInspector() {
   const templateName = useCanvasStore((s) => s.templateName);
 
   return (
-    <aside className="w-80 bg-neutral-900 border-l border-neutral-800 p-4">
-      <div className="text-neutral-400 text-sm">
+    <aside className="w-80 bg-[#0a0a0b] border-l border-white/[0.08] p-4">
+      <div className="text-zinc-500 text-sm">
         <p className="mb-4">Select a block or lane to view details</p>
 
         {templateName && (
           <div className="mb-6">
-            <h3 className="text-neutral-300 font-medium mb-2">Template</h3>
-            <p className="text-neutral-200">{templateName}</p>
+            <h3 className="text-zinc-300 font-medium mb-2">Template</h3>
+            <p className="text-zinc-100">{templateName}</p>
           </div>
         )}
 
         <div>
-          <h3 className="text-neutral-300 font-medium mb-2">Keyboard Shortcuts</h3>
+          <h3 className="text-zinc-300 font-medium mb-2">Keyboard Shortcuts</h3>
           <ul className="space-y-1 text-xs">
             <li>
-              <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400">
+              <kbd className="px-1.5 py-0.5 bg-white/[0.04] rounded text-zinc-500">
                 Delete
               </kbd>{" "}
               - Remove selected block
             </li>
             <li>
-              <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400">
+              <kbd className="px-1.5 py-0.5 bg-white/[0.04] rounded text-zinc-500">
                 Cmd+S
               </kbd>{" "}
               - Save template
@@ -101,23 +101,23 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
   const isValidInCurrentLane = data.stageScope.includes(parentLane);
 
   return (
-    <aside className="w-80 bg-neutral-900 border-l border-neutral-800 p-4 overflow-y-auto">
+    <aside className="w-80 bg-[#0a0a0b] border-l border-white/[0.08] p-4 overflow-y-auto">
       {/* Block name */}
-      <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+      <h2 className="text-lg font-semibold text-zinc-100 mb-4">
         {data.name}
       </h2>
 
       {/* Block type */}
       <div className="mb-4">
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-zinc-500 uppercase tracking-wide">
           Type
         </label>
-        <p className="text-sm text-neutral-300">{data.type}</p>
+        <p className="text-sm text-zinc-300">{data.type}</p>
       </div>
 
       {/* Validity status */}
       <div className="mb-4">
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-zinc-500 uppercase tracking-wide">
           Placement Status
         </label>
         {isValidInCurrentLane ? (
@@ -134,7 +134,7 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
 
       {/* Stage scope badges */}
       <div className="mb-4">
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-zinc-500 uppercase tracking-wide">
           Valid Lanes
         </label>
         <div className="flex flex-wrap gap-1 mt-1">
@@ -143,7 +143,7 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
               key={lane}
               className={`
                 px-2 py-0.5 rounded text-xs
-                ${lane === parentLane ? "bg-violet-600 text-white" : "bg-neutral-700 text-neutral-300"}
+                ${lane === parentLane ? "bg-cyan-500 text-white" : "bg-white/[0.08] text-zinc-300"}
               `}
             >
               {lane}
@@ -155,10 +155,10 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
       {/* Rotation group */}
       {data.type !== "CUSTOM" && (
         <div className="mb-4">
-          <label className="text-xs text-neutral-500 uppercase tracking-wide">
+          <label className="text-xs text-zinc-500 uppercase tracking-wide">
             Rotation Group
           </label>
-          <p className="text-sm text-neutral-300">
+          <p className="text-sm text-zinc-300">
             {data.type.toLowerCase().replace("_", " ")}
           </p>
         </div>
@@ -166,7 +166,7 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
 
       {/* Pin toggle */}
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-sm text-neutral-300">
+        <span className="text-sm text-zinc-300">
           {data.pinned ? "Pinned" : "Not pinned"}
         </span>
         <label className="relative inline-flex items-center cursor-pointer">
@@ -178,8 +178,8 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
             className="sr-only peer"
           />
           <div className="
-            w-9 h-5 bg-neutral-700 rounded-full
-            peer-checked:bg-violet-600
+            w-9 h-5 bg-white/[0.08] rounded-full
+            peer-checked:bg-cyan-500
             after:content-[''] after:absolute after:top-0.5 after:left-0.5
             after:bg-white after:rounded-full after:h-4 after:w-4
             after:transition-all peer-checked:after:translate-x-4
@@ -189,7 +189,7 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
 
       {/* Fragment editor */}
       <div className="mb-4">
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-zinc-500 uppercase tracking-wide">
           Prompt Fragment
           {data.override && (
             <span className="ml-2 px-1.5 py-0.5 bg-amber-600/20 text-amber-500 rounded text-[10px]">
@@ -200,7 +200,7 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
 
         {/* Show original with strikethrough if override exists */}
         {data.override && (
-          <p className="text-xs text-neutral-500 line-through mt-1 mb-2">
+          <p className="text-xs text-zinc-500 line-through mt-1 mb-2">
             {data.fragment}
           </p>
         )}
@@ -211,10 +211,10 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
           onChange={handleFragmentChange}
           className="
             w-full h-32 mt-1 p-2
-            bg-neutral-800 border border-neutral-700 rounded
-            text-sm text-neutral-200 font-mono
+            bg-white/[0.04] border border-white/[0.1] rounded
+            text-sm text-zinc-100 font-mono
             resize-none
-            focus:outline-none focus:ring-2 focus:ring-violet-500
+            focus:outline-none focus:ring-2 focus:ring-cyan-500/50
           "
         />
       </div>
@@ -231,8 +231,8 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
             text-sm font-medium
             transition-colors
             ${hasChanges
-              ? "bg-violet-600 text-white hover:bg-violet-500"
-              : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+              ? "bg-cyan-500 text-white hover:bg-cyan-400"
+              : "bg-white/[0.08] text-zinc-500 cursor-not-allowed"
             }
           `}
         >
@@ -245,7 +245,7 @@ function BlockInspector({ node }: { node: Node<BlockNodeData> }) {
             onClick={handleClearOverride}
             className="
               px-3 py-2 rounded
-              bg-neutral-700 text-neutral-300
+              bg-white/[0.08] text-zinc-300
               text-sm font-medium
               hover:bg-neutral-600
               transition-colors
@@ -349,18 +349,18 @@ function LaneInspector({ lane }: { lane: Lane }) {
   }, []);
 
   return (
-    <aside className="w-80 bg-neutral-900 border-l border-neutral-800 p-4 overflow-y-auto">
-      <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+    <aside className="w-80 bg-[#0a0a0b] border-l border-white/[0.08] p-4 overflow-y-auto">
+      <h2 className="text-lg font-semibold text-zinc-100 mb-4">
         {lane}
       </h2>
 
       <div className="mb-4">
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-zinc-500 uppercase tracking-wide">
           Blocks ({blocksInLane.length})
         </label>
 
         {blocksInLane.length === 0 ? (
-          <p className="text-sm text-neutral-500 mt-2">
+          <p className="text-sm text-zinc-500 mt-2">
             No blocks in this lane. Drag blocks from the palette.
           </p>
         ) : (
@@ -380,15 +380,15 @@ function LaneInspector({ lane }: { lane: Lane }) {
                   onDragEnd={handleDragEnd}
                   className={`
                     flex items-center gap-2 p-2
-                    bg-neutral-800 rounded
+                    bg-white/[0.04] rounded
                     cursor-grab active:cursor-grabbing
                     ${draggedIndex === index ? "opacity-50" : ""}
                   `}
                 >
-                  <span className="text-neutral-500 text-sm w-4">
+                  <span className="text-zinc-500 text-sm w-4">
                     {index + 1}
                   </span>
-                  <span className="text-sm text-neutral-200 truncate flex-1">
+                  <span className="text-sm text-zinc-100 truncate flex-1">
                     {data.name}
                   </span>
                   <div
@@ -404,7 +404,7 @@ function LaneInspector({ lane }: { lane: Lane }) {
         )}
       </div>
 
-      <div className="text-xs text-neutral-500">
+      <div className="text-xs text-zinc-500">
         Drag items to reorder the assembly sequence
       </div>
     </aside>

@@ -44,7 +44,7 @@ export function CreateBlockButton({ onCreated }: CreateBlockButtonProps = {}) {
           ${
             themePackId
               ? "text-violet-200 bg-violet-950/50 border-violet-700/50 hover:bg-violet-900/40 hover:text-white"
-              : "text-zinc-500 bg-zinc-800/50 border-zinc-700 cursor-not-allowed"
+              : "text-zinc-500 bg-white/[0.04]/50 border-white/[0.1] cursor-not-allowed"
           }
         `}
         aria-label="Create block"

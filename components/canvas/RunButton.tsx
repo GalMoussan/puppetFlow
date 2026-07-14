@@ -150,13 +150,12 @@ export function RunButton() {
         onClick={() => setIsModalOpen(true)}
         disabled={isDisabled}
         className={`
-          flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+          pf-btn px-4 py-1.5 font-semibold tracking-tight
           ${
             isDisabled
-              ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-500 text-white"
+              ? "bg-white/[0.06] text-zinc-600 cursor-not-allowed border border-white/[0.06]"
+              : "pf-btn-primary"
           }
-          transition-colors
         `}
       >
         {isRunning ? (
@@ -165,11 +164,11 @@ export function RunButton() {
               className="w-4 h-4 animate-spin"
               data-testid="run-button-loading"
             />
-            Running...
+            Running…
           </>
         ) : (
           <>
-            <Play className="w-4 h-4" />
+            <Play className="w-3.5 h-3.5 fill-current" />
             Run
           </>
         )}

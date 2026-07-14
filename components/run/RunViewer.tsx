@@ -142,41 +142,38 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      {/* Header — zinc/violet tokens aligned with library */}
-      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur px-6 py-4">
+    <div className="pf-shell min-h-screen">
+      <header className="pf-header sticky top-0 z-40 px-6 py-3.5">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={onBackToCanvas}
-              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors shrink-0"
+              className="pf-btn pf-btn-ghost px-2.5 py-1.5 shrink-0"
               aria-label="Back to canvas"
               type="button"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
               Canvas
             </button>
             <a
               href="/library"
-              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors shrink-0"
+              className="pf-btn pf-btn-ghost px-2.5 py-1.5 shrink-0"
               aria-label="Generation library"
               data-testid="nav-library"
             >
-              <Library className="w-5 h-5" />
+              <Library className="w-4 h-4" />
               Library
             </a>
-            <div className="h-6 w-px bg-zinc-700 shrink-0" />
-            <h1 className="text-xl font-semibold truncate">
-              <span className="text-violet-400 mr-2" aria-hidden>
-                ●
-              </span>
+            <div className="h-5 w-px bg-white/[0.08] shrink-0" />
+            <h1 className="text-[15px] font-semibold tracking-tight truncate text-white">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] mr-2 align-middle" aria-hidden />
               {run.templateName}
             </h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleCopyAll}
-              className="flex items-center gap-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-zinc-500 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors"
               aria-label="Copy all"
               type="button"
             >
@@ -189,7 +186,7 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
             </button>
             <button
               onClick={handleExportScenes}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-zinc-100 rounded-lg transition-colors"
               aria-label="Export scenes"
               type="button"
             >
@@ -198,7 +195,7 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
             </button>
             <button
               onClick={handleExportScaffold}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white rounded-lg transition-colors"
               aria-label="Export scaffold"
               type="button"
             >
@@ -210,8 +207,8 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
       </header>
 
       {/* Metadata */}
-      <div className="border-b border-zinc-800 bg-zinc-950 px-6 py-3">
-        <div className="flex items-center gap-6 text-sm text-zinc-400 flex-wrap">
+      <div className="border-b border-white/[0.08] bg-black px-6 py-3">
+        <div className="flex items-center gap-6 text-sm text-zinc-500 flex-wrap">
           <span>{formatDate(run.createdAt)}</span>
           <span className="flex items-center gap-1">
             <span className="text-zinc-500">{run.sceneCount} scenes</span>

@@ -95,12 +95,12 @@ export const BlockNode = memo(function BlockNode({
       draggable="true"
       className={`
         w-[180px]
-        bg-neutral-900 border rounded-lg
+        bg-[#0a0a0b] border rounded-lg
         cursor-pointer
         focus:outline-none
         transition-all duration-150
         ${isSelected ? "ring-2 ring-violet-500" : ""}
-        ${data.valid ? "border-neutral-700" : "border-red-500"}
+        ${data.valid ? "border-white/[0.1]" : "border-red-500"}
       `}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -139,7 +139,7 @@ export const BlockNode = memo(function BlockNode({
         <p
           className="
             line-clamp-2
-            font-mono text-xs text-neutral-300
+            font-mono text-xs text-zinc-300
             mb-2
           "
         >

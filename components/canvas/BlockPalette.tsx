@@ -60,10 +60,10 @@ function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         className="
           w-full px-3 py-2
-          bg-neutral-800 border border-neutral-700 rounded-lg
-          text-neutral-200 placeholder-neutral-500
+          bg-white/[0.04] border border-white/[0.1] rounded-lg
+          text-zinc-100 placeholder-zinc-600
           text-sm
-          focus:outline-none focus:ring-2 focus:ring-violet-500
+          focus:outline-none focus:ring-2 focus:ring-cyan-500/50
         "
       />
     </div>
@@ -148,7 +148,7 @@ function PaletteBlock({ block, onCanvasCount }: PaletteBlockProps) {
           className="
             absolute -top-1 -right-1
             w-5 h-5
-            bg-violet-500 rounded-full
+            bg-cyan-400 rounded-full
             flex items-center justify-center
             text-[10px] font-bold text-white
           "
@@ -191,8 +191,8 @@ function BlockGroup({ name, blocks }: BlockGroupProps) {
         className="
           w-full flex items-center justify-between
           px-2 py-1.5
-          text-sm font-medium text-neutral-300
-          hover:bg-neutral-800 rounded
+          text-sm font-medium text-zinc-300
+          hover:bg-white/[0.04] rounded
           transition-colors
         "
       >
@@ -292,20 +292,20 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   if (!themePackId) {
     return (
       <aside
-        className="w-64 bg-neutral-900 border-r border-neutral-800 p-4"
+        className="w-64 bg-[#0a0a0b] border-r border-white/[0.08] p-4"
         data-testid="palette-no-theme"
       >
-        <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-4">
           Block Library
         </h2>
         <div className="flex flex-col items-center text-center gap-2 mt-8 px-2">
-          <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center">
-            <span className="text-neutral-500 text-lg" aria-hidden>
+          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.1] flex items-center justify-center">
+            <span className="text-zinc-500 text-lg" aria-hidden>
               ∅
             </span>
           </div>
-          <p className="text-sm text-neutral-400">No theme pack loaded</p>
-          <p className="text-xs text-neutral-600 leading-relaxed">
+          <p className="text-sm text-zinc-500">No theme pack loaded</p>
+          <p className="text-xs text-zinc-600 leading-relaxed">
             Bootstrap a template or theme pack to browse and drag blocks onto
             the canvas.
           </p>
@@ -317,13 +317,13 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   // Loading state
   if (loading) {
     return (
-      <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4">
-        <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+      <aside className="w-64 bg-[#0a0a0b] border-r border-white/[0.08] p-4">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-4">
           Block Library
         </h2>
         <div
           data-testid="palette-loading"
-          className="flex flex-col items-center gap-2 text-center text-neutral-500 text-sm mt-8"
+          className="flex flex-col items-center gap-2 text-center text-zinc-500 text-sm mt-8"
         >
           <div className="w-6 h-6 border-2 border-violet-500/40 border-t-violet-400 rounded-full animate-spin" />
           <p>Loading blocks…</p>
@@ -335,8 +335,8 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   // Error state
   if (error) {
     return (
-      <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4">
-        <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+      <aside className="w-64 bg-[#0a0a0b] border-r border-white/[0.08] p-4">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-4">
           Block Library
         </h2>
         <div
@@ -347,7 +347,7 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="text-xs text-violet-400 hover:text-violet-300 underline"
+            className="text-xs text-cyan-400 hover:text-cyan-300 underline"
           >
             Retry
           </button>
@@ -363,9 +363,9 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
   const hasResults = groupedBlocks.size > 0;
 
   return (
-    <aside className="w-64 bg-neutral-900 border-r border-neutral-800 p-4 overflow-y-auto flex flex-col">
+    <aside className="w-64 bg-[#0a0a0b] border-r border-white/[0.08] p-4 overflow-y-auto flex flex-col">
       <div className="flex items-center justify-between gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-neutral-200">
+        <h2 className="text-lg font-semibold text-zinc-100">
           Block Library
         </h2>
       </div>
@@ -378,7 +378,7 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
 
       <div className="flex-1 overflow-y-auto">
         {!hasResults && search && (
-          <div className="text-center text-neutral-500 text-sm mt-4">
+          <div className="text-center text-zinc-500 text-sm mt-4">
             No blocks found matching &quot;{search}&quot;
           </div>
         )}
@@ -397,7 +397,7 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
         })}
 
         {!hasResults && !search && effectiveBlocks.length === 0 && (
-          <div className="text-center text-neutral-500 text-sm mt-4 space-y-2">
+          <div className="text-center text-zinc-500 text-sm mt-4 space-y-2">
             <p>No blocks in this theme pack yet.</p>
             <p className="text-xs">Use Create Block above to add one.</p>
           </div>

@@ -79,7 +79,7 @@ export function LintBadge({ status, violations }: LintBadgeProps) {
       {showTooltip && violations.length > 0 && (
         <div
           data-testid="lint-tooltip"
-          className="absolute z-50 top-full left-0 mt-1 w-64 bg-zinc-800 border border-zinc-700 rounded-lg p-3 shadow-lg"
+          className="absolute z-50 top-full left-0 mt-1 w-64 bg-white/[0.04] border border-white/[0.1] rounded-lg p-3 shadow-lg"
         >
           <div className="text-sm space-y-2">
             {Object.entries(groupedViolations).map(([rule, vs]) => (
@@ -87,7 +87,7 @@ export function LintBadge({ status, violations }: LintBadgeProps) {
                 <div className="font-medium text-zinc-300">
                   {rule} ({vs.length})
                 </div>
-                <ul className="ml-2 text-zinc-400 text-xs space-y-1">
+                <ul className="ml-2 text-zinc-500 text-xs space-y-1">
                   {vs.map((v, i) => (
                     <li key={i}>{v.message}</li>
                   ))}

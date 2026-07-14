@@ -1,47 +1,70 @@
 @import "tailwindcss";
 
+/*
+ * PuppetFlow — Modern tech-black design system
+ * Deep pure blacks, hairline borders, cyan/violet electric accents.
+ */
+
 :root {
   color-scheme: dark;
 
-  --background: #09090b;
-  --foreground: #fafafa;
+  /* Core — true black stack */
+  --background: #000000;
+  --background-subtle: #050506;
+  --foreground: #f4f4f5;
 
-  /* Festival accent colors (UV-violet / acid-green) */
-  --accent-violet: #8b5cf6;
-  --accent-violet-light: #a78bfa;
-  --accent-violet-muted: rgba(139, 92, 246, 0.18);
-  --accent-green: #84cc16;
-  --accent-green-light: #a3e635;
-  --accent-green-muted: rgba(132, 204, 22, 0.18);
+  /* Surfaces */
+  --surface: #0a0a0b;
+  --surface-raised: #111113;
+  --surface-overlay: #18181b;
+  --surface-glass: rgba(10, 10, 12, 0.72);
 
-  /* Surfaces (zinc scale — near-black festival UI) */
-  --surface: #09090b;
-  --surface-raised: #18181b;
-  --surface-overlay: #27272a;
+  /* Accents — electric cyan + soft violet */
+  --accent-cyan: #22d3ee;
+  --accent-cyan-dim: #06b6d4;
+  --accent-cyan-muted: rgba(34, 211, 238, 0.12);
+  --accent-violet: #a78bfa;
+  --accent-violet-bright: #c4b5fd;
+  --accent-violet-muted: rgba(167, 139, 250, 0.14);
+  --accent-green: #4ade80;
+  --accent-green-muted: rgba(74, 222, 128, 0.14);
+  --accent-amber: #fbbf24;
+  --accent-red: #f87171;
 
-  /* Lane colors (per blueprint) */
-  --lane-image: #f97316;
-  --lane-video-start: #8b5cf6;
-  --lane-extend-middle: #06b6d4;
-  --lane-extend-end: #22c55e;
+  /* Legacy aliases (components still reference violet/green festival names) */
+  --accent-violet-light: var(--accent-violet-bright);
+  --accent-green-light: #86efac;
 
-  /* UI colors */
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --border: #3f3f46;
-  --ring: #8b5cf6;
-  --ring-green: #84cc16;
-  --selection-bg: rgba(139, 92, 246, 0.4);
-  --selection-fg: #fafafa;
+  /* Lane colors — slightly neon for tech canvas */
+  --lane-image: #fb923c;
+  --lane-video-start: #a78bfa;
+  --lane-extend-middle: #22d3ee;
+  --lane-extend-end: #4ade80;
+
+  /* Chrome */
+  --muted: #18181b;
+  --muted-foreground: #71717a;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --ring: var(--accent-cyan);
+  --ring-green: var(--accent-green);
+  --selection-bg: rgba(34, 211, 238, 0.28);
+  --selection-fg: #ffffff;
+
+  /* Effects */
+  --glow-cyan: 0 0 24px rgba(34, 211, 238, 0.18);
+  --glow-violet: 0 0 24px rgba(167, 139, 250, 0.16);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.55);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent-violet: var(--accent-violet);
-  --color-accent-violet-light: var(--accent-violet-light);
+  --color-accent-violet-light: var(--accent-violet-bright);
   --color-accent-green: var(--accent-green);
   --color-accent-green-light: var(--accent-green-light);
+  --color-accent-cyan: var(--accent-cyan);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-surface-overlay: var(--surface-overlay);
@@ -64,7 +87,6 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  /* Hebrew-safe stack: Geist + system UI + Hebrew-capable faces */
   font-family:
     var(--font-sans),
     system-ui,
@@ -76,14 +98,36 @@ body {
     "Arial Hebrew",
     "David Libre",
     sans-serif;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Monospace for prompt text (blocks, inspector, run viewer) */
+/* Subtle tech grid behind the whole app */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 20%, transparent 75%);
+  opacity: 0.9;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 .font-prompt {
   font-family: var(--font-mono), ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  letter-spacing: 0;
 }
 
-/* Text selection — UV-violet wash */
 ::selection {
   background: var(--selection-bg);
   color: var(--selection-fg);
@@ -94,7 +138,6 @@ body {
   color: var(--selection-fg);
 }
 
-/* Focus rings — violet festival accent (skip when Tailwind focus:ring is used) */
 :focus {
   outline: none;
 }
@@ -104,7 +147,6 @@ body {
   outline-offset: 2px;
 }
 
-/* Form controls inherit dark scheme */
 input,
 textarea,
 select,
@@ -112,10 +154,145 @@ button {
   color-scheme: dark;
 }
 
-/* ── Scrollbars (dark) ─────────────────────────────────────────── */
+/* ── Design utilities ─────────────────────────────────────────── */
+
+.pf-shell {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.pf-header {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--border);
+}
+
+.pf-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.pf-panel-raised {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.pf-card {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.pf-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--glow-cyan);
+}
+
+.pf-input {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--foreground);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pf-input:focus {
+  border-color: rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 0 3px var(--accent-cyan-muted);
+  outline: none;
+}
+
+.pf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.pf-btn-primary {
+  background: linear-gradient(180deg, #2dd4bf 0%, #06b6d4 100%);
+  color: #041016;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+}
+
+.pf-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #5eead4 0%, #22d3ee 100%);
+  box-shadow: 0 0 28px rgba(34, 211, 238, 0.35);
+}
+
+.pf-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pf-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.pf-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-strong);
+}
+
+.pf-btn-ghost {
+  background: transparent;
+  color: var(--muted-foreground);
+  border: 1px solid transparent;
+}
+
+.pf-btn-ghost:hover {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pf-btn-danger {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.pf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.pf-logo-mark {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.35);
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -128,14 +305,14 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: rgba(255, 255, 255, 0.22);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
@@ -144,62 +321,58 @@ button {
   background: transparent;
 }
 
-/* ── React Flow dark / festival overrides ──────────────────────── */
-/*
- * RF ships light defaults on .react-flow and dark on .react-flow.dark.
- * We apply festival-tuned dark tokens to both so light chrome never leaks.
- */
+/* ── React Flow ───────────────────────────────────────────────── */
 .react-flow,
 .react-flow.dark {
-  --xy-background-color: var(--background);
-  --xy-background-pattern-color: #3f3f46;
-  --xy-background-pattern-dots-color-default: #3f3f46;
+  --xy-background-color: #000000;
+  --xy-background-pattern-color: rgba(255, 255, 255, 0.06);
+  --xy-background-pattern-dots-color-default: rgba(255, 255, 255, 0.07);
 
   --xy-node-color: var(--foreground);
   --xy-node-background-color: var(--surface-raised);
   --xy-node-border: 1px solid var(--border);
-  --xy-node-boxshadow-hover: 0 1px 6px 1px rgba(0, 0, 0, 0.35);
-  --xy-node-boxshadow-selected: 0 0 0 2px var(--accent-violet);
+  --xy-node-boxshadow-hover: 0 0 0 1px rgba(34, 211, 238, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.5);
+  --xy-node-boxshadow-selected: 0 0 0 1px var(--accent-cyan), var(--glow-cyan);
 
-  --xy-handle-background-color: var(--accent-violet);
-  --xy-handle-border-color: var(--surface-raised);
+  --xy-handle-background-color: var(--accent-cyan);
+  --xy-handle-border-color: #000;
 
-  --xy-selection-background-color: var(--accent-violet-muted);
-  --xy-selection-border: 1px dotted var(--accent-violet);
+  --xy-selection-background-color: var(--accent-cyan-muted);
+  --xy-selection-border: 1px solid var(--accent-cyan);
 
-  --xy-edge-stroke: #52525b;
-  --xy-edge-stroke-selected: var(--accent-violet);
-  --xy-connectionline-stroke: var(--accent-violet-light);
+  --xy-edge-stroke: rgba(255, 255, 255, 0.18);
+  --xy-edge-stroke-selected: var(--accent-cyan);
+  --xy-connectionline-stroke: var(--accent-cyan);
 
   --xy-controls-button-background-color: var(--surface-raised);
   --xy-controls-button-background-color-hover: var(--surface-overlay);
   --xy-controls-button-color: var(--muted-foreground);
   --xy-controls-button-color-hover: var(--foreground);
   --xy-controls-button-border-color: var(--border);
-  --xy-controls-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --xy-controls-box-shadow: var(--shadow-elevated);
 
   --xy-edge-label-background-color: var(--surface-raised);
   --xy-edge-label-color: var(--foreground);
 
-  --xy-minimap-background-color: var(--surface-raised);
-  --xy-minimap-mask-background-color: rgba(9, 9, 11, 0.65);
+  --xy-minimap-background-color: var(--surface);
+  --xy-minimap-mask-background-color: rgba(0, 0, 0, 0.7);
   --xy-minimap-node-background-color: var(--surface-overlay);
 
   --xy-attribution-background-color: transparent;
 
-  background-color: var(--background) !important;
+  background-color: #000 !important;
 }
 
 .react-flow__background {
-  background-color: var(--background) !important;
+  background-color: #000 !important;
 }
 
-/* Controls — zinc raised surface (overrides RF light defaults) */
 .react-flow__controls {
   background: var(--surface-raised) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--shadow-elevated) !important;
   overflow: hidden;
 }
 
@@ -207,14 +380,14 @@ button {
   background: var(--surface-raised) !important;
   border-bottom: 1px solid var(--border) !important;
   color: var(--muted-foreground) !important;
-  width: 28px !important;
-  height: 28px !important;
+  width: 30px !important;
+  height: 30px !important;
   fill: currentColor !important;
 }
 
 .react-flow__controls-button:hover {
   background: var(--surface-overlay) !important;
-  color: var(--foreground) !important;
+  color: var(--accent-cyan) !important;
 }
 
 .react-flow__controls-button:focus-visible {
@@ -233,37 +406,34 @@ button {
   fill: currentColor !important;
 }
 
-/* Edge strokes — muted zinc, violet when selected */
 .react-flow__edge-path,
 .react-flow__connection-path {
-  stroke: #52525b;
+  stroke: rgba(255, 255, 255, 0.18);
 }
 
 .react-flow__edge.selected .react-flow__edge-path,
 .react-flow__edge:focus .react-flow__edge-path,
 .react-flow__edge:focus-visible .react-flow__edge-path {
-  stroke: var(--accent-violet);
+  stroke: var(--accent-cyan);
+  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.5));
 }
 
-/* Selection box */
 .react-flow__nodesselection-rect,
 .react-flow__selection {
-  background: var(--accent-violet-muted) !important;
-  border: 1px dotted var(--accent-violet) !important;
+  background: var(--accent-cyan-muted) !important;
+  border: 1px solid var(--accent-cyan) !important;
 }
 
-/* Handles */
 .react-flow__handle {
-  background: var(--accent-violet) !important;
-  border-color: var(--surface-raised) !important;
+  background: var(--accent-cyan) !important;
+  border-color: #000 !important;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
 }
 
-/* Hide attribution chrome if ever shown */
 .react-flow__attribution {
   display: none !important;
 }
 
-/* Edge labels */
 .react-flow__edge-textbg {
   fill: var(--surface-raised) !important;
 }
@@ -272,9 +442,8 @@ button {
   fill: var(--foreground) !important;
 }
 
-/* Minimap (if enabled later) */
 .react-flow__minimap {
-  background: var(--surface-raised) !important;
+  background: var(--surface) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
 }

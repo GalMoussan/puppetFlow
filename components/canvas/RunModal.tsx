@@ -212,32 +212,34 @@ export function RunModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       data-testid="run-modal-backdrop"
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-zinc-900 rounded-xl p-6 w-full max-w-md border border-zinc-700 max-h-[90vh] overflow-y-auto"
+        className="bg-[#0a0a0b]/95 rounded-2xl p-6 w-full max-w-md border border-white/[0.1] max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.08)]"
         data-testid="run-modal"
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">Run Template</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-white">
+            Run Template
+          </h2>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white transition-colors"
+            className="text-zinc-500 hover:text-white transition-colors"
             type="button"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="text-sm text-zinc-400 mb-4 space-y-1">
+        <div className="text-sm text-zinc-500 mb-4 space-y-1">
           <div>
             Template: <span className="text-white">{templateName}</span>
           </div>
           <div>
             Provider:{" "}
-            <span className="text-violet-300 capitalize" data-testid="llm-provider">
+            <span className="text-cyan-300 capitalize" data-testid="llm-provider">
               {provider}
             </span>
             {!hasKey && (
@@ -259,7 +261,7 @@ export function RunModal({
                 setRunDate(e.target.value);
                 clearValidation();
               }}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             />
           </div>
 
@@ -277,7 +279,7 @@ export function RunModal({
               }}
               min={1}
               max={10}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             />
             <p className="text-xs text-zinc-500 mt-1">
               Language weights auto-adjust to match scene count.
@@ -296,7 +298,7 @@ export function RunModal({
                 setLoopMode(e.target.checked);
                 clearValidation();
               }}
-              className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-green-500 focus:ring-green-500"
+              className="h-4 w-4 rounded border-white/[0.12] bg-white/[0.04] text-green-500 focus:ring-cyan-500/50"
             />
           </div>
 
@@ -316,7 +318,7 @@ export function RunModal({
                 }}
                 min={0}
                 max={sceneCount || 10}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
               />
             </div>
             <div>
@@ -334,7 +336,7 @@ export function RunModal({
                 }}
                 min={0}
                 max={sceneCount || 10}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
               />
             </div>
           </div>
@@ -356,7 +358,7 @@ export function RunModal({
                 setHistoryStrictness(e.target.value as "hard-fail" | "warn");
                 clearValidation();
               }}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             >
               <option value="warn">Warn on history collision</option>
               <option value="hard-fail">Hard-fail on history collision</option>
@@ -374,7 +376,7 @@ export function RunModal({
                 setModel(e.target.value);
                 clearValidation();
               }}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             >
               {models.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -397,7 +399,7 @@ export function RunModal({
               }}
               rows={3}
               placeholder="Add any notes for this run..."
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none"
             />
           </div>
 
@@ -413,7 +415,7 @@ export function RunModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+              className="pf-btn pf-btn-secondary flex-1 px-4 py-2.5"
             >
               Cancel
             </button>
@@ -422,11 +424,8 @@ export function RunModal({
               disabled={isLoading}
               aria-label="Generate"
               className={`
-                flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium
-                ${isLoading
-                  ? "bg-green-700 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-500"}
-                text-white transition-colors
+                pf-btn flex-1 px-4 py-2.5 font-semibold
+                ${isLoading ? "opacity-60 cursor-not-allowed pf-btn-primary" : "pf-btn-primary"}
               `}
             >
               {isLoading ? (
