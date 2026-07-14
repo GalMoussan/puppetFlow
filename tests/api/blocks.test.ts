@@ -333,6 +333,7 @@ describe("api/blocks", () => {
       };
 
       mockPrisma.themePack.findUnique.mockResolvedValue(sampleThemePack);
+      mockPrisma.blockDefinition.findFirst.mockResolvedValue(null);
       mockPrisma.blockDefinition.create.mockResolvedValue(createdBlock);
 
       const request = createRequest("/api/blocks", {
@@ -347,6 +348,11 @@ describe("api/blocks", () => {
       expect(response.status).toBe(201);
       expect(body.id).toBe("block-new-001");
       expect(body.stageScope).toEqual(["VIDEO_START", "EXTEND_MIDDLE"]);
+      expect(mockPrisma.blockDefinition.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ themePackId: "pack-1" }),
+        })
+      );
     });
 
     it("rejects invalid lane in stageScope with 400", async () => {
@@ -433,7 +439,7 @@ describe("api/blocks", () => {
       expect(response.status).toBe(201);
     });
 
-    it("creates global block (null themePackId)", async () => {
+    it("rejects create without themePackId (blocks must persist under a pack)", async () => {
       const globalBlock = {
         type: "STYLE_LOCK",
         name: "Global Style",
@@ -441,16 +447,6 @@ describe("api/blocks", () => {
         stageScope: ["GLOBAL"],
         themePackId: null,
       };
-
-      const createdBlock = {
-        ...globalBlock,
-        id: "block-global-002",
-        archived: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockPrisma.blockDefinition.create.mockResolvedValue(createdBlock);
 
       const request = createRequest("/api/blocks", {
         method: "POST",
@@ -460,7 +456,8 @@ describe("api/blocks", () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(400);
+      expect(mockPrisma.blockDefinition.create).not.toHaveBeenCalled();
     });
 
     it("rejects invalid block type with 400", async () => {

@@ -60,7 +60,10 @@ export function useBlockLibrary(
     setError(null);
 
     try {
-      const response = await fetch(`/api/blocks?themePackId=${themePackId}`);
+      // High limit — library must show all seed + user blocks for the pack
+      const response = await fetch(
+        `/api/blocks?themePackId=${encodeURIComponent(themePackId)}&limit=200&archived=false`
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch blocks: ${response.status}`);
@@ -88,63 +91,9 @@ export function useBlockLibrary(
   }, [themePackId]);
 
   // Fetch on mount and when themePackId changes
-  // Using IIFE to handle async data fetching in useEffect
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      if (!themePackId) {
-        if (!cancelled) {
-          setBlocks([]);
-          setLoading(false);
-          setError(null);
-        }
-        return;
-      }
-
-      if (!cancelled) {
-        setLoading(true);
-        setError(null);
-      }
-
-      try {
-        const response = await fetch(`/api/blocks?themePackId=${themePackId}`);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch blocks: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const fetchedBlocks = (data.data || data) as BlockDefinition[];
-
-        // Filter out archived blocks and map dates
-        const activeBlocks = fetchedBlocks
-          .filter((b) => !b.archived)
-          .map((b) => ({
-            ...b,
-            createdAt: new Date(b.createdAt),
-            updatedAt: new Date(b.updatedAt),
-          }));
-
-        if (!cancelled) {
-          setBlocks(activeBlocks);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error("Unknown error"));
-          setBlocks([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [themePackId]);
+    void fetchBlocks();
+  }, [fetchBlocks]);
 
   return {
     blocks,

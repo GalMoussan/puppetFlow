@@ -134,6 +134,12 @@ export function CreateBlockModal({
     setIsSubmitting(true);
     setError(null);
 
+    if (!themePackId) {
+      setError("No theme pack loaded — cannot save block permanently");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/blocks", {
         method: "POST",

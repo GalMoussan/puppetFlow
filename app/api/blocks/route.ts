@@ -133,21 +133,34 @@ export async function POST(request: NextRequest) {
 
     const data = parseResult.data;
 
-    // Verify theme pack exists if provided
-    if (data.themePackId) {
-      const themePack = await prisma.themePack.findUnique({
-        where: { id: data.themePackId },
-      });
+    // themePackId is required — blocks without a pack vanish from the palette filter
+    const themePack = await prisma.themePack.findUnique({
+      where: { id: data.themePackId },
+    });
 
-      if (!themePack) {
-        return NextResponse.json(
-          { error: "Theme pack not found" },
-          { status: 404 }
-        );
-      }
+    if (!themePack) {
+      return NextResponse.json(
+        { error: "Theme pack not found" },
+        { status: 404 }
+      );
     }
 
-    // Create block
+    // Optional uniqueness within pack (friendly 409 for duplicate names)
+    const duplicate = await prisma.blockDefinition.findFirst({
+      where: {
+        themePackId: data.themePackId,
+        name: data.name,
+        archived: false,
+      },
+    });
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Block name already exists" },
+        { status: 409 }
+      );
+    }
+
+    // Create block — always tied to theme pack so GET ?themePackId= returns it
     const block = await prisma.blockDefinition.create({
       data: {
         type: data.type,
@@ -156,6 +169,7 @@ export async function POST(request: NextRequest) {
         stageScope: data.stageScope,
         rotationGroup: data.rotationGroup,
         themePackId: data.themePackId,
+        archived: false,
       },
     });
 

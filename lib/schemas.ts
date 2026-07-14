@@ -88,7 +88,8 @@ export const CreateBlockSchema = z.object({
   promptFragment: z.string().min(1),
   stageScope: z.array(LaneSchema).default([]),
   rotationGroup: z.string().nullable().optional(),
-  themePackId: z.string().nullable().optional(),
+  // Required so blocks survive refresh under the active theme pack filter
+  themePackId: z.string().min(1, "themePackId is required"),
 });
 
 export type CreateBlock = z.infer<typeof CreateBlockSchema>;

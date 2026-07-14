@@ -185,163 +185,165 @@ async function main() {
 
   console.log(`✅ Theme pack ready: ${themePack.name} (${themePack.id})`);
 
-  // Clear prior demo blocks for this pack so seed is idempotent
-  await prisma.blockDefinition.deleteMany({
-    where: { themePackId: themePack.id },
+  /**
+   * Upsert a seed block by (themePackId, name).
+   * NEVER deleteMany on the whole pack — that wiped user-created blocks.
+   */
+  async function upsertSeedBlock(data: {
+    type: string;
+    name: string;
+    promptFragment: string;
+    stageScope: string[];
+    rotationGroup?: string | null;
+  }) {
+    const existing = await prisma.blockDefinition.findFirst({
+      where: { themePackId: themePack.id, name: data.name },
+    });
+    if (existing) {
+      return prisma.blockDefinition.update({
+        where: { id: existing.id },
+        data: {
+          type: data.type as never,
+          promptFragment: data.promptFragment,
+          stageScope: data.stageScope,
+          rotationGroup: data.rotationGroup ?? null,
+          archived: false,
+        },
+      });
+    }
+    return prisma.blockDefinition.create({
+      data: {
+        themePackId: themePack.id,
+        type: data.type as never,
+        name: data.name,
+        promptFragment: data.promptFragment,
+        stageScope: data.stageScope,
+        rotationGroup: data.rotationGroup ?? null,
+      },
+    });
+  }
+
+  const seedBlockSpecs = [
+    {
+      type: "HOOK",
+      name: "Dramatic Entrance",
+      promptFragment:
+        "The puppet makes a dramatic entrance with {visual}, surprising the crowd",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "hooks",
+    },
+    {
+      type: "HOOK",
+      name: "Crowd Chant",
+      promptFragment:
+        "The crowd starts chanting in unison, the puppet responds with {dynamic}",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "hooks",
+    },
+    {
+      type: "CAMERA_MOVE",
+      name: "Whip Pan",
+      promptFragment:
+        "Quick whip pan to follow the action, motion blur emphasizing speed",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "cameras",
+    },
+    {
+      type: "CAMERA_MOVE",
+      name: "Crane Up",
+      promptFragment:
+        "Sweeping crane shot rising to reveal the full stage panorama",
+      stageScope: ["VIDEO_START", "EXTEND_END"],
+      rotationGroup: "cameras",
+    },
+    {
+      type: "PUPPET_DYNAMIC",
+      name: "Synchronized Dance",
+      promptFragment:
+        "Puppets move in perfect synchronization, mirroring each other's movements",
+      stageScope: ["GLOBAL", "VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "dynamics",
+    },
+    {
+      type: "PUPPET_VISUAL",
+      name: "Neon Strings",
+      promptFragment:
+        "Puppet strings glow with vibrant neon colors, pulsing to the beat",
+      stageScope: ["GLOBAL", "IMAGE"],
+      rotationGroup: "visuals",
+    },
+    {
+      type: "PUPPET_VISUAL",
+      name: "Wide Establishing Shot",
+      promptFragment:
+        "Wide festival establishing frame: packed crowd, LED walls, golden-hour haze, two puppets center stage",
+      stageScope: ["IMAGE"],
+      rotationGroup: "visuals",
+    },
+    {
+      type: "STAGE_AREA",
+      name: "Image Main Stage Plate",
+      promptFragment:
+        "Main Stage environment plate for still generation: LED backdrop, UV haze, dense crowd midground",
+      stageScope: ["IMAGE", "GLOBAL"],
+      rotationGroup: null,
+    },
+    {
+      type: "PHYSICAL_GAG",
+      name: "Tangled Strings",
+      promptFragment:
+        "The puppet's strings get hilariously tangled, comical struggle ensues",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "gags",
+    },
+    {
+      type: "PAYOFF",
+      name: "Confetti Burst",
+      promptFragment:
+        "Massive confetti explosion fills the frame, celebration moment",
+      stageScope: ["EXTEND_END"],
+      rotationGroup: "payoffs",
+    },
+    {
+      type: "CHAOS_THREAD",
+      name: "Rogue Balloon",
+      promptFragment:
+        "A balloon escapes and floats across the stage, puppet tries to catch it",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "chaos",
+    },
+    {
+      type: "STAGE_AREA",
+      name: "Main Stage",
+      promptFragment:
+        "Set on the Main Stage, massive LED screens, packed crowd",
+      stageScope: ["GLOBAL"],
+      rotationGroup: null,
+    },
+    {
+      type: "FESTIVAL_MOMENT",
+      name: "Sunset Arrival",
+      promptFragment: "Golden hour lighting, silhouettes against orange sky",
+      stageScope: ["GLOBAL"],
+      rotationGroup: null,
+    },
+  ] as const;
+
+  const blocks = [];
+  for (const spec of seedBlockSpecs) {
+    blocks.push(await upsertSeedBlock({ ...spec }));
+  }
+
+  const userBlockCount = await prisma.blockDefinition.count({
+    where: {
+      themePackId: themePack.id,
+      name: { notIn: seedBlockSpecs.map((s) => s.name) },
+    },
   });
 
-  // Create block definitions
-  const blocks = await Promise.all([
-    // Hook blocks
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "HOOK",
-        name: "Dramatic Entrance",
-        promptFragment: "The puppet makes a dramatic entrance with {visual}, surprising the crowd",
-        stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
-        rotationGroup: "hooks",
-      },
-    }),
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "HOOK",
-        name: "Crowd Chant",
-        promptFragment: "The crowd starts chanting in unison, the puppet responds with {dynamic}",
-        stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
-        rotationGroup: "hooks",
-      },
-    }),
-
-    // Camera moves
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "CAMERA_MOVE",
-        name: "Whip Pan",
-        promptFragment: "Quick whip pan to follow the action, motion blur emphasizing speed",
-        stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
-        rotationGroup: "cameras",
-      },
-    }),
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "CAMERA_MOVE",
-        name: "Crane Up",
-        promptFragment: "Sweeping crane shot rising to reveal the full stage panorama",
-        stageScope: ["VIDEO_START", "EXTEND_END"],
-        rotationGroup: "cameras",
-      },
-    }),
-
-    // Puppet dynamics
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "PUPPET_DYNAMIC",
-        name: "Synchronized Dance",
-        promptFragment: "Puppets move in perfect synchronization, mirroring each other's movements",
-        stageScope: ["GLOBAL", "VIDEO_START", "EXTEND_MIDDLE"],
-        rotationGroup: "dynamics",
-      },
-    }),
-
-    // Puppet visuals (IMAGE lane)
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "PUPPET_VISUAL",
-        name: "Neon Strings",
-        promptFragment: "Puppet strings glow with vibrant neon colors, pulsing to the beat",
-        stageScope: ["GLOBAL", "IMAGE"],
-        rotationGroup: "visuals",
-      },
-    }),
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "PUPPET_VISUAL",
-        name: "Wide Establishing Shot",
-        promptFragment:
-          "Wide festival establishing frame: packed crowd, LED walls, golden-hour haze, two puppets center stage",
-        stageScope: ["IMAGE"],
-        rotationGroup: "visuals",
-      },
-    }),
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "STAGE_AREA",
-        name: "Image Main Stage Plate",
-        promptFragment:
-          "Main Stage environment plate for still generation: LED backdrop, UV haze, dense crowd midground",
-        stageScope: ["IMAGE", "GLOBAL"],
-        rotationGroup: null,
-      },
-    }),
-
-    // Physical gags
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "PHYSICAL_GAG",
-        name: "Tangled Strings",
-        promptFragment: "The puppet's strings get hilariously tangled, comical struggle ensues",
-        stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
-        rotationGroup: "gags",
-      },
-    }),
-
-    // Payoffs
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "PAYOFF",
-        name: "Confetti Burst",
-        promptFragment: "Massive confetti explosion fills the frame, celebration moment",
-        stageScope: ["EXTEND_END"],
-        rotationGroup: "payoffs",
-      },
-    }),
-
-    // Chaos threads
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "CHAOS_THREAD",
-        name: "Rogue Balloon",
-        promptFragment: "A balloon escapes and floats across the stage, puppet tries to catch it",
-        stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
-        rotationGroup: "chaos",
-      },
-    }),
-
-    // Global blocks
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "STAGE_AREA",
-        name: "Main Stage",
-        promptFragment: "Set on the Main Stage, massive LED screens, packed crowd",
-        stageScope: ["GLOBAL"],
-        rotationGroup: null,
-      },
-    }),
-    prisma.blockDefinition.create({
-      data: {
-        themePackId: themePack.id,
-        type: "FESTIVAL_MOMENT",
-        name: "Sunset Arrival",
-        promptFragment: "Golden hour lighting, silhouettes against orange sky",
-        stageScope: ["GLOBAL"],
-        rotationGroup: null,
-      },
-    }),
-  ]);
-
-  console.log(`✅ Created ${blocks.length} block definitions`);
+  console.log(
+    `✅ Seed blocks ready: ${blocks.length} (preserved ${userBlockCount} user-created block(s))`
+  );
 
   // Upsert demo flow template (full CanvasGraph so agent never sees missing runConfig)
   const demoGraph = {
