@@ -347,10 +347,38 @@ function buildThemePack(dbThemePack: {
 }
 
 /**
- * Build empty block definitions (for now)
+ * Load block definitions referenced by the canvas graph from the database.
+ * Compile fails with "Block definition not found" if these are missing.
  */
-function buildBlockDefs(): Record<string, BlockDefinition> {
-  return {};
+async function loadBlockDefs(
+  graph: CanvasGraph
+): Promise<Record<string, BlockDefinition>> {
+  const ids = [
+    ...new Set(
+      (graph.nodes ?? [])
+        .map((n) => n.blockDefId)
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+  if (ids.length === 0) return {};
+
+  const rows = await prisma.blockDefinition.findMany({
+    where: { id: { in: ids } },
+  });
+
+  const map: Record<string, BlockDefinition> = {};
+  for (const row of rows) {
+    const primaryLane = (row.stageScope?.[0] as Lane | undefined) ?? "GLOBAL";
+    map[row.id] = {
+      id: row.id,
+      type: row.type,
+      name: row.name,
+      promptFragment: row.promptFragment,
+      lane: primaryLane === "GLOBAL" ? "GLOBAL" : primaryLane,
+      defaultPinned: false,
+    };
+  }
+  return map;
 }
 
 function nowTs(): number {
@@ -572,7 +600,7 @@ export async function runBatch(
     });
 
     const themePack = buildThemePack(template.themePack);
-    const blockDefs = buildBlockDefs();
+    const blockDefs = await loadBlockDefs(graph);
     const scaffold = compile(graph, themePack, assignments, blockDefs);
 
     // Update run with scaffold
@@ -797,7 +825,7 @@ export async function rerollScene(
 
   if (!scaffold) {
     const themePack = buildThemePack(run.template.themePack);
-    const blockDefs = buildBlockDefs();
+    const blockDefs = await loadBlockDefs(graph);
     const allCombos = run.scenes.map((s) => s.combo as ComboAssignment);
     scaffold = compile(graph, themePack, allCombos, blockDefs);
   }

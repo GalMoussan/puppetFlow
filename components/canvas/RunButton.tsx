@@ -18,19 +18,28 @@ export function RunButton() {
   const [error, setError] = useState<string | undefined>();
   const [showProgress, setShowProgress] = useState(false);
 
-  const { hasBlocks, templateId, templateName, runConfig, setRunConfig } =
-    useCanvasStore(
-      useShallow((state) => {
-        const blockNodes = state.nodes.filter((n) => n.type === "block");
-        return {
-          hasBlocks: blockNodes.length > 0,
-          templateId: state.templateId,
-          templateName: state.templateName,
-          runConfig: state.runConfig,
-          setRunConfig: state.setRunConfig,
-        };
-      })
-    );
+  const {
+    hasBlocks,
+    templateId,
+    templateName,
+    runConfig,
+    setRunConfig,
+    isDirty,
+    saveTemplate,
+  } = useCanvasStore(
+    useShallow((state) => {
+      const blockNodes = state.nodes.filter((n) => n.type === "block");
+      return {
+        hasBlocks: blockNodes.length > 0,
+        templateId: state.templateId,
+        templateName: state.templateName,
+        runConfig: state.runConfig,
+        setRunConfig: state.setRunConfig,
+        isDirty: state.isDirty,
+        saveTemplate: state.saveTemplate,
+      };
+    })
+  );
 
   const { status, currentRunId, progress, duration, errorMessage } =
     useRunStore(
@@ -66,6 +75,25 @@ export function RunButton() {
         loopMode: config.loopMode,
         languages: config.languages,
       });
+
+      // Server runs the *saved* template graph — persist dirty import/canvas first.
+      // setRunConfig marks dirty on the real store; read via getState when available.
+      const getState = (
+        useCanvasStore as typeof useCanvasStore & {
+          getState?: () => { isDirty: boolean; saveState: string };
+        }
+      ).getState;
+      const snap = typeof getState === "function" ? getState() : null;
+      if (isDirty || snap?.isDirty) {
+        await saveTemplate();
+        const after = typeof getState === "function" ? getState() : null;
+        if (after?.saveState === "error") {
+          throw new Error(
+            "Could not save template before run. Fix save errors and try again."
+          );
+        }
+        toast.success("Template saved before run");
+      }
 
       const response = await fetch("/api/runs", {
         method: "POST",
@@ -117,17 +145,24 @@ export function RunButton() {
 
       if (finalState.runStatus === "done" && finalState.currentRunId) {
         router.push(`/runs/${finalState.currentRunId}`);
+      } else if (finalState.runStatus === "failed") {
+        // Keep progress host open with error so user can read + dismiss
+        setShowProgress(true);
+        toast.error(finalState.errorMessage ?? "Run failed");
       }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to start run";
       setError(message);
-      // Keep modal open for pre-stream validation/API errors
       fail(message);
       toast.error(message);
       setIsLoading(false);
-      // Only show progress overlay if we already started streaming
-      // (showProgress true means stream had begun)
+      // If we already closed the modal for streaming, show progress error card
+      setShowProgress((was) => {
+        if (was) return true;
+        // Pre-stream errors: leave modal open with error
+        return false;
+      });
     }
   };
 

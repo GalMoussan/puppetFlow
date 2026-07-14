@@ -212,23 +212,26 @@ export function RunModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain"
       data-testid="run-modal-backdrop"
       onClick={handleBackdropClick}
     >
       {/*
+        Centering via min-h-full + flex so tall panels stay in viewport middle.
         Flex column panel: header + scroll body + sticky actions.
-        Generate must never live inside the scroll region (below-the-fold trap).
       */}
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
       <div
         className="
           bg-[#0a0a0b]/95 rounded-2xl w-full max-w-md
           border border-white/[0.1]
-          max-h-[min(90vh,40rem)]
+          max-h-[min(85vh,36rem)]
           flex flex-col overflow-hidden
           shadow-[0_0_60px_rgba(34,211,238,0.08)]
+          my-auto
         "
         data-testid="run-modal"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 flex justify-between items-center px-6 pt-6 pb-3">
           <h2 className="text-lg font-semibold tracking-tight text-white">
@@ -488,6 +491,7 @@ export function RunModal({
             )}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

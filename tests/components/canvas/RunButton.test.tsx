@@ -342,6 +342,34 @@ describe("RunButton", () => {
       });
     });
 
+    it("saves dirty template before POST /api/runs", async () => {
+      const user = userEvent.setup();
+      setupWithBlocks();
+      mockStore.isDirty = true;
+      mockStore.saveTemplate = vi.fn().mockResolvedValue(undefined);
+      mockFetchWithLlmStatus(
+        mockSSEResponse([
+          { type: "phase", phase: "COMPILING" },
+          { type: "done", runId: "run-save", sceneCount: 1, duration: 10 },
+        ])
+      );
+
+      render(<RunButton />);
+      await user.click(screen.getByRole("button", { name: /run/i }));
+      await user.click(screen.getByRole("button", { name: /generate/i }));
+
+      await waitFor(() => {
+        expect(mockStore.saveTemplate).toHaveBeenCalled();
+      });
+      await waitFor(() => {
+        expect(
+          mockFetch.mock.calls.some(
+            (c) => typeof c[0] === "string" && c[0] === "/api/runs"
+          )
+        ).toBe(true);
+      });
+    });
+
     it("closes the run modal and shows progress host above modal z-index after stream starts", async () => {
       const user = userEvent.setup();
       setupWithBlocks();

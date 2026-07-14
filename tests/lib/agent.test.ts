@@ -240,6 +240,103 @@ describe("lib/agent", () => {
       expect(result.sceneCount).toBe(5);
     });
 
+    it("loads block definitions from DB when graph nodes reference them", async () => {
+      const template = createMockTemplate();
+      template.graph.nodes = [
+        {
+          id: "node-import-1",
+          blockDefId: "blk-import-1",
+          lane: "IMAGE",
+          order: 0,
+        },
+      ];
+
+      mockPrisma.flowTemplate.findUnique.mockResolvedValue(template);
+      mockPrisma.blockDefinition.findMany.mockResolvedValue([
+        {
+          id: "blk-import-1",
+          type: "STYLE_LOCK",
+          name: "Import Style",
+          promptFragment: "HYPERREAL BARBERSHOP STYLE LOCK TEXT",
+          stageScope: ["GLOBAL", "IMAGE"],
+          rotationGroup: "style",
+          archived: false,
+        },
+      ]);
+      mockPrisma.run.create.mockResolvedValue({
+        id: "run-with-blocks",
+        templateId: template.id,
+        status: "PENDING",
+      });
+      mockPrisma.run.update.mockResolvedValue({ id: "run-with-blocks" });
+      mockPrisma.scene.createMany.mockResolvedValue({ count: 5 });
+      mockPrisma.usageLog.createMany.mockResolvedValue({ count: 5 });
+      mockGenerateBatch.mockResolvedValue(
+        createMockBatchOutput("run-with-blocks", 5)
+      );
+
+      const result = await runBatch(
+        template.id,
+        {
+          batchSize: 5,
+          loopMode: true,
+          languages: { hi: 3, ja: 2 },
+          historyStrictness: "warn",
+        },
+        vi.fn()
+      );
+
+      expect(result.status).toBe("DONE");
+      expect(result.error).toBeUndefined();
+      expect(mockPrisma.blockDefinition.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: { in: ["blk-import-1"] } },
+        })
+      );
+      // Scaffold persisted should include the loaded fragment
+      const scaffoldUpdate = mockPrisma.run.update.mock.calls.find(
+        (c) => c[0]?.data?.scaffold
+      );
+      expect(String(scaffoldUpdate?.[0]?.data?.scaffold ?? "")).toContain(
+        "HYPERREAL BARBERSHOP STYLE LOCK TEXT"
+      );
+    });
+
+    it("fails clearly when graph references a missing block definition", async () => {
+      const template = createMockTemplate();
+      template.graph.nodes = [
+        {
+          id: "node-missing",
+          blockDefId: "blk-does-not-exist",
+          lane: "IMAGE",
+          order: 0,
+        },
+      ];
+
+      mockPrisma.flowTemplate.findUnique.mockResolvedValue(template);
+      mockPrisma.blockDefinition.findMany.mockResolvedValue([]);
+      mockPrisma.run.create.mockResolvedValue({
+        id: "run-missing-block",
+        templateId: template.id,
+        status: "PENDING",
+      });
+      mockPrisma.run.update.mockResolvedValue({ id: "run-missing-block" });
+
+      const result = await runBatch(
+        template.id,
+        {
+          batchSize: 5,
+          loopMode: true,
+          languages: { hi: 3, ja: 2 },
+          historyStrictness: "warn",
+        },
+        vi.fn()
+      );
+
+      expect(result.status).toBe("FAILED");
+      expect(result.error).toMatch(/Block definition|not found/i);
+    });
+
     it("successful batch generation end-to-end", async () => {
       const template = createMockTemplate();
       const batchOutput = createMockBatchOutput("run-1", 5);
