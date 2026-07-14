@@ -240,6 +240,27 @@ describe("api/blocks", () => {
       );
     });
 
+    it("keeps archived=false when query string is the word false (not Boolean coerce)", async () => {
+      // Regression: z.coerce.boolean() turns "false" into true, hiding all active blocks
+      mockPrisma.blockDefinition.findMany.mockResolvedValue([sampleBlock]);
+      mockPrisma.blockDefinition.count.mockResolvedValue(1);
+
+      const request = createRequest(
+        "/api/blocks?themePackId=pack-1&archived=false&limit=200"
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      expect(mockPrisma.blockDefinition.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            themePackId: "pack-1",
+            archived: false,
+          }),
+        })
+      );
+    });
+
     it("combines multiple filters", async () => {
       mockPrisma.blockDefinition.findMany.mockResolvedValue([sampleBlock]);
       mockPrisma.blockDefinition.count.mockResolvedValue(1);

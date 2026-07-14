@@ -108,6 +108,18 @@ export const UpdateBlockSchema = z.object({
 export type UpdateBlock = z.infer<typeof UpdateBlockSchema>;
 
 /**
+ * Parse query-string booleans correctly.
+ * NEVER use z.coerce.boolean() on search params — Boolean("false") === true.
+ */
+const QueryBooleanSchema = z
+  .union([z.boolean(), z.string(), z.null(), z.undefined()])
+  .transform((v) => {
+    if (v === true || v === "true" || v === "1") return true;
+    if (v === false || v === "false" || v === "0") return false;
+    return false; // missing / null / garbage → default false
+  });
+
+/**
  * Block filter query parameters
  * Note: Uses nullable().transform() because url.searchParams.get() returns null for missing params
  */
@@ -115,7 +127,7 @@ export const BlockFilterSchema = z.object({
   type: BlockTypeSchema.nullable().transform((v) => v ?? undefined).optional(),
   themePackId: z.string().nullable().transform((v) => v ?? undefined).optional(),
   rotationGroup: z.string().nullable().transform((v) => v ?? undefined).optional(),
-  archived: z.coerce.boolean().default(false),
+  archived: QueryBooleanSchema,
 });
 
 export type BlockFilter = z.infer<typeof BlockFilterSchema>;
