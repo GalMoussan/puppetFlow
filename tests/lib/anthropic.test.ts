@@ -20,22 +20,13 @@ import {
   hasAnthropicKey,
   getModelName,
   BatchOutputSchema,
-  type BatchOutput,
-  type GenerationOptions,
-  type GeneratedScene,
 } from "@/lib/anthropic";
 
 import { AnthropicError } from "@/lib/errors";
 
 import {
-  createMockBatchOutput,
-  createMockStreamChunks,
   rateLimitResponse,
-  validationErrorResponse,
   authErrorResponse,
-  serverErrorResponse,
-  contextLengthExceededResponse,
-  invalidBatchOutput,
 } from "@/tests/mocks/anthropic-responses";
 
 import type { ComboAssignment } from "@/packages/domain/types";

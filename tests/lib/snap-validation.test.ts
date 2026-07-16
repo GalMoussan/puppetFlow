@@ -11,7 +11,7 @@
  * Coverage target: >= 90% line / 85% branch coverage
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // These imports will fail until implementation exists - expected for TDD
 import {
@@ -19,8 +19,6 @@ import {
   validateCanvasGraph,
   isValidLane,
   getValidationError,
-  type ValidationResult,
-  type GraphValidationResult,
 } from "@/lib/snap-validation";
 
 import { Lane } from "@puppetflow/domain";

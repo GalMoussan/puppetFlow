@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import type { BatchOutput } from "@/packages/domain/types";
 
 // These imports will fail until implementation exists - that's expected (RED phase)
 import {
@@ -27,16 +28,9 @@ import {
   checkR11AudioDirection,
   checkR12DropSync,
   checkR13CharacterLocks,
-  type LintReport,
 } from "@/packages/domain/linter";
 
-import {
-  type BatchOutput,
-  type Scene,
-  type CanvasGraph,
-  type RunConfig,
-  type Violation,
-} from "@/packages/domain/types";
+import { type Scene, type RunConfig } from "@/packages/domain/types";
 
 import { createMinimalGraph, createMinimalScene, createMinimalBatch } from "./helpers";
 
@@ -89,7 +83,7 @@ describe("linter", () => {
     describe("basic functionality", () => {
       it("returns LintReport for valid batch", () => {
         const batch: BatchOutput = {
-          scenes: createMinimalBatch().map((s, i) => ({
+          scenes: createMinimalBatch().map((s) => ({
             ...s,
             imagePrompt: VALID_IMAGE_PROMPT,
             startPrompt: VALID_VIDEO_START_PROMPT,

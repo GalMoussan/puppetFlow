@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { collectSSEEvents, assertPhaseSequence } from "@/tests/utils/sse-reader";
-import { createMockBatchOutput } from "@/tests/mocks/anthropic-responses";
+// Mock batch outputs created inline
 import type { CanvasGraph } from "@/packages/domain/types";
 import { type MockPrismaClient } from "@/tests/mocks/prisma";
 
@@ -101,7 +101,6 @@ vi.mock("@/lib/agent", () => ({
 
 // These imports will fail until implementation exists - that's expected (RED phase)
 import { GET, POST } from "@/app/api/runs/route";
-import { GET as GET_BY_ID } from "@/app/api/runs/[id]/route";
 
 // Helper to create a mock request
 // Next.js 16 has different RequestInit type - use eslint-disable to bypass

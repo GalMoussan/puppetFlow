@@ -7,7 +7,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   parseSceneMarkdown,
-  planImport,
   importSceneFromMarkdown,
 } from "@/packages/domain/scene-import";
 

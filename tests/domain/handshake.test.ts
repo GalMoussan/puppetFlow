@@ -37,8 +37,6 @@ import {
   LIGHTING_DESCRIPTORS,
   MID_BLUR_PATTERNS,
   type HandshakeConfig,
-  type HandshakeResult,
-  type BoundaryFrame,
 } from "@/packages/domain/handshake";
 
 // Sample prompts for testing

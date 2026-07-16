@@ -84,7 +84,7 @@ vi.mock("@/lib/db", () => ({
 }));
 
 // These imports will fail until implementation exists - that's expected (RED phase)
-import { GET, POST, PATCH } from "@/app/api/templates/route";
+import { GET, POST } from "@/app/api/templates/route";
 import { GET as GET_BY_ID, PATCH as PATCH_BY_ID } from "@/app/api/templates/[id]/route";
 
 // Helper to create a mock request
@@ -237,7 +237,7 @@ describe("api/templates", () => {
           lane: "VIDEO_START" as const,
           order: i,
         })),
-        edges: Array.from({ length: 10 }, (_, i) => ({
+        edges: Array.from({ length: 10 }, () => ({
           from: "VIDEO_START" as const,
           to: "EXTEND_MIDDLE" as const,
           handshake: { strictness: "verbatim" as const, trackCrowdMembers: 2 },

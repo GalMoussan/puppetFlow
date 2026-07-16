@@ -24,7 +24,7 @@ import {
   type ExportMetadata,
 } from "@/packages/domain/exporter";
 
-import { type Scene, type BatchOutput, type ComboAssignment } from "@/packages/domain/types";
+import { type Scene, type ComboAssignment } from "@/packages/domain/types";
 
 import { createMinimalScene, createMinimalBatch } from "./helpers";
 

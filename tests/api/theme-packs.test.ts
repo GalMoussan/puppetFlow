@@ -83,7 +83,7 @@ vi.mock("@/lib/db", () => ({
 }));
 
 // These imports will fail until implementation exists - that's expected (RED phase)
-import { GET, POST, PATCH } from "@/app/api/theme-packs/route";
+import { GET, POST } from "@/app/api/theme-packs/route";
 import { GET as GET_BY_ID, PATCH as PATCH_BY_ID } from "@/app/api/theme-packs/[id]/route";
 
 // Helper to create a mock request
@@ -191,7 +191,7 @@ describe("api/theme-packs", () => {
 
       const request = createRequest("/api/theme-packs?cursor=clx_theme_010&limit=10");
       const response = await GET(request);
-      const body = await response.json();
+      await response.json(); // Parse body to complete response
 
       expect(response.status).toBe(200);
       expect(mockPrisma.themePack.findMany).toHaveBeenCalledWith(

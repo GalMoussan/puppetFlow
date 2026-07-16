@@ -84,7 +84,7 @@ vi.mock("@/lib/db", () => ({
 }));
 
 // These imports will fail until implementation exists - that's expected (RED phase)
-import { GET, POST, PATCH } from "@/app/api/blocks/route";
+import { GET, POST } from "@/app/api/blocks/route";
 import { GET as GET_BY_ID, PATCH as PATCH_BY_ID } from "@/app/api/blocks/[id]/route";
 
 // Helper to create a mock request

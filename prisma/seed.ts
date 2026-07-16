@@ -41,8 +41,35 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+/** Character definitions with detailed lock text for image prompts */
+const DEMO_CHARACTERS = [
+  {
+    name: "Shika",
+    description: "The puppet master - a tall, elegant dog with knowing eyes",
+    lockText: `**CRITICAL SHIKA IMAGE LOCK:** Shika must be based directly on the provided Shika reference image. Do not infer Shika from text. Do not reinterpret Shika as a different breed, different coat pattern, different ears, different eyes, different muzzle, or different body shape. Follow how the dog in the image appears exactly as is. No add-ons, no extra characteristics or characteristics that are not in the image. Her expression and posture should match her role in the scene's emotional dynamic, but her physical identity is locked to the reference image absolutely. Shika is the ONLY dog in the scene.`,
+  },
+  {
+    name: "Shilshul",
+    description: "The puppet - a life-sized animatronic T-Rex with oblivious joy",
+    lockText: `**CRITICAL SHILSHUL IMAGE LOCK:** Shilshul is a life-sized, hyperrealistic, animatronic-grade T-Rex with detailed green-brown scales, amber eyes, a massive expressive dinosaur face, comically tiny arms, and a long heavy tail. His face carries oblivious joy — genuine, unguarded happiness. Shilshul must NEVER become a dog, small animal, mascot, cartoon creature, duplicate of Shika, or any other species. Keep him visually distinct: huge green-brown scaly T-Rex with amber eyes, giant dinosaur head, powerful legs, long tail, and tiny arms. He is the ONLY T-Rex in the scene.`,
+  },
+];
+
+/** Universe rules for the puppet world */
+const DEMO_UNIVERSE_RULES = [
+  "Shika controls Shilshul through invisible gesture control - no visible strings or cords anywhere in frame",
+  "The puppet visual manifests as eerie half-second synchronization: Shilshul's movements mirror Shika's with a slight delay",
+  "Shilshul is completely unaware he is being controlled - his joy is genuine and unguarded",
+  "The control is beautiful on the verge of collapse - precise yet precarious",
+  "All scenes are hyperrealistic photographs, not illustrations or animations",
+  "Technical frame: ARRI Alexa look, cinematic lenses (24-85mm), shallow depth of field",
+];
+
 /** Full canon pools — variety engine needs ≥ batchSize unique values per axis (batch up to 10). */
 const DEMO_CANON = {
+  characters: DEMO_CHARACTERS,
+  universeRules: DEMO_UNIVERSE_RULES,
+  festivalName: "Master of Puppets Festival",
   hooks: [
     "surprise entrance",
     "dramatic lighting",
@@ -224,6 +251,47 @@ async function main() {
   }
 
   const seedBlockSpecs = [
+    // IMAGE-specific detailed blocks
+    {
+      type: "STYLE_LOCK",
+      name: "Cinematic Realism Frame",
+      promptFragment:
+        "A real, unedited photograph. Hyperrealistic cinematic realism, full color, no animation, no cartoon, no illustration. ARRI Alexa look, 35mm lens, f/2.2, golden-hour festival grade.",
+      stageScope: ["IMAGE"],
+      rotationGroup: null,
+    },
+    {
+      type: "CHARACTER_LOCK",
+      name: "Shika Character Lock",
+      promptFragment:
+        "Shika — The dog EXACTLY as she appears in the provided reference image — no deviation in breed, coat, size, expression, body shape, or any feature. No add-ons, no extra characteristics not present in the reference image. Trust the image completely.",
+      stageScope: ["IMAGE", "GLOBAL"],
+      rotationGroup: null,
+    },
+    {
+      type: "CHARACTER_LOCK",
+      name: "Shilshul Character Lock",
+      promptFragment:
+        "Shilshul — A life-sized, hyperrealistic, animatronic-grade T-Rex with detailed green-brown scales, amber eyes, a massive expressive dinosaur face, comically tiny arms, and a long heavy tail. His face carries oblivious joy — genuine, unguarded happiness.",
+      stageScope: ["IMAGE", "GLOBAL"],
+      rotationGroup: null,
+    },
+    {
+      type: "PUPPET_VISUAL",
+      name: "Invisible Control Dynamic",
+      promptFragment:
+        "The Puppet Visual — Invisible gesture control: no strings or cords anywhere in frame. Instead, an eerie half-second synchronization — Shilshul's movement mirrors Shika's gesture with a beat delay, unmistakable once noticed.",
+      stageScope: ["IMAGE"],
+      rotationGroup: null,
+    },
+    {
+      type: "STYLE_LOCK",
+      name: "Image Negative Constraints",
+      promptFragment:
+        "Mood: beautiful control on the verge of collapse. No distorted animals, no extra dogs, no extra dinosaurs, no cartoon features, no illustration, correct anatomy, no floating text, no real-celebrity faces, no real band logos.",
+      stageScope: ["IMAGE"],
+      rotationGroup: null,
+    },
     {
       type: "HOOK",
       name: "Dramatic Entrance",
@@ -276,7 +344,7 @@ async function main() {
       type: "PUPPET_VISUAL",
       name: "Wide Establishing Shot",
       promptFragment:
-        "Wide festival establishing frame: packed crowd, LED walls, golden-hour haze, two puppets center stage",
+        "Wide festival establishing frame composition: Shika positioned on elevated platform stage left, Shilshul center stage. Packed crowd fills midground with raised arms, phone lights, festival flags. LED walls display abstract patterns. Golden-hour haze diffuses through the scene, volumetric light rays visible.",
       stageScope: ["IMAGE"],
       rotationGroup: "visuals",
     },
@@ -316,15 +384,31 @@ async function main() {
       type: "STAGE_AREA",
       name: "Main Stage",
       promptFragment:
-        "Set on the Main Stage, massive LED screens, packed crowd",
+        "Setting — Main Stage at {{stageArea}}: massive LED screens towering three stories, speaker stacks flanking the stage, metal barriers separating the pit, worn grass underfoot from thousands of dancing feet, equipment cases visible backstage, roadies in black moving between shadows.",
       stageScope: ["GLOBAL"],
       rotationGroup: null,
     },
     {
       type: "FESTIVAL_MOMENT",
       name: "Sunset Arrival",
-      promptFragment: "Golden hour lighting, silhouettes against orange sky",
+      promptFragment: "Golden hour lighting: warm orange sun low on horizon, long shadows stretching across the crowd, silhouettes of raised arms against amber sky, dust particles floating in light beams, lens flare kissing the frame edge.",
       stageScope: ["GLOBAL"],
+      rotationGroup: null,
+    },
+    {
+      type: "CHAOS_THREAD",
+      name: "Background Life",
+      promptFragment:
+        "Background chaos thread — a festival-goer with a flag pole weaving through the crowd, barely visible at frame edge.",
+      stageScope: ["IMAGE"],
+      rotationGroup: "chaos",
+    },
+    {
+      type: "CUSTOM",
+      name: "Crowd Atmosphere",
+      promptFragment:
+        "Crowd — The natural chaos of a festival crowd: a couple dancing obliviously in their own world, a group lifting a friend onto shoulders, someone recording on their phone, security watching from the edge, the dense mass of humanity united by the music.",
+      stageScope: ["IMAGE"],
       rotationGroup: null,
     },
   ] as const;

@@ -4,7 +4,7 @@
  * Consumes a fetch Response body SSE stream and updates useRunStore.
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { useRunStream } from "@/lib/hooks/useRunStream";
 import { useRunStore } from "@/lib/store/run-store";

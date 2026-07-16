@@ -6,7 +6,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   generateBatchDeepseek,
   hasDeepseekKey,
-  getDeepseekModel,
   buildDeepseekGenerationPrompt,
 } from "@/lib/deepseek";
 import { getLlmProvider, hasLlmKey } from "@/lib/llm-provider";

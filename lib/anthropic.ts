@@ -85,7 +85,7 @@ async function generateBatchAnthropic(
             type: "object",
             properties: {
               lyrics: { type: "string", description: "Generated lyrics for the scene" },
-              imagePrompt: { type: "string", description: "IMAGE stage prompt" },
+              imagePrompt: { type: "string", description: "IMAGE stage prompt - MUST be 250-400 words with: (1) Technical frame (ARRI Alexa, lens, aperture, color grade), (2) Detailed character descriptions with poses/expressions, (3) Puppet visual showing invisible control dynamic, (4) Rich setting with 5+ environmental details, (5) Negative constraints, (6) Background chaos thread, (7) Crowd activities, (8) Mood line, (9) CRITICAL CHARACTER LOCKS verbatim. Follow the IMAGE Prompt Style Guide exactly." },
               startPrompt: { type: "string", description: "VIDEO_START stage prompt" },
               middlePrompt: { type: "string", description: "EXTEND_MIDDLE stage prompt" },
               endPrompt: { type: "string", description: "EXTEND_END stage prompt" },

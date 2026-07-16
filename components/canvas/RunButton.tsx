@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Play, Loader2 } from "lucide-react";
@@ -192,10 +192,10 @@ export function RunButton() {
 
   // Portal target: fixed overlays must NOT be descendants of .pf-header
   // (backdrop-filter creates a containing block that clips position:fixed).
-  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    setPortalEl(document.body);
-  }, []);
+  // Use lazy initial state to avoid calling setState in effect.
+  const [portalEl] = useState<HTMLElement | null>(() =>
+    typeof document !== "undefined" ? document.body : null
+  );
 
   const openRunModal = () => {
     const disabled = !hasBlocks;

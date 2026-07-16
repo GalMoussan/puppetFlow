@@ -12,7 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import { createMockScene, createMockBatchOutput } from "@/tests/mocks/anthropic-responses";
+import { createMockScene } from "@/tests/mocks/anthropic-responses";
 import { type MockPrismaClient } from "@/tests/mocks/prisma";
 
 // Create hoisted mock for Prisma - must be before vi.mock

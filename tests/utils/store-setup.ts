@@ -9,8 +9,8 @@
 
 import { beforeEach, afterEach } from "vitest";
 import { useCanvasStore, type CanvasState } from "@/lib/store/canvas-store";
-import type { Node, Edge } from "@xyflow/react";
-import type { BlockNodeData, LaneNodeData, SaveState } from "@/lib/types/canvas";
+import type { Node } from "@xyflow/react";
+import type { BlockNodeData, LaneNodeData } from "@/lib/types/canvas";
 import type { Lane, BlockType } from "@/packages/domain/types";
 
 // =============================================================================

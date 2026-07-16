@@ -9,7 +9,6 @@ import {
   mapAgentPhaseToRunStatus,
   applyAgentSSEEvent,
   parseSSEChunk,
-  type AgentSSEEvent,
   type RunUIState,
 } from "@/lib/run-sse";
 

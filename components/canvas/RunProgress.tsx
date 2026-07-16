@@ -45,7 +45,6 @@ function getStepState(
   ];
 
   const currentIndex = statusOrder.indexOf(currentStatus);
-  const stepFirstIndex = statusOrder.indexOf(stepStatus[0]);
 
   // Find the highest index for this step
   const stepLastIndex = Math.max(

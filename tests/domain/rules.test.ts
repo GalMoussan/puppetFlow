@@ -30,28 +30,22 @@ import {
 
 import { type Lane } from "@/packages/domain/types";
 
-import {
-  loadPositiveFixtures,
-  loadNegativeFixtures,
-  loadAllFixtures,
-  type PositiveFixture,
-  type NegativeFixture,
-} from "./helpers";
+import { loadAllFixtures } from "./helpers";
 
-// Input types for rule fixtures
-interface PromptInput {
-  prompt: string;
-  stage?: "IMAGE" | "VIDEO_START" | "EXTEND_MIDDLE" | "EXTEND_END";
-}
+// Input types for rule fixtures - kept for documentation
+// interface PromptInput {
+//   prompt: string;
+//   stage?: "IMAGE" | "VIDEO_START" | "EXTEND_MIDDLE" | "EXTEND_END";
+// }
 
-interface CrossPromptInput {
-  imagePrompt?: string;
-  videoPrompt?: string;
-  previousEndingFrame?: string;
-  currentContinuation?: string;
-}
+// interface CrossPromptInput {
+//   imagePrompt?: string;
+//   videoPrompt?: string;
+//   previousEndingFrame?: string;
+//   currentContinuation?: string;
+// }
 
-interface BatchInput {
+interface _BatchInput {
   sceneIndex?: number;
   combo?: Record<string, string>;
   batchCombos?: Record<string, string>[];
@@ -61,7 +55,8 @@ interface BatchInput {
   };
 }
 
-type RuleInput = PromptInput | CrossPromptInput | BatchInput;
+// Type union for rule fixture inputs - kept for documentation
+// type RuleInput = PromptInput | CrossPromptInput | BatchInput;
 
 describe("rules", () => {
   describe("RULES constant", () => {
@@ -184,7 +179,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes when first sentence has subject + action verb", () => {
-        const input = {
+        const _input = {
           prompt:
             'Shika surges forward, strings blazing with neon light. Camera dollies backward. [00:04] The crowd roars. Keep same lighting throughout. ENDING FRAME [EXACT]: Shika center stage, arms raised.',
           stage: "VIDEO_START" as const,
@@ -196,7 +191,7 @@ describe("rules", () => {
 
       it("passes when preservation is in final 25%", () => {
         // 80-word prompt with "keep same lighting" at word 65 (position 81%)
-        const input = {
+        const _input = {
           prompt: `[00:00] Shika explodes onto stage left, strings crackling with UV energy. The crowd gasps in unison. Camera whips left to capture the full spectacle. [00:04] Shilshul emerges from shadow, arms unfurling in perfect sync with the bass drop. Festival lights pulse rhythmically overhead. [00:08] Both puppets freeze mid-pose, strings taut. Keep same lighting, same character appearance throughout this scene. ENDING FRAME [EXACT]: Both puppets frozen.`,
           stage: "VIDEO_START" as const,
         };
@@ -207,7 +202,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails when first sentence has no action verb", () => {
-        const input = {
+        const _input = {
           prompt:
             "The stage. Shika stands still. Camera pans left. Keep same lighting.",
           stage: "VIDEO_START" as const,
@@ -218,7 +213,7 @@ describe("rules", () => {
       });
 
       it("fails when preservation is in first half", () => {
-        const input = {
+        const _input = {
           prompt:
             "Shika moves left. Keep same lighting throughout. Camera pans right. The crowd roars.",
           stage: "VIDEO_START" as const,
@@ -245,7 +240,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with exactly one camera verb: dolly", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika leaps forward. Camera dollies backward as the crowd erupts. [00:04] Festival lights cascade. Keep same character. ENDING FRAME [EXACT]: Shika mid-air.",
           stage: "VIDEO_START" as const,
@@ -255,7 +250,7 @@ describe("rules", () => {
       });
 
       it("passes with compound camera: dolly zoom", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] The scene intensifies. Dolly zoom creates vertigo effect as Shilshul spins. [00:04] Strings tangle dramatically. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Shilshul dizzy.",
           stage: "VIDEO_START" as const,
@@ -267,7 +262,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails with zero camera verbs", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika dances wildly. Lights flash everywhere. The crowd cheers loudly. [00:04] Festival energy peaks. ENDING FRAME [EXACT]: Chaos.",
           stage: "VIDEO_START" as const,
@@ -278,7 +273,7 @@ describe("rules", () => {
       });
 
       it("fails with two camera verbs", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Pan left to Shika, then dolly forward toward the stage. [00:04] Action continues. ENDING FRAME [EXACT]: Final pose.",
           stage: "EXTEND_MIDDLE" as const,
@@ -289,7 +284,7 @@ describe("rules", () => {
       });
 
       it("fails with only cinematic", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Cinematic shot of the festival as Shika performs. [00:04] Crowd reacts. ENDING FRAME [EXACT]: Wide view.",
           stage: "VIDEO_START" as const,
@@ -311,7 +306,7 @@ describe("rules", () => {
     describe("positive fixtures", () => {
       it("passes at exactly 40 words (lower boundary)", () => {
         // Exactly 40 words including punctuation handling
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika's strings surge upward as puppet arms unfurl in perfect sync. The crowd gasps. [00:04] Camera whips left. Shilshul detonates confetti cannons, streamers cascading through UV beams. [00:08] Both puppets freeze mid-pose. Keep same lighting, same character appearance, same string tension throughout.",
           stage: "VIDEO_START" as const,
@@ -321,7 +316,7 @@ describe("rules", () => {
       });
 
       it("passes at exactly 90 words (upper boundary)", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika explodes onto the mainstage platform, strings blazing with intense neon purple light that pulses to the thundering bassline. The massive crowd surges forward in anticipation. [00:04] Camera dollies dramatically backward to capture the full spectacular scene as Shilshul emerges from the shadows stage right, arms unfurling in perfect synchronization with the escalating pre-drop build. Festival pyrotechnics erupt overhead. [00:08] Both puppets freeze mid-pose, strings taut and gleaming. Keep same UV purple lighting, same character appearance, same string tension, same crowd energy throughout this segment. ENDING FRAME [EXACT]: Puppets frozen center stage.",
           stage: "VIDEO_START" as const,
@@ -331,7 +326,7 @@ describe("rules", () => {
       });
 
       it("passes with exactly 2 generic verbs (maximum allowed)", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika moves left dramatically. The crowd is wild with excitement. Camera pans to follow. Strings explode with color. [00:04] Festival energy surges. ENDING FRAME [EXACT]: Action frozen.",
           stage: "VIDEO_START" as const,
@@ -344,7 +339,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("warns at 35 words (under budget)", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika leaps. Camera dollies back. Crowd roars. [00:04] Strings flash. Lights pulse. [00:08] Freeze. Keep same lighting. ENDING FRAME [EXACT]: Done.",
           stage: "VIDEO_START" as const,
@@ -355,7 +350,7 @@ describe("rules", () => {
       });
 
       it("fails with 3 generic verbs", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika moves to the left side of the stage. The puppet goes toward the crowd. The lighting is bright and colorful. [00:04] Camera pans right. The scene is electric with energy. Shilshul moves forward. [00:08] Both puppets freeze. Keep same lighting, same characters. ENDING FRAME [EXACT]: Final pose.",
           stage: "VIDEO_START" as const,
@@ -376,7 +371,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with 3 timestamps (maximum)", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika explodes onto stage. [00:04] Shilshul joins the dance. [00:08] Both freeze dramatically. Camera dollies back. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Frozen tableau.",
           stage: "VIDEO_START" as const,
@@ -386,7 +381,7 @@ describe("rules", () => {
       });
 
       it("passes with 2 timestamps", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika surges forward energetically. Camera pans left to capture motion. [00:05] Action builds to climax. Keep same lighting. ENDING FRAME [EXACT]: Peak energy.",
           stage: "VIDEO_START" as const,
@@ -396,7 +391,7 @@ describe("rules", () => {
       });
 
       it("passes with 1 timestamp (minimum)", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Single intense beat as Shika performs continuous action throughout the entire ten second clip. Camera tracks smoothly. Maintain consistent energy. Audio: building synth, no dialogue. ENDING FRAME [EXACT]: Shika centered.",
           stage: "VIDEO_START" as const,
@@ -408,7 +403,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails with 0 timestamps", () => {
-        const input = {
+        const _input = {
           prompt:
             "Shika dances across the stage while Shilshul watches from the wings. Camera follows the action smoothly. The crowd erupts in cheers as the performance reaches its climax. Keep same lighting throughout. ENDING FRAME [EXACT]: Both puppets visible.",
           stage: "VIDEO_START" as const,
@@ -419,7 +414,7 @@ describe("rules", () => {
       });
 
       it("fails with 4 timestamps", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Beat one starts. [00:03] Beat two. [00:06] Beat three. [00:09] Beat four - too many! Camera dollies. ENDING FRAME [EXACT]: Over-structured.",
           stage: "VIDEO_START" as const,
@@ -440,7 +435,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with no environment overlap", () => {
-        const input = {
+        const _input = {
           imagePrompt:
             "A grand festival stage bathed in UV purple lighting. Two puppet characters, Shika and Shilshul, stand ready. The mainstage towers behind them with psychedelic visuals projected onto massive LED screens. Dense crowd silhouettes visible in foreground.",
           videoPrompt:
@@ -451,7 +446,7 @@ describe("rules", () => {
       });
 
       it("passes with minimal overlap (10 words)", () => {
-        const input = {
+        const _input = {
           imagePrompt:
             "Festival stage with UV purple lighting, two puppets Shika and Shilshul positioned center frame, crowd visible.",
           videoPrompt:
@@ -465,7 +460,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails with heavy environment copy", () => {
-        const input = {
+        const _input = {
           imagePrompt:
             "The grand mainstage at the festival features massive LED screens displaying psychedelic visuals. UV purple lighting bathes the entire scene. Two puppet characters stand ready.",
           videoPrompt:
@@ -483,7 +478,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with positive preservation only", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika surges forward dramatically. Camera dollies back. [00:04] Strings flash brilliantly. [00:08] Freeze pose. Keep Shika identical to reference image. Keep same UV lighting. Audio: synth pulse, no dialogue. ENDING FRAME [EXACT]: Shika frozen.",
           stage: "VIDEO_START" as const,
@@ -493,7 +488,7 @@ describe("rules", () => {
       });
 
       it('passes with "no dialogue" exception', () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Action begins intensely. Camera pans smoothly left. [00:04] Energy peaks dramatically. [00:08] Both puppets freeze. Audio: crowd cheers building to climax, no dialogue. Keep same character appearance. ENDING FRAME [EXACT]: Frozen moment.",
           stage: "EXTEND_MIDDLE" as const,
@@ -504,7 +499,7 @@ describe("rules", () => {
       });
 
       it('passes with "no" within a word', () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] The enormous crowd surges forward. Camera dollies through the innovative stage design. [00:04] Action continues phenomenally. [00:08] Freeze. Keep same lighting. ENDING FRAME [EXACT]: Scene complete.",
           stage: "VIDEO_START" as const,
@@ -517,7 +512,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails with 'no' constraint", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika performs the routine, no extra puppets in frame. Camera pans. [00:04] Action. ENDING FRAME [EXACT]: Done.",
           stage: "VIDEO_START" as const,
@@ -528,7 +523,7 @@ describe("rules", () => {
       });
 
       it("fails with 'avoid' constraint", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika dances, avoid cartoon style throughout. Camera dollies. [00:04] Continue. ENDING FRAME [EXACT]: Complete.",
           stage: "EXTEND_MIDDLE" as const,
@@ -539,7 +534,7 @@ describe("rules", () => {
       });
 
       it("fails with 'never' constraint", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Performance continues, never show empty stage. Camera pans. [00:04] Energy. ENDING FRAME [EXACT]: Populated.",
           stage: "EXTEND_END" as const,
@@ -556,7 +551,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with verbatim handshake (100% similarity)", () => {
-        const input = {
+        const _input = {
           previousEndingFrame:
             "Shika stage-left, strings taut at 45-degree angle, mouth agape in mid-laugh, Shilshul stage-right with one arm raised, confetti frozen mid-air, camera at medium-wide, UV purple lighting from overhead, crowd silhouettes visible.",
           currentContinuation:
@@ -567,7 +562,7 @@ describe("rules", () => {
       });
 
       it("passes with 80% similarity (boundary)", () => {
-        const input = {
+        const _input = {
           previousEndingFrame:
             "Shika stage-left, strings taut at angle, laughing expression, Shilshul stage-right arm raised, confetti in air, medium-wide shot, UV purple lighting, crowd visible.",
           currentContinuation:
@@ -581,7 +576,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails when missing ENDING FRAME", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika performs dramatically. Camera dollies. [00:04] Action continues. [00:08] Scene ends without proper ending frame marker.",
           stage: "VIDEO_START" as const,
@@ -592,7 +587,7 @@ describe("rules", () => {
       });
 
       it("fails with 79% similarity (below threshold)", () => {
-        const input = {
+        const _input = {
           previousEndingFrame:
             "Shika stage-left, strings taut at 45-degree angle, mouth agape in mid-laugh, Shilshul stage-right with one arm raised, confetti frozen mid-air, camera at medium-wide, UV purple lighting from overhead, crowd silhouettes visible.",
           currentContinuation:
@@ -604,7 +599,7 @@ describe("rules", () => {
       });
 
       it("fails when lighting changes across handshake", () => {
-        const input = {
+        const _input = {
           previousEndingFrame:
             "Shika frozen mid-pose, UV purple lighting from overhead, strings taut.",
           currentContinuation:
@@ -628,7 +623,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes at 40 words (lower boundary)", () => {
-        const input = {
+        const _input = {
           prompt:
             "Continue directly from previous: Shika stage-left frozen. [00:00] Shika's strings surge upward as movement resumes. Camera pans smoothly left. [00:04] Energy builds steadily. Keep same UV purple lighting, same character appearance, same crowd position. ENDING FRAME [EXACT]: Shika centered stage.",
           stage: "EXTEND_MIDDLE" as const,
@@ -638,7 +633,7 @@ describe("rules", () => {
       });
 
       it("passes at 70 words (upper boundary)", () => {
-        const input = {
+        const _input = {
           prompt:
             "Continue directly from previous: Shika and Shilshul frozen mid-pose, UV purple lighting, crowd visible. [00:00] Shika's strings surge dramatically upward as both puppets resume their synchronized dance routine together. Camera pans smoothly left to capture the full stage energy. [00:04] The festival atmosphere builds steadily as pyrotechnics pulse overhead rhythmically. Keep same UV purple lighting, same character appearance, same string positions. ENDING FRAME [EXACT]: Both puppets frozen center stage, strings gleaming under festival lights.",
           stage: "EXTEND_MIDDLE" as const,
@@ -650,7 +645,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails at 35 words (under budget)", () => {
-        const input = {
+        const _input = {
           prompt:
             "Continue from previous. [00:00] Shika moves. Camera pans. [00:04] Freeze. Keep same lighting. ENDING FRAME [EXACT]: Done.",
           stage: "EXTEND_MIDDLE" as const,
@@ -661,7 +656,7 @@ describe("rules", () => {
       });
 
       it("fails when new character introduced", () => {
-        const input = {
+        const _input = {
           prompt:
             "Continue from previous: Shika frozen. [00:00] A new puppet named Zara appears suddenly from stage right, surprising everyone. Camera pans to capture Zara. [00:04] Energy shifts. Keep same lighting. ENDING FRAME [EXACT]: Zara visible.",
           stage: "EXTEND_MIDDLE" as const,
@@ -687,7 +682,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with 3s spacing and hook at 0s", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] [HOOK] Shika explodes onto stage with strings blazing! Camera dollies dramatically backward. [00:03] Shilshul joins the action energetically. [00:06] Both puppets synchronize their movements. Keep same lighting. Audio: synth pulse, no dialogue. ENDING FRAME [EXACT]: Synchronized pose.",
           stage: "VIDEO_START" as const,
@@ -697,7 +692,7 @@ describe("rules", () => {
       });
 
       it("passes with 4s spacing (boundary) and hook at 2s", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:02] [HOOK] Opening action as Shika springs forward dramatically! Camera pans smoothly left to capture the energy. [00:06] Beat continues with building intensity. Keep same character appearance. ENDING FRAME [EXACT]: Action frozen.",
           stage: "VIDEO_START" as const,
@@ -710,7 +705,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails with 5s gap between beats", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] [HOOK] Shika starts performing energetically. Camera tracks smoothly. [00:05] Second beat arrives too late. Keep same lighting. ENDING FRAME [EXACT]: Done.",
           stage: "VIDEO_START" as const,
@@ -721,7 +716,7 @@ describe("rules", () => {
       });
 
       it("fails when first beat not tagged as hook", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika walks onto stage casually. Camera pans. [00:04] Action builds slowly. Keep same character. ENDING FRAME [EXACT]: Standing.",
           stage: "VIDEO_START" as const,
@@ -732,7 +727,7 @@ describe("rules", () => {
       });
 
       it("fails when hook is at 3s (outside 0-2s window)", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:03] [HOOK] Late opening action as Shika finally springs into motion! Camera dollies. [00:07] Beat continues. Keep same lighting. ENDING FRAME [EXACT]: Complete.",
           stage: "VIDEO_START" as const,
@@ -754,7 +749,7 @@ describe("rules", () => {
 
     describe("positive fixtures (loopMode=true)", () => {
       it("passes with both directives present", () => {
-        const input = {
+        const _input = {
           runConfig: { loopMode: true },
           imagePrompt:
             "Grand festival stage with UV lighting. Shika and Shilshul positioned center. This frame serves as a loop anchor for seamless video looping.",
@@ -768,7 +763,7 @@ describe("rules", () => {
 
     describe("negative fixtures (loopMode=true)", () => {
       it("fails when missing loop anchor in IMAGE", () => {
-        const input = {
+        const _input = {
           runConfig: { loopMode: true },
           imagePrompt:
             "Grand festival stage with UV lighting. Shika and Shilshul positioned center. Standard composition.",
@@ -781,7 +776,7 @@ describe("rules", () => {
       });
 
       it("fails when missing mirror directive in END", () => {
-        const input = {
+        const _input = {
           runConfig: { loopMode: true },
           imagePrompt:
             "Grand festival stage. Loop anchor composition for seamless looping.",
@@ -796,7 +791,7 @@ describe("rules", () => {
 
     describe("skip scenarios (loopMode=false)", () => {
       it("passes without directives when loopMode=false", () => {
-        const input = {
+        const _input = {
           runConfig: { loopMode: false },
           imagePrompt: "Grand festival stage with UV lighting. Standard setup.",
           endPrompt:
@@ -814,7 +809,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with audio cue and no dialogue", () => {
-        const input = {
+        const _input = {
           prompt:
             '[00:00] Shika explodes onto stage dramatically. Camera dollies backward capturing the energy. [00:04] Shilshul joins the performance. [00:08] Both freeze. Audio: crowd roar building to crescendo, no dialogue. Keep same lighting. ENDING FRAME [EXACT]: Frozen tableau.',
           stage: "VIDEO_START" as const,
@@ -824,7 +819,7 @@ describe("rules", () => {
       });
 
       it("passes with song section mapped correctly", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] [HOOK] Opening action with intense energy. Camera pans dramatically left. [00:04] Build continues with rising intensity. Audio: intro synth pulse building steadily, no dialogue. Keep same character. ENDING FRAME [EXACT]: Energy peaks.",
           stage: "VIDEO_START" as const,
@@ -837,7 +832,7 @@ describe("rules", () => {
 
     describe("negative fixtures", () => {
       it("fails when missing audio cue", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika performs energetically on stage. Camera dollies backward smoothly. [00:04] Shilshul joins the dance. [00:08] Both freeze mid-pose. Keep same UV purple lighting throughout. ENDING FRAME [EXACT]: Frozen moment.",
           stage: "VIDEO_START" as const,
@@ -848,7 +843,7 @@ describe("rules", () => {
       });
 
       it("fails when missing no dialogue", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika dances energetically. Camera pans left. [00:04] Energy builds. Audio: crowd cheers building. [00:08] Freeze. Keep same lighting. ENDING FRAME [EXACT]: Done.",
           stage: "EXTEND_MIDDLE" as const,
@@ -859,7 +854,7 @@ describe("rules", () => {
       });
 
       it("fails when dialogue requested", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika performs while speaking to the crowd. Camera tracks the action. Audio: Shika speaks words of encouragement to fans. ENDING FRAME [EXACT]: Speaking.",
           stage: "VIDEO_START" as const,
@@ -881,7 +876,7 @@ describe("rules", () => {
 
     describe("positive fixtures", () => {
       it("passes with DROP tag in END final beat", () => {
-        const input = {
+        const _input = {
           prompt:
             "Continue from previous: Both puppets centered. [00:00] Energy builds steadily. Camera cranes up dramatically. [00:04] Anticipation rises with the music. [00:08] [DROP] Climactic moment as both puppets explode into synchronized movement! Keep same lighting. Audio: bass drop impact, no dialogue. ENDING FRAME [EXACT]: Peak energy frozen.",
           stage: "EXTEND_END" as const,
@@ -891,7 +886,7 @@ describe("rules", () => {
       });
 
       it("passes with chant in lyrics", () => {
-        const input = {
+        const _input = {
           lyrics: `[Intro]
 Festival energy rises...
 
@@ -916,7 +911,7 @@ Energy slowly fades...`,
 
     describe("negative fixtures", () => {
       it("fails when END final beat missing DROP tag", () => {
-        const input = {
+        const _input = {
           prompt:
             "Continue from previous. [00:00] Energy builds. Camera pans. [00:04] Anticipation. [00:08] Climactic moment without proper tag! Keep lighting. ENDING FRAME [EXACT]: Peak.",
           stage: "EXTEND_END" as const,
@@ -927,7 +922,7 @@ Energy slowly fades...`,
       });
 
       it("fails when lyrics missing chant", () => {
-        const input = {
+        const _input = {
           lyrics: `[Intro]
 Festival energy rises...
 
@@ -945,7 +940,7 @@ Slowly fading...`,
       });
 
       it("fails with incomplete chant", () => {
-        const input = {
+        const _input = {
           lyrics: `[Drop]
 Shika! Shilshul!
 The bass drops hard!`,
@@ -977,7 +972,7 @@ The bass drops hard!`,
     describe("positive fixtures", () => {
       it("passes with verbatim locks in IMAGE", () => {
         // The test will use CHARACTER_LOCK_BLOCKS from the implementation
-        const input = {
+        const _input = {
           prompt: `Grand festival stage with UV purple lighting.
 
 ${CHARACTER_LOCK_BLOCKS[0]}
@@ -992,7 +987,7 @@ Shika and Shilshul positioned center stage, strings gleaming under festival ligh
       });
 
       it("passes with condensed preservation in VIDEO", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika surges forward dramatically. Camera dollies backward. [00:04] Energy builds. Keep Shika and Shilshul identical to reference image throughout. [00:08] Freeze. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Both visible.",
           stage: "VIDEO_START" as const,
@@ -1004,7 +999,7 @@ Shika and Shilshul positioned center stage, strings gleaming under festival ligh
 
     describe("negative fixtures", () => {
       it("fails when lock block modified", () => {
-        const input = {
+        const _input = {
           prompt:
             "Grand festival stage. Shika is a small orange puppet with glowing strings. Different description from canonical lock. Positioned center.",
           stage: "IMAGE" as const,
@@ -1015,7 +1010,7 @@ Shika and Shilshul positioned center stage, strings gleaming under festival ligh
       });
 
       it("fails when lock block missing", () => {
-        const input = {
+        const _input = {
           prompt:
             "Grand festival stage with UV purple lighting. Two puppet characters stand ready. Standard scene composition without character lock blocks.",
           stage: "IMAGE" as const,
@@ -1026,7 +1021,7 @@ Shika and Shilshul positioned center stage, strings gleaming under festival ligh
       });
 
       it("fails when VIDEO missing preservation", () => {
-        const input = {
+        const _input = {
           prompt:
             "[00:00] Shika performs action. Camera dollies. [00:04] Action continues. [00:08] Freeze. Audio: crowd roar, no dialogue. ENDING FRAME [EXACT]: Scene complete.",
           stage: "VIDEO_START" as const,
@@ -1191,35 +1186,35 @@ Shika and Shilshul positioned center stage, strings gleaming under festival ligh
 
       it("passes for IMAGE with character lock blocks", () => {
         // Must include verbatim CHARACTER_LOCK_BLOCKS text
-        const input = {
+        const _input = {
           prompt: `${CHARACTER_LOCK_BLOCKS[0]} Additional scene description.`,
           stage: "IMAGE",
         };
-        expect(rule13().predicate!(input)).toBe(true);
+        expect(rule13().predicate!(_input)).toBe(true);
       });
 
       it("fails for IMAGE without character lock blocks", () => {
-        const input = {
+        const _input = {
           prompt: "A goat puppet on stage with lighting",
           stage: "IMAGE",
         };
-        expect(rule13().predicate!(input)).toBe(false);
+        expect(rule13().predicate!(_input)).toBe(false);
       });
 
       it("passes for video prompts with preservation patterns", () => {
-        const input = {
+        const _input = {
           prompt: "[00:00] Action continues. Keep same character appearance. ENDING FRAME [EXACT]: Done.",
           stage: "VIDEO_START",
         };
-        expect(rule13().predicate!(input)).toBe(true);
+        expect(rule13().predicate!(_input)).toBe(true);
       });
 
       it("fails for video prompts without preservation patterns", () => {
-        const input = {
+        const _input = {
           prompt: "[00:00] Action continues. ENDING FRAME [EXACT]: Done.",
           stage: "VIDEO_START",
         };
-        expect(rule13().predicate!(input)).toBe(false);
+        expect(rule13().predicate!(_input)).toBe(false);
       });
     });
 
@@ -1316,29 +1311,29 @@ Shika and Shilshul positioned center stage, strings gleaming under festival ligh
       const rule5 = () => RULES.find((r) => r.id === "R5")!;
 
       it("passes when no prompts provided", () => {
-        const input = {};
-        expect(rule5().predicate!(input)).toBe(true);
+        const _input = {};
+        expect(rule5().predicate!(_input)).toBe(true);
       });
 
       it("passes when only imagePrompt provided", () => {
-        const input = { imagePrompt: "Scene description" };
-        expect(rule5().predicate!(input)).toBe(true);
+        const _input = { imagePrompt: "Scene description" };
+        expect(rule5().predicate!(_input)).toBe(true);
       });
 
       it("passes when overlap is low", () => {
-        const input = {
+        const _input = {
           imagePrompt: "Main stage with sunset lighting and golden strings",
           videoPrompt: "Camera pans across the festival grounds showing crowd dancing",
         };
-        expect(rule5().predicate!(input)).toBe(true);
+        expect(rule5().predicate!(_input)).toBe(true);
       });
 
       it("fails when overlap is high", () => {
-        const input = {
+        const _input = {
           imagePrompt: "Main stage with sunset lighting and golden strings puppet dancing",
           videoPrompt: "Main stage with sunset lighting and golden strings puppet moving",
         };
-        expect(rule5().predicate!(input)).toBe(false);
+        expect(rule5().predicate!(_input)).toBe(false);
       });
     });
 

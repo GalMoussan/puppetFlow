@@ -176,9 +176,9 @@ export const CHARACTER_KEYWORDS: readonly string[] = [
 // =============================================================================
 
 /**
- * Extract the ending boundary frame from a prompt (internal)
+ * Extract the ending boundary frame from a prompt (internal, reserved for future use)
  */
-function extractEndingFrameFull(prompt: string): BoundaryFrame | null {
+function _extractEndingFrameFull(prompt: string): BoundaryFrame | null {
   // Find all ENDING FRAME markers and get the last one
   const regex = /ENDING FRAME \[EXACT\]:\s*(.+?)(?:$)/gi;
   let lastMatch: RegExpExecArray | null = null;

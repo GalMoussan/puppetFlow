@@ -30,7 +30,6 @@ import {
   type CanvasEdge,
   type CanvasGraph,
   type Violation,
-  type Scene,
   type BatchOutput,
   type ComboAssignment,
   type RunConfig,

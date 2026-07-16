@@ -16,26 +16,23 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // These imports will fail until implementation exists - that's expected (RED phase)
 import {
   runBatch,
-  AgentEventEmitter,
-  VarietyError,
   padPool,
   type SSEEmitter,
-  type RunResult,
 } from "@/lib/agent";
 
-import type { SSEEvent, RunConfigInput } from "@/lib/schemas";
+import type { SSEEvent } from "@/lib/schemas";
 
 // Type alias for test events (SSEEvent with optional extra fields for test assertions)
 type TestEvent = SSEEvent & { timestamp?: number; preview?: string };
 
-import { createMockPrisma, type MockPrismaClient } from "@/tests/mocks/prisma";
+import { type MockPrismaClient } from "@/tests/mocks/prisma";
 import {
   createMockBatchOutput,
   createMockBatchOutputWithViolations,
   createMockCombo,
 } from "@/tests/mocks/anthropic-responses";
 
-import type { CanvasGraph, RunConfig, Violation, Scene } from "@/packages/domain/types";
+import type { CanvasGraph, Violation, Scene } from "@/packages/domain/types";
 import type { LintReport } from "@/packages/domain/linter";
 
 // Mock dependencies - use async factory to ensure imports are available
@@ -530,7 +527,7 @@ describe("lib/agent", () => {
 
       // Track if emitter is disconnected
       let disconnected = false;
-      const emitter: SSEEmitter = (event) => {
+      const emitter: SSEEmitter = (_event) => {
         if (disconnected) return; // Don't emit if disconnected
       };
 

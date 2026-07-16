@@ -23,11 +23,8 @@ import {
   mockBlocks,
   mockCameraBlock,
   mockHookBlock,
-  mockGlobalBlock,
-  BLOCK_GROUPS,
   getBlockGroup,
   type MockCanvasStore,
-  type BlockDefinition,
   type BlockNodeData,
 } from "@/tests/mocks/canvas-fixtures";
 

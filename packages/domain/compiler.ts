@@ -113,9 +113,9 @@ export function resolveBlockFragment(
 // =============================================================================
 
 /**
- * All supported placeholder keys
+ * All supported placeholder keys (reserved for future template validation)
  */
-const PLACEHOLDER_KEYS = [
+const _PLACEHOLDER_KEYS = [
   "stageArea",
   "festivalMoment",
   "dynamic",
@@ -217,17 +217,17 @@ export function injectCharacterLocks(template: string, characters: CharacterDefi
 // =============================================================================
 
 /**
- * Video prompt structure templates
+ * Video prompt structure templates (reserved for future template-based generation)
  */
-const VIDEO_START_TEMPLATE = `[00:00] {blocks}
+const _VIDEO_START_TEMPLATE = `[00:00] {blocks}
 
 ENDING FRAME [EXACT]: {description}`;
 
-const EXTEND_MIDDLE_TEMPLATE = `Continue directly from the final frame of the previous clip: {previous_frame}. [00:00] {blocks}
+const _EXTEND_MIDDLE_TEMPLATE = `Continue directly from the final frame of the previous clip: {previous_frame}. [00:00] {blocks}
 
 ENDING FRAME [EXACT]: {description}`;
 
-const EXTEND_END_TEMPLATE = `Continue directly from the final frame of the previous clip: {previous_frame}. [00:00] {blocks} [00:08] [DROP] {drop_action}
+const _EXTEND_END_TEMPLATE = `Continue directly from the final frame of the previous clip: {previous_frame}. [00:00] {blocks} [00:08] [DROP] {drop_action}
 
 ENDING FRAME [EXACT]: {description}`;
 
@@ -287,6 +287,19 @@ function generateThemePackCanon(themePack: ThemePack): string {
     lines.push(`- **${char.name}:** ${char.description}`);
   }
   lines.push("");
+
+  // Add character lock texts for IMAGE prompts
+  if (themePack.characters.length > 0) {
+    lines.push("**Character Locks (MUST appear verbatim in every imagePrompt):**");
+    lines.push("");
+    for (const char of themePack.characters) {
+      if (char.lockText) {
+        lines.push(char.lockText);
+        lines.push("");
+      }
+    }
+  }
+
   return lines.join("\n");
 }
 
@@ -466,6 +479,86 @@ function generateStageTemplatesSection(
 }
 
 // =============================================================================
+// Image Prompt Style Guide Section
+// =============================================================================
+
+/**
+ * Generate the Image Prompt Style Guide section
+ */
+function generateImagePromptStyleGuide(): string {
+  const lines: string[] = [];
+  lines.push("## IMAGE Prompt Style Guide");
+  lines.push("");
+  lines.push("The imagePrompt field must be HIGHLY DETAILED and CINEMATIC. Follow this structure:");
+  lines.push("");
+  lines.push("### Required Elements (in order):");
+  lines.push("");
+  lines.push("1. **Technical Frame** (first line):");
+  lines.push("   - \"A real, unedited photograph. Hyperrealistic cinematic realism, full color, no animation, no cartoon, no illustration.\"");
+  lines.push("   - Camera specs: ARRI Alexa, lens (24-85mm), aperture (f/1.8-f/4), color grade");
+  lines.push("");
+  lines.push("2. **Character Descriptions** (2-3 paragraphs each):");
+  lines.push("   - Name in bold");
+  lines.push("   - Exact physical appearance locked to reference");
+  lines.push("   - Current pose/action in this frame");
+  lines.push("   - Emotional state visible in expression");
+  lines.push("");
+  lines.push("3. **The Puppet Visual** (1 paragraph):");
+  lines.push("   - How the puppet-master dynamic manifests visually");
+  lines.push("   - \"Invisible gesture control\" - describe the eerie synchronization");
+  lines.push("   - The tell: delayed mirroring, synchronized twitches");
+  lines.push("");
+  lines.push("4. **Setting** (1 detailed paragraph):");
+  lines.push("   - Specific location with 5+ environmental details");
+  lines.push("   - Textures, materials, weathering, lighting quality");
+  lines.push("   - Atmospheric elements: haze, particles, reflections");
+  lines.push("");
+  lines.push("5. **Negative Constraints** (1 line):");
+  lines.push("   - \"No floating text anywhere (scene description).\"");
+  lines.push("");
+  lines.push("6. **Background Chaos Thread** (1 line):");
+  lines.push("   - Background element that adds life/humor");
+  lines.push("");
+  lines.push("7. **Crowd Description** (1 paragraph):");
+  lines.push("   - 3-4 specific crowd member activities");
+  lines.push("   - Creates sense of authentic busy environment");
+  lines.push("");
+  lines.push("8. **Mood Line** (final line):");
+  lines.push("   - \"Mood: [emotional essence]. [List of negative constraints].\"");
+  lines.push("");
+  lines.push("9. **CRITICAL CHARACTER LOCKS** (final paragraphs):");
+  lines.push("   - Verbatim character lock text for each character");
+  lines.push("   - These MUST appear exactly as defined in the theme pack");
+  lines.push("");
+  lines.push("### Word Count: 250-400 words for imagePrompt");
+  lines.push("");
+  lines.push("### Example Structure:");
+  lines.push("```");
+  lines.push("A real, unedited photograph. Hyperrealistic cinematic realism, full color, no animation. ARRI Alexa, 35mm lens, f/2.2, [color grade].");
+  lines.push("");
+  lines.push("[Character 1 Name] — [Exact physical description from reference]. [Current pose]. [Emotional expression].");
+  lines.push("");
+  lines.push("[Character 2 Name] — [Exact physical description from reference]. [Current action]. [Emotional state].");
+  lines.push("");
+  lines.push("The Puppet Visual — [How the control dynamic is shown visually without visible strings].");
+  lines.push("");
+  lines.push("Setting — [Location]: [5+ specific environmental details with textures and lighting].");
+  lines.push("");
+  lines.push("No floating text anywhere ([scene type]).");
+  lines.push("");
+  lines.push("Background chaos thread — [subtle background element].");
+  lines.push("");
+  lines.push("Crowd — [3-4 specific crowd activities creating authentic atmosphere].");
+  lines.push("");
+  lines.push("Mood: [emotional essence]. No distorted animals, no extra characters, no cartoon features, no illustration, correct anatomy, no floating text.");
+  lines.push("");
+  lines.push("**CRITICAL CHARACTER LOCK:** [Verbatim lock text for each character].");
+  lines.push("```");
+  lines.push("");
+  return lines.join("\n");
+}
+
+// =============================================================================
 // Output Schema Section
 // =============================================================================
 
@@ -484,7 +577,7 @@ function generateOutputSchemaSection(): string {
     {
       "index": 0,
       "lyrics": "...",
-      "imagePrompt": "...",
+      "imagePrompt": "... (250-400 words following IMAGE Prompt Style Guide above)",
       "startPrompt": "...",
       "middlePrompt": "...",
       "endPrompt": "...",
@@ -561,6 +654,9 @@ export function compile(
 
   // Per-Stage Templates
   sections.push(generateStageTemplatesSection(graph, themePack, combos, blockDefs));
+
+  // Image Prompt Style Guide (critical for quality)
+  sections.push(generateImagePromptStyleGuide());
 
   // Output Schema
   sections.push(generateOutputSchemaSection());

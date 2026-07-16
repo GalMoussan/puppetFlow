@@ -6,7 +6,7 @@
  */
 
 import { vi } from "vitest";
-import type { Lane, CanvasGraph, CanvasNode, BlockType } from "@/packages/domain/types";
+import type { Lane, CanvasGraph, BlockType } from "@/packages/domain/types";
 
 // =============================================================================
 // BlockDefinition Interface (matches expected structure for canvas)

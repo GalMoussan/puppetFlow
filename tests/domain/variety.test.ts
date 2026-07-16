@@ -9,7 +9,7 @@
  * - Pinned blocks bypass rotation, appear in all scenes
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { fc, test as fcTest } from "@fast-check/vitest";
 
 // These imports will fail until implementation exists - that's expected (RED phase)
@@ -23,10 +23,9 @@ import {
   type VarietyAxis,
   type HistoryEntry,
   type VarietyConfig,
-  type CollisionCheckResult,
 } from "@/packages/domain/variety";
 
-import { type ComboAssignment, type RunConfig } from "@/packages/domain/types";
+import { type ComboAssignment } from "@/packages/domain/types";
 
 // Constants for test data - matching blueprint Section 7 seed data
 const STAGE_AREAS = [

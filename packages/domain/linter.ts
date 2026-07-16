@@ -15,13 +15,6 @@ import {
   type Violation,
 } from "./types";
 import {
-  RULES,
-  CAMERA_MOVES,
-  GENERIC_VERBS,
-  NEGATIVE_PATTERNS,
-  ALLOWED_NEGATIVES,
-  ACTION_VERBS,
-  PRESERVATION_PATTERNS,
   extractTimestamps,
   countWords,
   countGenericVerbs,
@@ -401,8 +394,6 @@ export function checkR9RetentionPacing(prompt: string, stage: string): Violation
   // Check for [HOOK] in VIDEO_START
   if (stage === "VIDEO_START") {
     const hasHook = /\[HOOK\]/i.test(prompt);
-    const hookPosition = prompt.indexOf("[HOOK]");
-    const firstTimestamp = prompt.match(/\[00:0[0-2]\]/);
 
     if (!hasHook) {
       violations.push({

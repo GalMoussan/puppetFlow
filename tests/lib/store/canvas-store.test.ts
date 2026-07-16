@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // This import will fail until implementation exists - expected for TDD
-import { useCanvasStore, type CanvasStore } from "@/lib/store/canvas-store";
+import { useCanvasStore } from "@/lib/store/canvas-store";
 
 import { Lane } from "@puppetflow/domain";
 

@@ -23,7 +23,6 @@ import { useRunProgress } from "@/hooks/useRunProgress";
 import {
   createMockCanvasStore,
   type MockCanvasStore,
-  type RunStatus,
 } from "@/tests/mocks/canvas-fixtures";
 import { useRunStore } from "@/lib/store/run-store";
 

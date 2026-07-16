@@ -33,7 +33,7 @@ import {
   type RunConfig,
 } from "@/packages/domain/types";
 
-import { createMinimalGraph } from "./helpers";
+// createMinimalGraph available from helpers if needed for future tests
 
 // Sample theme pack for testing
 const SAMPLE_THEME_PACK: ThemePack = {
@@ -500,8 +500,8 @@ describe("compiler", () => {
 
         // Count occurrences of the lock text
         const matches = result.match(/CRITICAL CHARACTER LOCK - SHIKA/g);
-        // Should appear once per scene, not duplicated within a scene
-        expect(matches?.length).toBe(1); // One scene, one lock
+        // Should appear in theme pack canon section AND in IMAGE template
+        expect(matches?.length).toBe(2); // Once in canon, once in template
       });
     });
 
