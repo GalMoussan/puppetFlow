@@ -550,6 +550,14 @@ export const TYPE_COLORS: Record<BlockType, string> = {
   STAGE_AREA: "bg-lime-600",
   FESTIVAL_MOMENT: "bg-emerald-600",
   CUSTOM: "bg-slate-600",
+  // Content preset block types
+  GLITCH_EFFECT: "bg-fuchsia-600",
+  SOUND_CUE: "bg-sky-600",
+  TEXT_OVERLAY: "bg-amber-500",
+  EXPLAINER_VISUAL: "bg-blue-500",
+  CHOREO_BEAT: "bg-purple-500",
+  STORY_BEAT: "bg-emerald-500",
+  EMOTION_MARKER: "bg-rose-500",
 };
 
 export function getTypeColor(type: BlockType): string {

@@ -33,6 +33,14 @@ enum BlockType {
   STAGE_AREA
   FESTIVAL_MOMENT
   CUSTOM
+  // New block types for content presets
+  GLITCH_EFFECT
+  SOUND_CUE
+  TEXT_OVERLAY
+  EXPLAINER_VISUAL
+  CHOREO_BEAT
+  STORY_BEAT
+  EMOTION_MARKER
 }
 
 enum RunStatus {
@@ -43,6 +51,15 @@ enum RunStatus {
   REPAIRING
   DONE
   FAILED
+}
+
+enum PresetCategory {
+  FESTIVAL
+  BRAINROT
+  EDUCATIONAL
+  DANCE
+  NARRATIVE
+  EXPERIMENTAL
 }
 
 // =============================================================================
@@ -87,32 +104,85 @@ model BlockDefinition {
   @@index([archived])
 }
 
-/// Flow template - a saved canvas configuration
-model FlowTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  graph       Json
-  themePackId String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+/// Template preset - pre-configured template with canon overrides and default settings
+model TemplatePreset {
+  id               String         @id @default(cuid())
+  name             String
+  description      String
+  category         PresetCategory
+
+  canonOverrides   Json           @default("{}")
+  defaultRunConfig Json           @default("{}")
+  defaultBlocks    Json           @default("[]")
+
+  thumbnailUrl     String?
+  guidelines       Json           @default("[]")
+
+  isSystem         Boolean        @default(false)
+  createdBy        String?
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   // Relations
-  themePack ThemePack @relation(fields: [themePackId], references: [id], onDelete: Cascade)
+  templates FlowTemplate[]
+
+  @@index([category])
+  @@index([isSystem])
+}
+
+/// Flow template - a saved canvas configuration
+model FlowTemplate {
+  id             String   @id @default(cuid())
+  name           String
+  graph          Json
+  themePackId    String
+  presetId       String?
+  currentVersion Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  themePack ThemePack         @relation(fields: [themePackId], references: [id], onDelete: Cascade)
+  preset    TemplatePreset?   @relation(fields: [presetId], references: [id], onDelete: SetNull)
   runs      Run[]
+  versions  TemplateVersion[]
 
   @@index([themePackId])
+  @@index([presetId])
+}
+
+/// Template version - snapshot of template graph at a point in time
+model TemplateVersion {
+  id         String       @id @default(cuid())
+  templateId String
+  version    Int
+  graph      Json
+  createdAt  DateTime     @default(now())
+
+  // Relations
+  template FlowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, version])
+  @@index([templateId])
 }
 
 /// Run - a generation batch execution
 model Run {
-  id         String    @id @default(cuid())
-  templateId String
-  status     RunStatus @default(PENDING)
-  scaffold   String?
-  error      String?
-  model      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  templateId    String
+  status        RunStatus @default(PENDING)
+  scaffold      String?
+  error         String?
+  model         String?
+  // Usage analytics fields
+  inputTokens   Int?
+  outputTokens  Int?
+  totalTokens   Int?
+  estimatedCost Decimal?  @db.Decimal(10, 6)
+  durationMs    Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
   template FlowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)

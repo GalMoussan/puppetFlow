@@ -70,6 +70,7 @@ export interface CanvasState {
   templateId: string | null;
   templateName: string | null;
   themePackId: string | null;
+  currentVersion: number;
   isDirty: boolean;
   saveState: SaveState;
 
@@ -117,6 +118,7 @@ export const useCanvasStore = create<CanvasState>()(
     templateId: null,
     templateName: null,
     themePackId: null,
+    currentVersion: 1,
     isDirty: false,
     saveState: "idle",
     runConfig: {
@@ -341,6 +343,7 @@ export const useCanvasStore = create<CanvasState>()(
         templateId: template.id,
         templateName: template.name,
         themePackId,
+        currentVersion: template.currentVersion ?? 1,
         isDirty: false,
         saveState: "idle",
         selectedId: null,
@@ -442,7 +445,14 @@ export const useCanvasStore = create<CanvasState>()(
           throw new Error(`Failed to save template: ${response.status}`);
         }
 
-        set({ isDirty: false, saveState: "saved" });
+        // Update currentVersion from response if available
+        const result = await response.json().catch(() => ({}));
+        const newVersion = result.data?.currentVersion ?? result.currentVersion;
+        set({
+          isDirty: false,
+          saveState: "saved",
+          ...(newVersion ? { currentVersion: newVersion } : {}),
+        });
       } catch (error) {
         set({ saveState: "error" });
         throw error;

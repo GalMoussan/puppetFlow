@@ -618,11 +618,23 @@ export async function runBatch(
       data: { status: "GENERATING" },
     });
 
+    // Track cumulative usage across all LLM calls
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalEstimatedCost = 0;
+
     const batchOutput = await anthropic.generateBatch(scaffold, assignments, {
       temperature: 1.0,
       maxTokens: 8000,
       model: resolvedModel,
     });
+
+    // Accumulate usage from batch generation
+    if (batchOutput.usage) {
+      totalInputTokens += batchOutput.usage.inputTokens;
+      totalOutputTokens += batchOutput.usage.outputTokens;
+      totalEstimatedCost += batchOutput.usage.estimatedCost;
+    }
 
     // Emit scene previews as soon as generation completes (before lint)
     batchOutput.scenes.forEach((scene, index) => {
@@ -674,9 +686,17 @@ export async function runBatch(
         data: { status: "REPAIRING" },
       });
 
-      finalOutput = await anthropic.repair(scaffold, {
+      const repairOutput = await anthropic.repair(scaffold, {
         violations: lintReport.hardViolations,
       });
+      finalOutput = repairOutput;
+
+      // Accumulate usage from repair call
+      if (repairOutput.usage) {
+        totalInputTokens += repairOutput.usage.inputTokens;
+        totalOutputTokens += repairOutput.usage.outputTokens;
+        totalEstimatedCost += repairOutput.usage.estimatedCost;
+      }
 
       // Re-lint after repair
       const repairedScenesForLinting: DomainScene[] = finalOutput.scenes.map(
@@ -736,17 +756,27 @@ export async function runBatch(
       })),
     });
 
-    // 10. Mark run complete
+    // 10. Mark run complete with usage stats
+    const durationMs = nowTs() - startedAt;
     await prisma.run.update({
       where: { id: run.id },
-      data: { status: "DONE" },
+      data: {
+        status: "DONE",
+        inputTokens: totalInputTokens > 0 ? totalInputTokens : null,
+        outputTokens: totalOutputTokens > 0 ? totalOutputTokens : null,
+        totalTokens: totalInputTokens + totalOutputTokens > 0
+          ? totalInputTokens + totalOutputTokens
+          : null,
+        estimatedCost: totalEstimatedCost > 0 ? totalEstimatedCost : null,
+        durationMs,
+      },
     });
 
     emitter({
       type: "done",
       runId: run.id,
       sceneCount: sceneRows.length,
-      duration: nowTs() - startedAt,
+      duration: durationMs,
       timestamp: nowTs(),
     });
 

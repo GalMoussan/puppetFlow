@@ -461,9 +461,469 @@ async function main() {
 
   console.log(`✅ Template ready: ${template.name} (${template.id})`);
 
+  // ==========================================================================
+  // Seed Content Preset Block Types
+  // ==========================================================================
+
+  const presetBlockSpecs = [
+    // GLITCH_EFFECT blocks
+    {
+      type: "GLITCH_EFFECT",
+      name: "VHS Tracking",
+      promptFragment: "VHS tracking artifacts: horizontal lines, color bleeding, static noise at frame edges",
+      stageScope: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "glitch",
+    },
+    {
+      type: "GLITCH_EFFECT",
+      name: "RGB Split",
+      promptFragment: "RGB channel separation: red, green, blue layers offset creating chromatic aberration",
+      stageScope: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "glitch",
+    },
+    {
+      type: "GLITCH_EFFECT",
+      name: "Screen Shake",
+      promptFragment: "Camera shake effect: frame jitters rapidly, simulating impact or bass drop",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "glitch",
+    },
+    {
+      type: "GLITCH_EFFECT",
+      name: "Deep Fried",
+      promptFragment: "Deep-fried visual: oversaturated colors, extreme contrast, JPEG artifacts, noise overlay",
+      stageScope: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "glitch",
+    },
+    {
+      type: "GLITCH_EFFECT",
+      name: "Motion Blur",
+      promptFragment: "Extreme motion blur: subjects streak across frame during rapid movement",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "glitch",
+    },
+    {
+      type: "GLITCH_EFFECT",
+      name: "Datamosh",
+      promptFragment: "Datamosh effect: compression artifacts bleed between frames, subjects morph unnaturally",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "glitch",
+    },
+    // SOUND_CUE blocks
+    {
+      type: "SOUND_CUE",
+      name: "Bass Drop",
+      promptFragment: "Visual sync with bass drop: everything freezes for a beat, then impacts with energy release",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "sound",
+    },
+    {
+      type: "SOUND_CUE",
+      name: "Vine Boom",
+      promptFragment: "Vine boom moment: dramatic pause, subject freezes mid-action, emphasis beat",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "sound",
+    },
+    {
+      type: "SOUND_CUE",
+      name: "Record Scratch",
+      promptFragment: "Record scratch freeze: everything stops, subject looks at camera, confused expression",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "sound",
+    },
+    {
+      type: "SOUND_CUE",
+      name: "Windows Error",
+      promptFragment: "Windows error sound moment: subject glitches, error popup appears in frame",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "sound",
+    },
+    {
+      type: "SOUND_CUE",
+      name: "Airhorn",
+      promptFragment: "Airhorn hype moment: subject celebrates, crowd energy peaks, hands raised",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "sound",
+    },
+    // TEXT_OVERLAY blocks
+    {
+      type: "TEXT_OVERLAY",
+      name: "Bouncing Caption",
+      promptFragment: "Kinetic text: words bounce and scale with the beat, emphasized syllables larger",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "text",
+    },
+    {
+      type: "TEXT_OVERLAY",
+      name: "Flying Text",
+      promptFragment: "Flying text effect: words enter from edges, zoom past camera, 3D perspective",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "text",
+    },
+    {
+      type: "TEXT_OVERLAY",
+      name: "Typewriter",
+      promptFragment: "Typewriter text: characters appear one by one with cursor, retro terminal style",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "text",
+    },
+    {
+      type: "TEXT_OVERLAY",
+      name: "Shake Text",
+      promptFragment: "Shaking text: words vibrate intensely, emphasizing intensity or chaos",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "text",
+    },
+    // EXPLAINER_VISUAL blocks
+    {
+      type: "EXPLAINER_VISUAL",
+      name: "Diagram Overlay",
+      promptFragment: "Educational diagram: labeled arrows point to key elements, clean infographic style",
+      stageScope: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "explainer",
+    },
+    {
+      type: "EXPLAINER_VISUAL",
+      name: "Comparison Split",
+      promptFragment: "Split screen comparison: before/after or A/B side by side, divider line visible",
+      stageScope: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "explainer",
+    },
+    {
+      type: "EXPLAINER_VISUAL",
+      name: "Highlight Glow",
+      promptFragment: "Highlight effect: key element glows or pulses, drawing viewer attention",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "explainer",
+    },
+    {
+      type: "EXPLAINER_VISUAL",
+      name: "Arrow Pointer",
+      promptFragment: "Animated arrow: points at important element, follows movement if needed",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "explainer",
+    },
+    // CHOREO_BEAT blocks
+    {
+      type: "CHOREO_BEAT",
+      name: "Sync Hit",
+      promptFragment: "Perfect sync hit: all dancers/puppets hit the same pose simultaneously on beat",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "choreo",
+    },
+    {
+      type: "CHOREO_BEAT",
+      name: "Wave Propagate",
+      promptFragment: "Wave effect: movement ripples through group from one side to the other",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "choreo",
+    },
+    {
+      type: "CHOREO_BEAT",
+      name: "Mirror Match",
+      promptFragment: "Mirror choreography: two subjects perform identical moves facing each other",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "choreo",
+    },
+    {
+      type: "CHOREO_BEAT",
+      name: "Pose Hold",
+      promptFragment: "Pose hold: freeze in dramatic position, camera circles or zooms",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "choreo",
+    },
+    {
+      type: "CHOREO_BEAT",
+      name: "Style Switch",
+      promptFragment: "Style switch: abrupt change from one dance style to another on beat",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "choreo",
+    },
+    {
+      type: "CHOREO_BEAT",
+      name: "Group Freeze",
+      promptFragment: "Group freeze: entire ensemble stops mid-movement, tableau moment",
+      stageScope: ["EXTEND_END"],
+      rotationGroup: "choreo",
+    },
+    // STORY_BEAT blocks
+    {
+      type: "STORY_BEAT",
+      name: "Inciting Incident",
+      promptFragment: "Story setup: establish normal state, then introduce the disruption or challenge",
+      stageScope: ["GLOBAL"],
+      rotationGroup: "story",
+    },
+    {
+      type: "STORY_BEAT",
+      name: "Rising Action",
+      promptFragment: "Tension builds: stakes increase, obstacles mount, energy escalates",
+      stageScope: ["GLOBAL"],
+      rotationGroup: "story",
+    },
+    {
+      type: "STORY_BEAT",
+      name: "Climax",
+      promptFragment: "Peak moment: maximum tension, decisive action, point of no return",
+      stageScope: ["GLOBAL"],
+      rotationGroup: "story",
+    },
+    {
+      type: "STORY_BEAT",
+      name: "Resolution",
+      promptFragment: "Satisfying close: tension resolves, new equilibrium established, emotional payoff",
+      stageScope: ["GLOBAL"],
+      rotationGroup: "story",
+    },
+    // EMOTION_MARKER blocks
+    {
+      type: "EMOTION_MARKER",
+      name: "Joy Burst",
+      promptFragment: "Joy expression: wide smile, raised arms, body language of celebration and triumph",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "emotion",
+    },
+    {
+      type: "EMOTION_MARKER",
+      name: "Tension Build",
+      promptFragment: "Tension expression: narrowed eyes, clenched fists, body coiled, anticipation",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "emotion",
+    },
+    {
+      type: "EMOTION_MARKER",
+      name: "Surprise Reveal",
+      promptFragment: "Surprise expression: wide eyes, open mouth, body recoils, double-take",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "emotion",
+    },
+    {
+      type: "EMOTION_MARKER",
+      name: "Relief Drop",
+      promptFragment: "Relief expression: shoulders drop, exhale visible, tension releases from body",
+      stageScope: ["EXTEND_MIDDLE", "EXTEND_END"],
+      rotationGroup: "emotion",
+    },
+    {
+      type: "EMOTION_MARKER",
+      name: "Determination Set",
+      promptFragment: "Determination expression: jaw set, eyes focused, body squares up, ready stance",
+      stageScope: ["VIDEO_START", "EXTEND_MIDDLE"],
+      rotationGroup: "emotion",
+    },
+  ] as const;
+
+  const presetBlocks = [];
+  for (const spec of presetBlockSpecs) {
+    presetBlocks.push(await upsertSeedBlock({ ...spec }));
+  }
+
+  console.log(`✅ Preset blocks ready: ${presetBlocks.length} new block types`);
+
+  // ==========================================================================
+  // Seed Template Presets
+  // ==========================================================================
+
+  const systemPresets = [
+    {
+      name: "Festival Hype",
+      description: "The core Master of Puppets aesthetic. High-energy festival moments with puppet synchronization.",
+      category: "FESTIVAL" as const,
+      canonOverrides: {},
+      defaultRunConfig: {
+        batchSize: 5,
+        loopMode: true,
+        pacingStyle: "normal",
+      },
+      defaultBlocks: [],
+      guidelines: [
+        "Use dramatic camera moves to capture festival energy",
+        "Emphasize puppet-crowd synchronization moments",
+        "Build to satisfying payoffs with confetti/light explosions",
+      ],
+      isSystem: true,
+    },
+    {
+      name: "Brainrot Chaos",
+      description: "Hyper-stimulating, dopamine-maximizing chaos. Fast cuts, multiple gags, absurdist humor.",
+      category: "BRAINROT" as const,
+      canonOverrides: {
+        hooks: ["record scratch", "jumpscare", "mid-sentence start", "wrong audio", "sus alert"],
+        gags: ["ragdoll physics", "T-pose freeze", "clip through floor", "item dupe", "wrong texture"],
+        payoffs: ["bass boosted drop", "screen explosion", "windows error", "vine boom", "airhorn spam"],
+        chaosThreads: ["amogus", "spinning rat", "dancing cockroach", "flying text", "random stock photo"],
+      },
+      defaultRunConfig: {
+        batchSize: 10,
+        loopMode: true,
+        pacingStyle: "chaotic",
+        beatInterval: 0.5,
+      },
+      defaultBlocks: [
+        { lane: "VIDEO_START", blockTypes: ["GLITCH_EFFECT", "SOUND_CUE"], rotationGroups: ["glitch", "sound"] },
+        { lane: "EXTEND_MIDDLE", blockTypes: ["GLITCH_EFFECT", "TEXT_OVERLAY"], rotationGroups: ["glitch", "text"] },
+      ],
+      guidelines: [
+        "Maximize visual chaos with glitch effects",
+        "Stack multiple gags per scene",
+        "Use absurdist hooks that subvert expectations",
+        "Fast beat intervals (0.5s) for hyperstimulation",
+      ],
+      isSystem: true,
+    },
+    {
+      name: "Edutainment Explainer",
+      description: "Puppet as teacher/presenter. Clear structure, deliberate pacing, concept visualization.",
+      category: "EDUCATIONAL" as const,
+      canonOverrides: {
+        stageAreas: ["Lecture Hall", "Workshop Tent", "Demo Stage", "TED Pavilion"],
+        festivalMoments: ["Morning Workshop", "Afternoon Session", "Q&A Hour"],
+        hooks: ["question hook", "problem statement", "Did you know...", "myth bust"],
+        gags: ["confused reaction", "lightbulb moment", "facepalm", "eureka jump"],
+        payoffs: ["summary recap", "call-to-action", "Now you know", "subscribe prompt"],
+        chaosThreads: [],
+      },
+      defaultRunConfig: {
+        batchSize: 3,
+        loopMode: false,
+        pacingStyle: "slow",
+        beatInterval: 4,
+      },
+      defaultBlocks: [
+        { lane: "GLOBAL", blockTypes: ["CHARACTER_LOCK"], rotationGroups: [] },
+        { lane: "VIDEO_START", blockTypes: ["EXPLAINER_VISUAL"], rotationGroups: ["explainer"] },
+      ],
+      guidelines: [
+        "One clear concept per video",
+        "Presenter puppet stays consistent throughout",
+        "Use explainer visuals for key concepts",
+        "Slow pacing for comprehension",
+      ],
+      isSystem: true,
+    },
+    {
+      name: "Dance Viral",
+      description: "Choreography-focused content for TikTok dance trends. Sync to beat, repeatable moves.",
+      category: "DANCE" as const,
+      canonOverrides: {
+        stageAreas: ["Dance Floor", "Mirror Room", "Spotlight Circle", "Battle Arena"],
+        dynamics: ["synchronized perfect", "mirror challenge", "wave propagate", "battle face-off"],
+        hooks: ["iconic first move", "challenge intro", "Try this dance"],
+        payoffs: ["final pose hold", "group sync", "mirror break", "style reveal"],
+      },
+      defaultRunConfig: {
+        batchSize: 5,
+        loopMode: true,
+        pacingStyle: "fast",
+        beatInterval: 1,
+      },
+      defaultBlocks: [
+        { lane: "VIDEO_START", blockTypes: ["CHOREO_BEAT"], rotationGroups: ["choreo"] },
+        { lane: "EXTEND_MIDDLE", blockTypes: ["CHOREO_BEAT"], rotationGroups: ["choreo"] },
+        { lane: "EXTEND_END", blockTypes: ["CHOREO_BEAT"], rotationGroups: ["choreo"] },
+      ],
+      guidelines: [
+        "Loop mode critical for dance content",
+        "Beat-synced movements throughout",
+        "End with memorable pose hold",
+        "Keep moves simple enough to replicate",
+      ],
+      isSystem: true,
+    },
+    {
+      name: "Story Arc",
+      description: "Mini-narrative with beginning, middle, end. Character development, emotional payoff.",
+      category: "NARRATIVE" as const,
+      canonOverrides: {
+        festivalMoments: ["Inciting Incident", "Rising Action", "Crisis", "Resolution"],
+        dynamics: ["character reaction", "relationship shift", "conflict", "resolution"],
+        hooks: ["in medias res", "flashback hint", "mystery object", "danger signal"],
+        payoffs: ["emotional climax", "twist reveal", "satisfying closure", "cliffhanger"],
+      },
+      defaultRunConfig: {
+        batchSize: 3,
+        loopMode: false,
+        pacingStyle: "normal",
+      },
+      defaultBlocks: [
+        { lane: "GLOBAL", blockTypes: ["STORY_BEAT", "CHARACTER_LOCK"], rotationGroups: ["story"] },
+        { lane: "VIDEO_START", blockTypes: ["EMOTION_MARKER"], rotationGroups: ["emotion"] },
+      ],
+      guidelines: [
+        "Establish clear character and stakes",
+        "Build tension through middle section",
+        "Deliver satisfying emotional payoff",
+        "Linear narrative, no loop mode",
+      ],
+      isSystem: true,
+    },
+    {
+      name: "Experimental Blend",
+      description: "Mix-and-match styles. Subvert expectations, avant-garde aesthetics.",
+      category: "EXPERIMENTAL" as const,
+      canonOverrides: {
+        festivalMoments: ["Non-linear time", "Dream sequence", "Style shift", "Reality break"],
+        hooks: ["subverted expectation", "genre fake-out", "fourth wall break"],
+        gags: ["format break", "style parody", "self-aware comment"],
+        payoffs: ["unexpected resolution", "anti-climax", "infinite loop"],
+        chaosThreads: ["reality glitch", "dimension bleed", "time skip"],
+      },
+      defaultRunConfig: {
+        batchSize: 5,
+        loopMode: true,
+        styleConsistency: false,
+      },
+      defaultBlocks: [],
+      guidelines: [
+        "Style consistency disabled - embrace chaos",
+        "Mix elements from different presets",
+        "Subvert viewer expectations",
+        "Experiment with unconventional structures",
+      ],
+      isSystem: true,
+    },
+  ];
+
+  const presets = [];
+  for (const preset of systemPresets) {
+    const existing = await prisma.templatePreset.findFirst({
+      where: { name: preset.name, isSystem: true },
+    });
+
+    if (existing) {
+      presets.push(await prisma.templatePreset.update({
+        where: { id: existing.id },
+        data: {
+          description: preset.description,
+          category: preset.category,
+          canonOverrides: preset.canonOverrides,
+          defaultRunConfig: preset.defaultRunConfig,
+          defaultBlocks: preset.defaultBlocks,
+          guidelines: preset.guidelines,
+        },
+      }));
+    } else {
+      presets.push(await prisma.templatePreset.create({
+        data: {
+          name: preset.name,
+          description: preset.description,
+          category: preset.category,
+          canonOverrides: preset.canonOverrides,
+          defaultRunConfig: preset.defaultRunConfig,
+          defaultBlocks: preset.defaultBlocks,
+          guidelines: preset.guidelines,
+          isSystem: true,
+        },
+      }));
+    }
+  }
+
+  console.log(`✅ Template presets ready: ${presets.length} system presets`);
+
   console.log("\n🎉 Seed complete!");
   console.log(`   Theme Pack ID: ${themePack.id}`);
-  console.log(`   Block Definitions: ${blocks.length}`);
+  console.log(`   Block Definitions: ${blocks.length + presetBlocks.length}`);
+  console.log(`   Template Presets: ${presets.length}`);
   console.log(`   Templates: 1`);
 }
 

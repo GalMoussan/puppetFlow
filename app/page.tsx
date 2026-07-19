@@ -13,18 +13,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ReactFlowProvider } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
-import { Library, LayoutTemplate, FileInput } from "lucide-react";
+import { Library, LayoutTemplate, FileInput, Plus, History, BarChart3 } from "lucide-react";
 import {
   Canvas,
   BlockPalette,
   Inspector,
   RunButton,
   ImportSceneModal,
+  TemplatePicker,
   type ImportSceneResult,
 } from "@/components/canvas";
 import { useCanvasStore } from "@/lib/store/canvas-store";
 import { useTemplate } from "@/lib/hooks/useTemplate";
 import { toast } from "@/lib/store/toast-store";
+import { NewTemplateModal } from "@/components/presets";
+import { VersionHistoryPanel } from "@/components/canvas/VersionHistoryPanel";
 import { useRunStore } from "@/lib/store/run-store";
 import {
   createLaneNodes,
@@ -39,11 +42,20 @@ import type { BlockType, Lane } from "@/packages/domain/types";
 function TopBar({
   onImportClick,
   canImport,
+  onNewClick,
+  onHistoryClick,
+  onSelectTemplate,
+  hasTemplate,
 }: {
   onImportClick: () => void;
   canImport: boolean;
+  onNewClick: () => void;
+  onHistoryClick: () => void;
+  onSelectTemplate: (templateId: string) => void;
+  hasTemplate: boolean;
 }) {
   const templateName = useCanvasStore((s) => s.templateName);
+  const currentVersion = useCanvasStore((s) => s.currentVersion);
   const templateId = useCanvasStore((s) => s.templateId);
   // Pass null so we don't re-fetch — page bootstrap already called loadTemplate.
   // save() still uses store.templateId via saveTemplate.
@@ -111,23 +123,30 @@ function TopBar({
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className="pf-logo-mark shrink-0" aria-hidden />
-        <div className="flex items-baseline gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <h1 className="text-[15px] font-semibold tracking-tight text-white">
             PuppetFlow
           </h1>
-          {templateName && (
-            <>
-              <span className="text-zinc-600 text-sm">/</span>
-              <span className="text-sm text-zinc-500 truncate font-medium">
-                {templateName}
-              </span>
-            </>
-          )}
+          <span className="text-zinc-600 text-sm">/</span>
+          <TemplatePicker
+            currentTemplateId={templateId}
+            currentTemplateName={templateName}
+            onSelect={onSelectTemplate}
+          />
         </div>
       </div>
 
       <div className="flex items-center gap-2.5">
         {getSaveIndicator()}
+        <button
+          type="button"
+          onClick={onNewClick}
+          className="pf-btn pf-btn-ghost px-3 py-1.5"
+          data-testid="nav-new-template"
+        >
+          <Plus className="w-4 h-4" aria-hidden />
+          New
+        </button>
         <Link
           href="/library"
           className="pf-btn pf-btn-ghost px-3 py-1.5"
@@ -136,6 +155,27 @@ function TopBar({
           <Library className="w-4 h-4" aria-hidden />
           Library
         </Link>
+        <Link
+          href="/analytics"
+          className="pf-btn pf-btn-ghost px-3 py-1.5"
+          data-testid="nav-analytics"
+        >
+          <BarChart3 className="w-4 h-4" aria-hidden />
+          Analytics
+        </Link>
+        <button
+          type="button"
+          onClick={onHistoryClick}
+          disabled={!hasTemplate}
+          title={hasTemplate ? `Version history (v${currentVersion})` : "Load a template first"}
+          data-testid="nav-history"
+          className={`pf-btn px-3 py-1.5 ${
+            hasTemplate ? "pf-btn-ghost" : "pf-btn-ghost opacity-40 cursor-not-allowed"
+          }`}
+        >
+          <History className="w-4 h-4" aria-hidden />
+          v{currentVersion}
+        </button>
         <button
           type="button"
           onClick={onImportClick}
@@ -194,7 +234,10 @@ export default function CanvasPage() {
   const [bootError, setBootError] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [newTemplateOpen, setNewTemplateOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [paletteKey, setPaletteKey] = useState(0);
+  const currentVersion = useCanvasStore((s) => s.currentVersion);
 
   const applyImport = (result: ImportSceneResult) => {
     const byId = new Map(result.blocks.map((b) => [b.id, b]));
@@ -255,6 +298,45 @@ export default function CanvasPage() {
         .catch(() =>
           toast.error("Import applied but save failed — click Save manually")
         );
+    }
+  };
+
+  // Handle new template creation
+  const handleTemplateCreated = async (newTemplateId: string) => {
+    try {
+      await loadTemplate(newTemplateId);
+      setPaletteKey((k) => k + 1); // Refresh palette for new blocks
+      useRunStore.getState().reset();
+      toast.success("Template created and loaded");
+    } catch {
+      toast.error("Template created but failed to load — refresh the page");
+    }
+  };
+
+  // Handle switching to a different template
+  const handleSelectTemplate = async (selectedTemplateId: string) => {
+    try {
+      await loadTemplate(selectedTemplateId);
+      setPaletteKey((k) => k + 1);
+      useRunStore.getState().reset();
+      toast.success("Template loaded");
+    } catch {
+      toast.error("Failed to load template");
+    }
+  };
+
+  // Handle version restore
+  const handleVersionRestore = async () => {
+    setHistoryOpen(false);
+    if (templateId) {
+      try {
+        await loadTemplate(templateId);
+        setPaletteKey((k) => k + 1);
+        useRunStore.getState().reset();
+        toast.success("Version restored");
+      } catch {
+        toast.error("Failed to reload template after restore");
+      }
     }
   };
 
@@ -334,6 +416,10 @@ export default function CanvasPage() {
         <TopBar
           onImportClick={() => setImportOpen(true)}
           canImport={Boolean(themePackId)}
+          onNewClick={() => setNewTemplateOpen(true)}
+          onHistoryClick={() => setHistoryOpen(true)}
+          onSelectTemplate={(id) => void handleSelectTemplate(id)}
+          hasTemplate={Boolean(templateId)}
         />
         <ImportSceneModal
           isOpen={importOpen}
@@ -341,6 +427,20 @@ export default function CanvasPage() {
           themePackId={themePackId || ""}
           onImported={applyImport}
         />
+        <NewTemplateModal
+          isOpen={newTemplateOpen}
+          onClose={() => setNewTemplateOpen(false)}
+          onCreated={(id) => void handleTemplateCreated(id)}
+          defaultThemePackId={themePackId ?? undefined}
+        />
+        {historyOpen && templateId && (
+          <VersionHistoryPanel
+            templateId={templateId}
+            currentVersion={currentVersion}
+            onRestore={() => void handleVersionRestore()}
+            onClose={() => setHistoryOpen(false)}
+          />
+        )}
         {bootError && (
           <div className="fixed top-14 left-0 right-0 z-40 bg-red-950/80 text-red-200 text-sm px-5 py-2.5 border-b border-red-500/30 backdrop-blur-md">
             {bootError}

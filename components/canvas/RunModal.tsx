@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 
+export type PacingStyle = "normal" | "fast" | "slow" | "chaotic";
+export type HookStyle = "question" | "shock" | "intrigue" | "direct";
+export type TargetPlatform = "tiktok" | "reels" | "shorts" | "generic";
+
 export interface RunConfig {
   sceneCount: number;
   model: string;
@@ -11,6 +15,11 @@ export interface RunConfig {
   languages: { hi: number; ja: number };
   historyStrictness: "hard-fail" | "warn";
   runDate: string;
+  // Preset-aware extended config
+  pacingStyle: PacingStyle;
+  beatInterval: number;
+  targetPlatform: TargetPlatform;
+  hookStyle?: HookStyle;
 }
 
 interface RunModalProps {
@@ -99,6 +108,16 @@ export function RunModal({
     "hard-fail" | "warn"
   >(defaults?.historyStrictness ?? "warn");
   const [runDate, setRunDate] = useState(defaults?.runDate ?? todayISODate());
+  const [pacingStyle, setPacingStyle] = useState<PacingStyle>(
+    defaults?.pacingStyle ?? "normal"
+  );
+  const [beatInterval, setBeatInterval] = useState(defaults?.beatInterval ?? 2);
+  const [targetPlatform, setTargetPlatform] = useState<TargetPlatform>(
+    defaults?.targetPlatform ?? "tiktok"
+  );
+  const [hookStyle, setHookStyle] = useState<HookStyle | "">(
+    defaults?.hookStyle ?? ""
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
   const [models, setModels] = useState<LlmModelOption[]>(FALLBACK_DEEPSEEK);
   const [provider, setProvider] = useState<string>("deepseek");
@@ -201,6 +220,10 @@ export function RunModal({
       languages: { hi, ja },
       historyStrictness,
       runDate,
+      pacingStyle,
+      beatInterval,
+      targetPlatform,
+      hookStyle: hookStyle || undefined,
     });
   };
 
@@ -404,6 +427,111 @@ export function RunModal({
                 <option value="warn">Warn on history collision</option>
                 <option value="hard-fail">Hard-fail on history collision</option>
               </select>
+            </div>
+
+            {/* Preset-aware extended settings */}
+            <div className="pt-3 border-t border-white/[0.06]">
+              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">
+                Content Style
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="pacingStyle"
+                    className="block text-sm font-medium text-zinc-300 mb-1"
+                  >
+                    Pacing
+                  </label>
+                  <select
+                    id="pacingStyle"
+                    value={pacingStyle}
+                    onChange={(e) => {
+                      setPacingStyle(e.target.value as PacingStyle);
+                      clearValidation();
+                    }}
+                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="fast">Fast</option>
+                    <option value="slow">Slow</option>
+                    <option value="chaotic">Chaotic</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="targetPlatform"
+                    className="block text-sm font-medium text-zinc-300 mb-1"
+                  >
+                    Platform
+                  </label>
+                  <select
+                    id="targetPlatform"
+                    value={targetPlatform}
+                    onChange={(e) => {
+                      setTargetPlatform(e.target.value as TargetPlatform);
+                      clearValidation();
+                    }}
+                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  >
+                    <option value="tiktok">TikTok</option>
+                    <option value="reels">Instagram Reels</option>
+                    <option value="shorts">YouTube Shorts</option>
+                    <option value="generic">Generic</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <label
+                  htmlFor="beatInterval"
+                  className="block text-sm font-medium text-zinc-300 mb-1"
+                >
+                  Beat Interval: {beatInterval.toFixed(1)}s
+                </label>
+                <input
+                  type="range"
+                  id="beatInterval"
+                  min={0.5}
+                  max={5}
+                  step={0.5}
+                  value={beatInterval}
+                  onChange={(e) => {
+                    setBeatInterval(parseFloat(e.target.value));
+                    clearValidation();
+                  }}
+                  className="w-full h-2 bg-white/[0.04] rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                />
+                <div className="flex justify-between text-xs text-zinc-500 mt-1">
+                  <span>0.5s (rapid)</span>
+                  <span>5s (slow)</span>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <label
+                  htmlFor="hookStyle"
+                  className="block text-sm font-medium text-zinc-300 mb-1"
+                >
+                  Hook Style (optional)
+                </label>
+                <select
+                  id="hookStyle"
+                  value={hookStyle}
+                  onChange={(e) => {
+                    setHookStyle(e.target.value as HookStyle | "");
+                    clearValidation();
+                  }}
+                  className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                >
+                  <option value="">Auto (based on preset)</option>
+                  <option value="question">Question Hook</option>
+                  <option value="shock">Shock Hook</option>
+                  <option value="intrigue">Intrigue Hook</option>
+                  <option value="direct">Direct Hook</option>
+                </select>
+              </div>
             </div>
 
             <div>

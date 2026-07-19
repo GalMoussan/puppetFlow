@@ -62,6 +62,14 @@ export const BlockTypeSchema = z.enum([
   "STAGE_AREA",
   "FESTIVAL_MOMENT",
   "CUSTOM",
+  // Content preset block types
+  "GLITCH_EFFECT",
+  "SOUND_CUE",
+  "TEXT_OVERLAY",
+  "EXPLAINER_VISUAL",
+  "CHOREO_BEAT",
+  "STORY_BEAT",
+  "EMOTION_MARKER",
 ]);
 
 export type BlockType = z.infer<typeof BlockTypeSchema>;
@@ -371,6 +379,162 @@ export const RuleSeveritySchema = z.enum(["hard", "warn", "advisory"]);
 export type RuleSeverity = z.infer<typeof RuleSeveritySchema>;
 
 // =============================================================================
+// Theme Pack Canon Types
+// =============================================================================
+
+/**
+ * A character definition with lock text
+ */
+export const CharacterSchema = z.object({
+  name: z.string().min(1).describe("Character name"),
+  description: z.string().describe("Character description for AI context"),
+  lockText: z.string().describe("Exact verbatim text for R13 character locks"),
+});
+
+export type Character = z.infer<typeof CharacterSchema>;
+
+/**
+ * Full canon structure for a theme pack
+ * Each field is an array of strings for variety engine pools
+ */
+export const FullCanonSchema = z.object({
+  // Stage and festival context
+  stageAreas: z.array(z.string()).default([]),
+  festivalMoments: z.array(z.string()).default([]),
+
+  // Puppet behavior
+  dynamics: z.array(z.string()).default([]),
+  visuals: z.array(z.string()).default([]),
+
+  // Scene structure
+  hooks: z.array(z.string()).default([]),
+  gags: z.array(z.string()).default([]),
+  payoffs: z.array(z.string()).default([]),
+  chaosThreads: z.array(z.string()).default([]),
+
+  // Camera moves (per stage)
+  cameraMoves: z.object({
+    start: z.array(z.string()).default([]),
+    middle: z.array(z.string()).default([]),
+    end: z.array(z.string()).default([]),
+  }).default({ start: [], middle: [], end: [] }),
+
+  // Music and language
+  subgenres: z.array(z.string()).default([]),
+  languages: z.array(z.string()).default(["en"]),
+
+  // Characters
+  characters: z.array(CharacterSchema).default([]),
+
+  // Universe rules (markdown text)
+  universeRules: z.string().default(""),
+});
+
+export type FullCanon = z.infer<typeof FullCanonSchema>;
+
+/**
+ * Canon pool names for iteration
+ */
+export const CANON_POOL_KEYS = [
+  "stageAreas",
+  "festivalMoments",
+  "dynamics",
+  "visuals",
+  "hooks",
+  "gags",
+  "payoffs",
+  "chaosThreads",
+  "subgenres",
+  "languages",
+] as const;
+
+export type CanonPoolKey = (typeof CANON_POOL_KEYS)[number];
+
+// =============================================================================
+// Content Preset Types
+// =============================================================================
+
+/**
+ * Pacing style for content generation
+ */
+export const PacingStyleSchema = z.enum(["slow", "normal", "fast", "chaotic"]);
+export type PacingStyle = z.infer<typeof PacingStyleSchema>;
+
+/**
+ * Hook style presets based on viral content research
+ */
+export const HookStyleSchema = z.enum([
+  "numbered",
+  "problem-solution",
+  "mid-action",
+  "controversy",
+  "transformation",
+  "secret",
+  "challenge",
+]);
+export type HookStyle = z.infer<typeof HookStyleSchema>;
+
+/**
+ * Target platform for content optimization
+ */
+export const TargetPlatformSchema = z.enum([
+  "tiktok",
+  "youtube",
+  "instagram",
+  "generic",
+]);
+export type TargetPlatform = z.infer<typeof TargetPlatformSchema>;
+
+/**
+ * Preset category for content templates
+ */
+export const PresetCategorySchema = z.enum([
+  "festival",
+  "brainrot",
+  "educational",
+  "dance",
+  "narrative",
+  "experimental",
+]);
+export type PresetCategory = z.infer<typeof PresetCategorySchema>;
+
+/**
+ * Extended run configuration with preset-aware fields
+ */
+export const ExtendedRunConfigSchema = RunConfigSchema.extend({
+  pacingStyle: PacingStyleSchema.default("normal"),
+  styleConsistency: z.boolean().default(true),
+  beatInterval: z.number().min(0.5).max(5).default(2),
+  hookStyle: HookStyleSchema.optional(),
+  targetPlatform: TargetPlatformSchema.default("tiktok"),
+});
+
+export type ExtendedRunConfig = z.infer<typeof ExtendedRunConfigSchema>;
+
+/**
+ * Template preset configuration
+ */
+export const TemplatePresetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  category: PresetCategorySchema,
+  canonOverrides: FullCanonSchema.partial().default({}),
+  defaultRunConfig: ExtendedRunConfigSchema.partial().default({}),
+  defaultBlocks: z.array(z.object({
+    lane: LaneSchema,
+    blockTypes: z.array(BlockTypeSchema),
+    rotationGroups: z.array(z.string()).optional(),
+  })).default([]),
+  thumbnailUrl: z.string().nullable().optional(),
+  guidelines: z.array(z.string()).default([]),
+  isSystem: z.boolean().default(false),
+  createdBy: z.string().nullable().optional(),
+});
+
+export type TemplatePreset = z.infer<typeof TemplatePresetSchema>;
+
+// =============================================================================
 // Export All Schemas
 // =============================================================================
 
@@ -394,4 +558,13 @@ export const schemas = {
   CompiledScaffold: CompiledScaffoldSchema,
   VarietyErrorType: VarietyErrorTypeSchema,
   RuleSeverity: RuleSeveritySchema,
+  Character: CharacterSchema,
+  FullCanon: FullCanonSchema,
+  // Content preset schemas
+  PacingStyle: PacingStyleSchema,
+  HookStyle: HookStyleSchema,
+  TargetPlatform: TargetPlatformSchema,
+  PresetCategory: PresetCategorySchema,
+  ExtendedRunConfig: ExtendedRunConfigSchema,
+  TemplatePreset: TemplatePresetSchema,
 } as const;

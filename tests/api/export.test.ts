@@ -448,8 +448,8 @@ Second line with tab:\there
 
       const disposition = response.headers.get("Content-Disposition");
       expect(disposition).toContain('attachment');
-      // Filename includes path format: scenes/{date}.md
-      expect(disposition).toContain('filename="scenes/2026-07-05.md"');
+      // Filename format: scenes-{date}.md
+      expect(disposition).toContain('filename="scenes-2026-07-05.md"');
     });
 
     it("sets Content-Disposition with different filename for scaffold format", async () => {
@@ -462,8 +462,8 @@ Second line with tab:\there
 
       const disposition = response.headers.get("Content-Disposition");
       expect(disposition).toContain('attachment');
-      // Filename includes path format: scaffold/{date}.md
-      expect(disposition).toContain('filename="scaffold/2026-07-05.md"');
+      // Filename format: scaffold-{date}.md
+      expect(disposition).toContain('filename="scaffold-2026-07-05.md"');
     });
 
     it("filename uses run createdAt date", async () => {
@@ -481,8 +481,8 @@ Second line with tab:\there
       const response = await GET(request, { params: { runId: "run-001" } });
 
       const disposition = response.headers.get("Content-Disposition");
-      // Filename includes path format: scenes/{date}.md
-      expect(disposition).toContain('filename="scenes/2026-12-25.md"');
+      // Filename format: scenes-{date}.md
+      expect(disposition).toContain('filename="scenes-2026-12-25.md"');
     });
 
     it("defaults to scenes format if format not specified", async () => {
@@ -495,8 +495,8 @@ Second line with tab:\there
       const response = await GET(request, { params: { runId: "run-001" } });
 
       const disposition = response.headers.get("Content-Disposition");
-      // Filename includes path format: scenes/{date}.md
-      expect(disposition).toContain('filename="scenes/2026-07-05.md"');
+      // Filename format: scenes-{date}.md
+      expect(disposition).toContain('filename="scenes-2026-07-05.md"');
     });
   });
 

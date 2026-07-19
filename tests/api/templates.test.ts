@@ -73,6 +73,15 @@ const mockPrisma = vi.hoisted(() => ({
     delete: vi.fn(),
     count: vi.fn(),
   },
+  templateVersion: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
   $transaction: vi.fn((fn: (client: MockPrismaClient) => unknown) => fn({} as MockPrismaClient)),
   $connect: vi.fn(),
   $disconnect: vi.fn(),
@@ -442,10 +451,21 @@ describe("api/templates", () => {
         ],
       };
 
-      mockPrisma.flowTemplate.findUnique.mockResolvedValue(sampleTemplate);
+      mockPrisma.flowTemplate.findUnique.mockResolvedValue({
+        ...sampleTemplate,
+        currentVersion: 1,
+      });
+      mockPrisma.templateVersion.create.mockResolvedValue({
+        id: "ver-1",
+        templateId: "tpl-001",
+        version: 1,
+        graph: sampleGraph,
+        createdAt: new Date(),
+      });
       mockPrisma.flowTemplate.update.mockResolvedValue({
         ...sampleTemplate,
         graph: updatedGraph,
+        currentVersion: 2,
         updatedAt: new Date(),
       });
 

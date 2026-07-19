@@ -14,8 +14,60 @@ import {
   type BatchOutput,
   type GenerationOptions,
   type GeneratedScene,
+  type UsageStats,
 } from "./anthropic-types";
 import { parseBatchOutput } from "./llm-batch-output";
+import { apiConfig, generationLimits } from "./config";
+
+// =============================================================================
+// Cost estimation (per million tokens)
+// =============================================================================
+
+/**
+ * Pricing per model (per million tokens)
+ * https://www.anthropic.com/pricing
+ */
+const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  "claude-sonnet-4-6": { input: 3.0, output: 15.0 },
+  "claude-sonnet-4-5-20250514": { input: 3.0, output: 15.0 },
+  "claude-opus-4-5-20251101": { input: 15.0, output: 75.0 },
+  "claude-3-5-sonnet-20241022": { input: 3.0, output: 15.0 },
+  "claude-3-5-sonnet-20240620": { input: 3.0, output: 15.0 },
+  "claude-3-haiku-20240307": { input: 0.25, output: 1.25 },
+  // Default fallback for unknown models
+  default: { input: 3.0, output: 15.0 },
+};
+
+/**
+ * Estimate cost in USD based on token usage
+ */
+function estimateCost(
+  inputTokens: number,
+  outputTokens: number,
+  model: string
+): number {
+  const pricing = MODEL_PRICING[model] ?? MODEL_PRICING.default;
+  const inputCost = (inputTokens / 1_000_000) * pricing.input;
+  const outputCost = (outputTokens / 1_000_000) * pricing.output;
+  return inputCost + outputCost;
+}
+
+/**
+ * Extract usage stats from Anthropic API response
+ */
+function extractUsageStats(
+  data: { usage?: { input_tokens?: number; output_tokens?: number } },
+  model: string
+): UsageStats | undefined {
+  if (!data.usage) return undefined;
+
+  const inputTokens = data.usage.input_tokens ?? 0;
+  const outputTokens = data.usage.output_tokens ?? 0;
+  const totalTokens = inputTokens + outputTokens;
+  const estimatedCost = estimateCost(inputTokens, outputTokens, model);
+
+  return { inputTokens, outputTokens, totalTokens, estimatedCost };
+}
 import { getLlmProvider, hasLlmKey } from "./llm-provider";
 import {
   generateBatchDeepseek,
@@ -41,12 +93,13 @@ export function hasAnthropicKey(): boolean {
 
 /**
  * Active model name for the selected provider.
+ * Note: Reads from process.env directly to allow dynamic configuration in tests
  */
 export function getModelName(): string {
   if (getLlmProvider() === "deepseek") {
     return getDeepseekModel();
   }
-  return process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+  return process.env.ANTHROPIC_MODEL || apiConfig.anthropicModel;
 }
 
 // =============================================================================
@@ -67,9 +120,9 @@ async function generateBatchAnthropic(
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY!;
-  const model =
-    options.model || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
-  const maxAttempts = 2;
+  const model = options.model || apiConfig.anthropicModel;
+  const maxAttempts = apiConfig.maxRetryAttempts;
+  const timeoutMs = apiConfig.anthropicTimeoutMs;
 
   const prompt = buildGenerationPrompt(scaffold, assignments);
 
@@ -119,6 +172,10 @@ async function generateBatchAnthropic(
   let attempt = 0;
 
   while (attempt < maxAttempts) {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -129,8 +186,8 @@ async function generateBatchAnthropic(
         },
         body: JSON.stringify({
           model,
-          max_tokens: options.maxTokens || 4000,
-          temperature: options.temperature || 1.0,
+          max_tokens: options.maxTokens || generationLimits.defaultMaxTokens,
+          temperature: options.temperature || generationLimits.defaultTemperature,
           messages: [
             {
               role: "user",
@@ -140,7 +197,8 @@ async function generateBatchAnthropic(
           tools: [toolSchema],
           tool_choice: { type: "tool", name: "return_batch_output" },
         }),
-      });
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
@@ -177,13 +235,28 @@ async function generateBatchAnthropic(
         throw new AnthropicError("No tool use in response");
       }
 
+      // Extract usage stats from the response
+      const usage = extractUsageStats(data, model);
+
       // Normalize then parse (shared path with DeepSeek for partial fields)
-      return parseBatchOutput(toolUseBlock.input);
+      const result = parseBatchOutput(toolUseBlock.input);
+      return { ...result, usage };
     } catch (err) {
       attempt++;
 
+      // Handle timeout (AbortError)
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new AnthropicError(
+          `Request timed out after ${timeoutMs}ms`,
+          "timeout_error"
+        );
+      }
+
       if (err instanceof AnthropicError) {
         if (err.code === "authentication_error") {
+          throw err;
+        }
+        if (err.code === "timeout_error") {
           throw err;
         }
         if (err.code === "rate_limit_error" && attempt < maxAttempts) {
@@ -209,7 +282,7 @@ async function generateBatchAnthropic(
         );
       }
 
-      await new Promise((r) => setTimeout(r, 1000 * attempt));
+      await new Promise((r) => setTimeout(r, apiConfig.retryDelayMs * attempt));
     }
   }
 
@@ -259,8 +332,8 @@ export async function generateScene(
   }
 
   const result = await generateBatch(scaffold, [combo], {
-    maxTokens: 2000,
-    temperature: 1.0,
+    maxTokens: generationLimits.defaultMaxTokens / 2,
+    temperature: generationLimits.defaultTemperature,
   });
 
   if (result.scenes.length === 0) {
@@ -335,8 +408,8 @@ export async function repair(
   }
 
   return generateBatch(prompt, [], {
-    temperature: options.temperature ?? 0.8,
-    maxTokens: options.maxTokens ?? 4000,
+    temperature: options.temperature ?? generationLimits.repairTemperature,
+    maxTokens: options.maxTokens ?? generationLimits.defaultMaxTokens,
   });
 }
 

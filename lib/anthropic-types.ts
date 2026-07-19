@@ -17,6 +17,17 @@ export interface GeneratedScene {
   finalFrame: string;
 }
 
+/**
+ * Usage statistics from LLM API response
+ */
+export interface UsageStats {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  /** Estimated cost in USD */
+  estimatedCost: number;
+}
+
 export const BatchOutputSchema = z.object({
   scenes: z.array(
     z.object({
@@ -32,7 +43,10 @@ export const BatchOutputSchema = z.object({
   ),
 });
 
-export type BatchOutput = z.infer<typeof BatchOutputSchema>;
+export type BatchOutput = z.infer<typeof BatchOutputSchema> & {
+  /** Usage statistics from the LLM call */
+  usage?: UsageStats;
+};
 
 export interface GenerationOptions {
   temperature?: number;

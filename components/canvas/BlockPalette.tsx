@@ -16,6 +16,8 @@ import { useCanvasStore } from "@/lib/store/canvas-store";
 import { getTypeColor, BLOCK_GROUPS } from "@/lib/types/canvas";
 import type { BlockNodeData } from "@/lib/types/canvas";
 import { CreateBlockButton } from "./CreateBlockButton";
+import { BlockLibraryManager } from "./BlockLibraryManager";
+import { Settings2 } from "lucide-react";
 
 /**
  * Props for the BlockPalette component
@@ -229,6 +231,7 @@ function BlockGroup({ name, blocks }: BlockGroupProps) {
 export function BlockPalette({ themePackId }: BlockPaletteProps) {
   const { blocks, loading, error, refetch } = useBlockLibrary(themePackId);
   const [search, setSearch] = useState("");
+  const [showManager, setShowManager] = useState(false);
   /** Optimistic prepend after create until refetch completes */
   const [optimisticBlocks, setOptimisticBlocks] = useState<BlockDefinition[]>(
     []
@@ -368,7 +371,26 @@ export function BlockPalette({ themePackId }: BlockPaletteProps) {
         <h2 className="text-lg font-semibold text-zinc-100">
           Block Library
         </h2>
+        <button
+          type="button"
+          onClick={() => setShowManager(true)}
+          className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] rounded-lg transition-colors"
+          title="Manage blocks"
+          data-testid="palette-manage-button"
+        >
+          <Settings2 className="w-4 h-4" />
+        </button>
       </div>
+
+      {showManager && (
+        <BlockLibraryManager
+          themePackId={themePackId}
+          onClose={() => {
+            setShowManager(false);
+            void refetch();
+          }}
+        />
+      )}
 
       <div className="mb-3">
         <CreateBlockButton onCreated={handleBlockCreated} />

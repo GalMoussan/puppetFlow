@@ -230,10 +230,18 @@ describe("RunViewer", () => {
       const mockBlob = new Blob(["# Run Export\n2024-01-15"], {
         type: "text/markdown",
       });
-      mockFetch.mockResolvedValueOnce({
+      // Mock Content-Disposition header for filename
+      mockFetch.mockImplementation(async (_url: string) => ({
         ok: true,
         blob: () => Promise.resolve(mockBlob),
-      });
+        headers: {
+          get: (name: string) =>
+            name === "Content-Disposition"
+              ? `attachment; filename="export-2024-01-15.md"`
+              : null,
+        },
+        json: () => Promise.resolve({}),
+      }));
       global.URL.createObjectURL = vi.fn(() => "blob:url");
       global.URL.revokeObjectURL = vi.fn();
       const mockLink = {
@@ -270,24 +278,29 @@ describe("RunViewer", () => {
       return mockLink;
     }
 
-    it("has Export scenes and Export scaffold buttons", () => {
+    it("has Export dropdown with format options", async () => {
+      const user = userEvent.setup();
       render(<RunViewer {...defaultProps} />);
 
-      expect(
-        screen.getByRole("button", { name: /export scenes/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /export scaffold/i })
-      ).toBeInTheDocument();
+      // Click Export dropdown button
+      await user.click(screen.getByRole("button", { name: /export/i }));
+
+      // Should show export format options in dropdown
+      expect(screen.getByText(/scenes \(markdown\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/scaffold \(markdown\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/pdf document/i)).toBeInTheDocument();
+      expect(screen.getByText(/word document/i)).toBeInTheDocument();
     });
 
-    it("triggers scenes download on export scenes", async () => {
+    it("triggers scenes download via dropdown", async () => {
       const user = userEvent.setup();
       const mockLink = mockDownload();
 
       render(<RunViewer {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /export scenes/i }));
+      // Open dropdown and click Scenes option
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByText(/scenes \(markdown\)/i));
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
@@ -299,35 +312,41 @@ describe("RunViewer", () => {
       vi.restoreAllMocks();
     });
 
-    it("export scenes filename includes date", async () => {
+    it("triggers pdf download via dropdown", async () => {
       const user = userEvent.setup();
       const mockLink = mockDownload();
 
       render(<RunViewer {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /export scenes/i }));
+      // Open dropdown and click PDF option
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByText(/pdf document/i));
 
       await waitFor(() => {
-        expect(mockLink.download).toContain("2024-01-15");
+        expect(mockFetch).toHaveBeenCalledWith(
+          "/api/export/run-001?format=pdf"
+        );
+        expect(mockLink.click).toHaveBeenCalled();
       });
 
       vi.restoreAllMocks();
     });
 
-    it("triggers scaffold download with format=scaffold", async () => {
+    it("triggers scaffold download via dropdown", async () => {
       const user = userEvent.setup();
       const mockLink = mockDownload();
 
       render(<RunViewer {...defaultProps} />);
 
-      await user.click(screen.getByRole("button", { name: /export scaffold/i }));
+      // Open dropdown and click Scaffold option
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByText(/scaffold \(markdown\)/i));
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
           "/api/export/run-001?format=scaffold"
         );
         expect(mockLink.click).toHaveBeenCalled();
-        expect(mockLink.download).toMatch(/scaffold/i);
       });
 
       vi.restoreAllMocks();

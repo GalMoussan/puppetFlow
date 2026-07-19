@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Copy, Download, Check, Library } from "lucide-react";
+import { ArrowLeft, Copy, Check, Library } from "lucide-react";
+import { ExportDropdown } from "./ExportDropdown";
 import { toast } from "@/lib/store/toast-store";
 import { SceneCard, type Scene, type RerollStage } from "./SceneCard";
 
@@ -64,32 +65,8 @@ function formatAllScenesForClipboard(scenes: Scene[]): string {
   return scenes.map(formatSceneForClipboard).join("\n---\n\n");
 }
 
-async function downloadExport(
-  runId: string,
-  format: "scenes" | "scaffold",
-  filename: string
-): Promise<void> {
-  const response = await fetch(`/api/export/${runId}?format=${format}`);
-  if (!response.ok) {
-    throw new Error("Export failed");
-  }
-
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-
-  URL.revokeObjectURL(url);
-}
-
 export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
   const [copySuccess, setCopySuccess] = useState(false);
-
-  const dateStr = new Date(run.createdAt).toISOString().split("T")[0];
-  const baseName = run.templateName.replace(/\s+/g, "-");
 
   const handleCopyAll = async () => {
     try {
@@ -110,34 +87,6 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
       toast.success(`Copied scene ${scene.index}`);
     } catch {
       toast.error("Failed to copy scene");
-    }
-  };
-
-  const handleExportScenes = async () => {
-    try {
-      await downloadExport(
-        run.id,
-        "scenes",
-        `${baseName}-${dateStr}.md`
-      );
-      toast.success("Scenes export downloaded");
-    } catch (error) {
-      console.error("Export scenes failed:", error);
-      toast.error("Export scenes failed");
-    }
-  };
-
-  const handleExportScaffold = async () => {
-    try {
-      await downloadExport(
-        run.id,
-        "scaffold",
-        `scaffold-${baseName}-${dateStr}.md`
-      );
-      toast.success("Scaffold export downloaded");
-    } catch (error) {
-      console.error("Export scaffold failed:", error);
-      toast.error("Export scaffold failed");
     }
   };
 
@@ -184,24 +133,11 @@ export function RunViewer({ run, onReroll, onBackToCanvas }: RunViewerProps) {
               )}
               {copySuccess ? "Copied!" : "Copy All"}
             </button>
-            <button
-              onClick={handleExportScenes}
-              className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-zinc-100 rounded-lg transition-colors"
-              aria-label="Export scenes"
-              type="button"
-            >
-              <Download className="w-4 h-4" />
-              Export scenes
-            </button>
-            <button
-              onClick={handleExportScaffold}
-              className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white rounded-lg transition-colors"
-              aria-label="Export scaffold"
-              type="button"
-            >
-              <Download className="w-4 h-4" />
-              Export scaffold
-            </button>
+            <ExportDropdown
+              runId={run.id}
+              hasScenes={run.scenes.length > 0}
+              hasScaffold={true}
+            />
           </div>
         </div>
       </header>

@@ -2,7 +2,7 @@
  * Template by ID API Routes
  *
  * GET   /api/templates/[id] - Get by ID with full graph
- * PATCH /api/templates/[id] - Update template (autosave)
+ * PATCH /api/templates/[id] - Update template (autosave with versioning)
  *
  * @module app/api/templates/[id]/route
  */
@@ -125,10 +125,25 @@ export async function PATCH(
 
     const data = parseResult.data;
 
-    // Update
+    // Auto-snapshot: create a version entry for the current graph before updating
+    if (data.graph && existing.graph !== null) {
+      await prisma.templateVersion.create({
+        data: {
+          templateId: id,
+          version: existing.currentVersion,
+          // Cast to satisfy Prisma's stricter input type (graph is never null in practice)
+          graph: existing.graph as object,
+        },
+      });
+    }
+
+    // Update template with incremented version
     const updated = await prisma.flowTemplate.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        currentVersion: data.graph ? existing.currentVersion + 1 : existing.currentVersion,
+      },
     });
 
     return NextResponse.json(updated);

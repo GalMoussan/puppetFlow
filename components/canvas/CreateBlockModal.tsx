@@ -16,6 +16,14 @@ const BLOCK_TYPES: { value: BlockType; label: string }[] = [
   { value: "STAGE_AREA", label: "Stage Area" },
   { value: "FESTIVAL_MOMENT", label: "Festival Moment" },
   { value: "CUSTOM", label: "Custom" },
+  // Content preset block types
+  { value: "GLITCH_EFFECT", label: "Glitch Effect" },
+  { value: "SOUND_CUE", label: "Sound Cue" },
+  { value: "TEXT_OVERLAY", label: "Text Overlay" },
+  { value: "EXPLAINER_VISUAL", label: "Explainer Visual" },
+  { value: "CHOREO_BEAT", label: "Choreo Beat" },
+  { value: "STORY_BEAT", label: "Story Beat" },
+  { value: "EMOTION_MARKER", label: "Emotion Marker" },
 ];
 
 const STAGE_SCOPES: { value: Lane; label: string }[] = [
@@ -44,6 +52,14 @@ const TYPE_DEFAULT_SCOPES: Record<BlockType, Lane[]> = {
   LANGUAGE: ["GLOBAL"],
   LOOP_CLOSURE: ["EXTEND_END"],
   CUSTOM: ["GLOBAL", "IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+  // Content preset block types
+  GLITCH_EFFECT: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+  SOUND_CUE: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+  TEXT_OVERLAY: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+  EXPLAINER_VISUAL: ["IMAGE", "VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+  CHOREO_BEAT: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
+  STORY_BEAT: ["GLOBAL"],
+  EMOTION_MARKER: ["VIDEO_START", "EXTEND_MIDDLE", "EXTEND_END"],
 };
 
 interface BlockData {

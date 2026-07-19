@@ -715,6 +715,10 @@ describe("RunModal", () => {
         languages: { hi: 3, ja: 2 },
         historyStrictness: "warn",
         runDate: today,
+        pacingStyle: "normal",
+        beatInterval: 2,
+        targetPlatform: "tiktok",
+        hookStyle: undefined,
       });
     });
 

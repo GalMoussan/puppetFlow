@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Library, Loader2, RefreshCw, Film } from "lucide-react";
+import { Library, Loader2, RefreshCw, Film, GitCompare } from "lucide-react";
 import { RunLibraryCard } from "./RunLibraryCard";
+import { RunComparison } from "./RunComparison";
 import {
   mapApiRunToLibraryItem,
   type ApiRun,
@@ -47,6 +48,9 @@ export function LibraryPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRuns, setSelectedRuns] = useState<Set<string>>(new Set());
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareIds, setCompareIds] = useState<[string, string] | null>(null);
 
   const fetchPage = useCallback(
     async (opts: { cursor?: string | null; append: boolean; filter: StatusFilter }) => {
@@ -155,6 +159,34 @@ export function LibraryPage() {
     void loadInitial(filter);
   };
 
+  const handleToggleSelect = (runId: string) => {
+    setSelectedRuns((prev) => {
+      const next = new Set(prev);
+      if (next.has(runId)) {
+        next.delete(runId);
+      } else if (next.size < 2) {
+        next.add(runId);
+      }
+      return next;
+    });
+  };
+
+  const handleCompare = () => {
+    const ids = Array.from(selectedRuns);
+    if (ids.length === 2) {
+      setCompareIds([ids[0], ids[1]]);
+      setCompareOpen(true);
+    }
+  };
+
+  const handleCloseCompare = () => {
+    setCompareOpen(false);
+    setCompareIds(null);
+    setSelectedRuns(new Set());
+  };
+
+  const canCompare = selectedRuns.size === 2;
+
   return (
     <div className="pf-shell min-h-screen text-white" data-testid="library-page">
       <header className="pf-header sticky top-0 z-40">
@@ -175,6 +207,26 @@ export function LibraryPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {selectedRuns.size > 0 && (
+              <span className="text-xs text-zinc-500">
+                {selectedRuns.size}/2 selected
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleCompare}
+              disabled={!canCompare}
+              className={`pf-btn px-3 py-1.5 ${
+                canCompare
+                  ? "pf-btn-secondary"
+                  : "pf-btn-ghost opacity-40 cursor-not-allowed"
+              }`}
+              title={canCompare ? "Compare selected runs" : "Select 2 runs to compare"}
+              data-testid="compare-runs-btn"
+            >
+              <GitCompare className="w-4 h-4" />
+              Compare
+            </button>
             <button
               type="button"
               onClick={handleRefresh}
@@ -269,8 +321,31 @@ export function LibraryPage() {
           <>
             <ul className="space-y-3" data-testid="library-run-list">
               {runs.map((run) => (
-                <li key={run.id}>
-                  <RunLibraryCard run={run} />
+                <li key={run.id} className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSelect(run.id)}
+                    className={`
+                      mt-3 w-5 h-5 shrink-0 rounded border-2 transition-all flex items-center justify-center
+                      ${
+                        selectedRuns.has(run.id)
+                          ? "bg-cyan-500 border-cyan-500 text-black"
+                          : "border-zinc-600 hover:border-cyan-500/50"
+                      }
+                      ${selectedRuns.size >= 2 && !selectedRuns.has(run.id) ? "opacity-30 cursor-not-allowed" : ""}
+                    `}
+                    disabled={selectedRuns.size >= 2 && !selectedRuns.has(run.id)}
+                    aria-label={selectedRuns.has(run.id) ? "Deselect run" : "Select run for comparison"}
+                  >
+                    {selectedRuns.has(run.id) && (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <RunLibraryCard run={run} />
+                  </div>
                 </li>
               ))}
             </ul>
@@ -303,6 +378,15 @@ export function LibraryPage() {
           </>
         )}
       </main>
+
+      {/* Comparison Modal */}
+      {compareOpen && compareIds && (
+        <RunComparison
+          runIdA={compareIds[0]}
+          runIdB={compareIds[1]}
+          onClose={handleCloseCompare}
+        />
+      )}
     </div>
   );
 }

@@ -18,3 +18,5 @@ export { CreateBlockModal } from "./CreateBlockModal";
 export { RunModal } from "./RunModal";
 export { ImportSceneModal } from "./ImportSceneModal";
 export type { ImportSceneResult } from "./ImportSceneModal";
+export { VersionHistoryPanel } from "./VersionHistoryPanel";
+export { TemplatePicker } from "./TemplatePicker";

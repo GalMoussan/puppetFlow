@@ -158,7 +158,9 @@ export function groupBlocksByType(
     "Theme & Style": ["THEME_PACK_REF", "STYLE_LOCK", "CHARACTER_LOCK"],
     "Scene Elements": ["PUPPET_VISUAL", "STAGE_AREA", "FESTIVAL_MOMENT"],
     Actions: ["CAMERA_MOVE", "PUPPET_DYNAMIC", "PHYSICAL_GAG"],
-    Narrative: ["HOOK", "CHAOS_THREAD", "PAYOFF"],
+    Narrative: ["HOOK", "CHAOS_THREAD", "PAYOFF", "STORY_BEAT"],
+    "Effects & Audio": ["GLITCH_EFFECT", "SOUND_CUE", "TEXT_OVERLAY"],
+    "Performance": ["CHOREO_BEAT", "EMOTION_MARKER", "EXPLAINER_VISUAL"],
     Configuration: ["SONG_SECTION", "LANGUAGE", "LOOP_CLOSURE", "CUSTOM"],
   };
 

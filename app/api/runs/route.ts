@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
 
     const filters = filterResult.success ? filterResult.data : {};
 
+    // Check if groupBy=template is requested
+    const groupBy = url.searchParams.get("groupBy");
+
     // Ensure limit is at least 1
     const effectiveLimit = Math.max(1, limit);
 
@@ -95,6 +98,48 @@ export async function GET(request: NextRequest) {
     const hasMore = runs.length === effectiveLimit;
     const nextCursor =
       hasMore && runs.length > 0 ? runs[runs.length - 1].id : null;
+
+    // If groupBy=template, aggregate runs by template
+    if (groupBy === "template") {
+      const grouped = new Map<string, {
+        templateId: string;
+        templateName: string;
+        runs: typeof runs;
+        totalRuns: number;
+        latestRun: Date;
+      }>();
+
+      for (const run of runs) {
+        const key = run.templateId;
+        const existing = grouped.get(key);
+        if (existing) {
+          existing.runs.push(run);
+          existing.totalRuns++;
+          if (run.createdAt > existing.latestRun) {
+            existing.latestRun = run.createdAt;
+          }
+        } else {
+          grouped.set(key, {
+            templateId: run.templateId,
+            templateName: run.template.name,
+            runs: [run],
+            totalRuns: 1,
+            latestRun: run.createdAt,
+          });
+        }
+      }
+
+      const groupedData = Array.from(grouped.values())
+        .sort((a, b) => b.latestRun.getTime() - a.latestRun.getTime());
+
+      return NextResponse.json({
+        data: groupedData,
+        cursor: nextCursor,
+        hasMore,
+        total,
+        groupedBy: "template",
+      });
+    }
 
     return NextResponse.json({
       data: runs,

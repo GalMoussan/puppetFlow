@@ -322,6 +322,6 @@ export type SSEEvent = z.infer<typeof SSEEventSchema>;
 /**
  * Export format query parameter
  */
-export const ExportFormatSchema = z.enum(["scenes", "scaffold"]).default("scenes");
+export const ExportFormatSchema = z.enum(["scenes", "scaffold", "pdf", "docx"]).default("scenes");
 
 export type ExportFormat = z.infer<typeof ExportFormatSchema>;
