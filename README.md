@@ -4,18 +4,20 @@
 
 A drag-and-drop flowchart tool that visually composes the 4-stage prompt pipeline (Image → Video START → Extend MIDDLE → Extend END) for the Shika & Shilshul "Master of Puppets" content series.
 
-**Status:** Phases 0–4 complete · Phase 5 polish (auth, theme, toasts) largely done · Deploy remaining
+**Status:** Phases 1–2 complete · All core features implemented · Production ready
 
 ## Overview
 
 PuppetFlow transforms the monolithic prompt-engineering workflow into a visual, modular system:
 
 - **Stage Lanes**: Fixed, ordered lanes (`IMAGE` → `VIDEO_START` → `EXTEND_MIDDLE` → `EXTEND_END`, plus `GLOBAL`)
-- **Component Blocks**: Draggable blocks (hooks, camera moves, puppet dynamics, etc.) that snap into lanes
+- **Component Blocks**: 54 draggable blocks across 7 categories that snap into lanes
+- **Template Presets**: 6 content styles (Festival, Brainrot, Educational, Dance, Story, Experimental)
 - **Boundary Frame Handshakes**: Edges between lanes carrying the contract for clip continuity
 - **Run Batch**: Compiles the graph, assigns variety, calls LLM (Anthropic or DeepSeek), validates outputs, persists scenes
-- **Library**: `/library` lists every generation forever (DB-backed)
-- **Export**: Download scenes or scaffold as `.md`
+- **Library**: `/library` lists every generation with comparison and filtering
+- **Analytics**: Token usage, cost tracking, and performance metrics
+- **Export**: Download scenes as PDF, DOCX, or Markdown
 
 ## Tech Stack
 
@@ -86,9 +88,52 @@ Open [http://localhost:3000](http://localhost:3000) — enter basic-auth credent
 
 | Route | Purpose |
 |-------|---------|
-| `/` | Canvas editor |
-| `/library` | All past generations |
-| `/runs/[id]` | Single run viewer |
+| `/` | Canvas editor with template picker |
+| `/library` | All past generations with comparison |
+| `/runs/[id]` | Single run viewer with export |
+| `/analytics` | Usage analytics dashboard |
+| `/theme-packs/[id]/edit` | Theme pack canon editor |
+
+## Features
+
+### Template System
+- **Template Picker**: Switch between saved templates via dropdown in header
+- **Template Presets**: Start from 6 content styles with pre-configured settings
+- **Version History**: Auto-snapshot on save, restore any previous version
+- **Auto-save**: Templates persist with full graph state
+
+### Block Library (54 blocks in 7 categories)
+| Category | Block Types |
+|----------|-------------|
+| Theme & Style | Style Lock, Character Lock |
+| Scene Elements | Puppet Visual, Stage Area, Festival Moment |
+| Actions | Camera Move, Puppet Dynamic, Physical Gag |
+| Narrative | Hook, Chaos Thread, Payoff, Story Beat |
+| Effects & Audio | Glitch Effect, Sound Cue, Text Overlay |
+| Performance | Choreo Beat, Emotion Marker, Explainer Visual |
+| Configuration | Song Section, Language, Custom |
+
+### Content Presets
+| Preset | Description |
+|--------|-------------|
+| Festival Hype | High-energy festival moments with puppet sync |
+| Brainrot Chaos | Hyper-stimulating, fast cuts, absurdist humor |
+| Edutainment | Clear structure, deliberate pacing, concept visualization |
+| Dance Viral | Choreography-focused for TikTok trends |
+| Story Arc | Mini-narrative with beginning, middle, end |
+| Experimental | Mix-and-match styles, avant-garde aesthetics |
+
+### Analytics Dashboard
+- Token usage tracking (input/output/total)
+- Cost estimation per run
+- Time series charts (runs over time)
+- Model breakdown statistics
+- Date range filtering
+
+### Export Options
+- **PDF**: Formatted document with scenes and metadata
+- **DOCX**: Word document for editing
+- **Markdown**: Raw text export
 
 ## Operator runbook
 
